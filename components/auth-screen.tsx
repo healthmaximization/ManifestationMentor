@@ -23,30 +23,66 @@ export default function AuthScreen() {
     setNotice("");
 
     const supabase = createBrowserSupabase();
-    const { data, error: authError } =
-      mode === "signin"
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              emailRedirectTo: `${window.location.origin}/auth/callback`
-            }
-          });
+    const normalizedEmail = email.trim().toLowerCase();
 
-    setLoading(false);
+    if (mode === "signin") {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password
+      });
 
-    if (authError) {
-      setError(authError.message);
+      setLoading(false);
+
+      if (authError) {
+        setError(authError.message === "Invalid login credentials" ? "No account found with this email/password. Create an account first, or check the password." : authError.message);
+        return;
+      }
+
+      if (data.session) {
+        router.refresh();
+      }
+
+      return;
+    }
+
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email: normalizedEmail,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`
+      }
+    });
+
+    if (signUpError) {
+      setLoading(false);
+      setError(signUpError.message);
       return;
     }
 
     if (data.session) {
+      setLoading(false);
       router.refresh();
       return;
     }
 
-    setNotice("Account created. Confirm your email if Supabase still has email confirmation enabled, then log in here.");
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email: normalizedEmail,
+      password
+    });
+
+    setLoading(false);
+
+    if (signInData.session) {
+      router.refresh();
+      return;
+    }
+
+    if (signInError?.message === "Invalid login credentials") {
+      setError("Supabase did not create an active password account. If this email already exists as unconfirmed, delete it in Supabase Auth Users or confirm it manually, then sign up again.");
+      return;
+    }
+
+    setNotice("Account created, but Supabase still wants email confirmation. Turn off Confirm email in Supabase Auth or confirm this user manually.");
   }
 
   return (
@@ -74,7 +110,7 @@ export default function AuthScreen() {
             id="email"
             type="email"
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            onChange={(event) => setEmail(event.target.value.trim())}
             placeholder="you@example.com"
             required
           />
