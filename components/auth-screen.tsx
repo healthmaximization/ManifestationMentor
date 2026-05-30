@@ -1,27 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
+import { Eye, EyeOff, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 
 export default function AuthScreen() {
+  const router = useRouter();
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
-  async function signIn(event: React.FormEvent) {
+  async function submit(event: React.FormEvent) {
     event.preventDefault();
     setLoading(true);
     setError("");
+    setNotice("");
 
     const supabase = createBrowserSupabase();
-    const { error: authError } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`
-      }
-    });
+    const credentials = { email, password };
+    const { data, error: authError } =
+      mode === "signin"
+        ? await supabase.auth.signInWithPassword(credentials)
+        : await supabase.auth.signUp(credentials);
 
     setLoading(false);
 
@@ -30,7 +35,12 @@ export default function AuthScreen() {
       return;
     }
 
-    setSent(true);
+    if (data.session) {
+      router.refresh();
+      return;
+    }
+
+    setNotice("Account created. If email confirmation is enabled in Supabase, confirm your email once before signing in.");
   }
 
   return (
@@ -41,7 +51,15 @@ export default function AuthScreen() {
         </div>
         <h1>AI Manifestation Advisor</h1>
         <p>Chat with a trained manifestation coach for clarity, alignment, and focused action.</p>
-        <form onSubmit={signIn} className="auth-form">
+        <div className="auth-tabs" role="tablist" aria-label="Authentication mode">
+          <button className={mode === "signin" ? "active" : ""} onClick={() => setMode("signin")} type="button">
+            Log in
+          </button>
+          <button className={mode === "signup" ? "active" : ""} onClick={() => setMode("signup")} type="button">
+            Sign up
+          </button>
+        </div>
+        <form onSubmit={submit} className="auth-form">
           <label htmlFor="email">Email</label>
           <input
             id="email"
@@ -51,14 +69,28 @@ export default function AuthScreen() {
             placeholder="you@example.com"
             required
           />
+          <label htmlFor="password">Password</label>
+          <div className="password-field">
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder={mode === "signin" ? "Your password" : "Create a strong password"}
+              minLength={6}
+              required
+            />
+            <button type="button" onClick={() => setShowPassword((current) => !current)} title="Toggle password visibility">
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
           <button type="submit" disabled={loading}>
-            {loading ? "Sending..." : "Send magic link"}
+            {loading ? "Working..." : mode === "signin" ? "Log in" : "Create account"}
           </button>
         </form>
-        {sent && <p className="notice">Check your inbox for the login link.</p>}
+        {notice && <p className="notice">{notice}</p>}
         {error && <p className="error">{error}</p>}
       </section>
     </main>
   );
 }
-
