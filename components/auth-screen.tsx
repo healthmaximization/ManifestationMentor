@@ -2,18 +2,19 @@
 
 import { useState } from "react";
 import { Eye, EyeOff, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 
 export default function AuthScreen() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
+  const [error, setError] = useState(searchParams.get("authError") ?? "");
+  const [notice, setNotice] = useState(searchParams.get("authNotice") ?? "");
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -22,11 +23,16 @@ export default function AuthScreen() {
     setNotice("");
 
     const supabase = createBrowserSupabase();
-    const credentials = { email, password };
     const { data, error: authError } =
       mode === "signin"
-        ? await supabase.auth.signInWithPassword(credentials)
-        : await supabase.auth.signUp(credentials);
+        ? await supabase.auth.signInWithPassword({ email, password })
+        : await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo: `${window.location.origin}/auth/callback`
+            }
+          });
 
     setLoading(false);
 
@@ -40,14 +46,17 @@ export default function AuthScreen() {
       return;
     }
 
-    setNotice("Account created. If email confirmation is enabled in Supabase, confirm your email once before signing in.");
+    setNotice("Account created. Confirm your email if Supabase still has email confirmation enabled, then log in here.");
   }
 
   return (
     <main className="auth-page">
       <section className="auth-panel">
-        <div className="brand-mark">
-          <Sparkles size={22} />
+        <div className="auth-card-top">
+          <div className="brand-mark">
+            <Sparkles size={22} />
+          </div>
+          <span>Private beta</span>
         </div>
         <h1>AI Manifestation Advisor</h1>
         <p>Chat with a trained manifestation coach for clarity, alignment, and focused action.</p>
