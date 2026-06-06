@@ -27,3 +27,24 @@ The owner account is hard-coded as `jelmer.huysmans123@gmail.com` in `lib/config
 ## OpenRouter
 
 The default model is `openrouter/owl-alpha`. You can override it with `OPENROUTER_MODEL`.
+
+## Stripe
+
+Add Stripe values in Vercel Project Settings and `.env.local`:
+
+```text
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_or_pk_live
+STRIPE_SECRET_KEY=sk_test_or_sk_live
+STRIPE_WEBHOOK_SECRET=whsec_from_stripe_webhook
+STRIPE_PRICE_MANIFESTATION_MONTHLY=price_...
+STRIPE_PRICE_SUBLIMIFY_MONTHLY=price_...
+STRIPE_PRICE_PRO_MONTHLY=price_...
+```
+
+Use `/api/stripe/create-checkout-session` to create subscription Checkout Sessions. Configure the Stripe webhook endpoint as:
+
+```text
+https://your-domain.com/api/stripe/webhook
+```
+
+Listen for `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, and `customer.subscription.deleted`.
