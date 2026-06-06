@@ -915,6 +915,52 @@ input[type="range"] {
   background: rgba(255, 255, 255, 0.035);
 }
 
+.creator-toggle {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.creator-toggle > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.toggle-switch {
+  width: 48px;
+  height: 27px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.toggle-switch span {
+  width: 19px;
+  height: 19px;
+  display: block;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.toggle-switch.on {
+  background: rgba(155, 92, 255, 0.2);
+  border-color: rgba(197, 163, 255, 0.32);
+}
+
+.toggle-switch.on span {
+  transform: translateX(20px);
+  background: var(--purple-soft);
+}
+
 .mini-stat span {
   color: var(--muted);
   font-size: 12px;

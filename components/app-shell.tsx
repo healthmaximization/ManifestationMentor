@@ -4,7 +4,9 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Home, LogOut, MessageCircle, Music2, Settings2, Sparkles } from "lucide-react";
 import ChatPanel from "@/components/chat-panel";
+import CreatorViewToggle from "@/components/creator-view-toggle";
 import TrainingPanel from "@/components/training-panel";
+import { useCreatorView } from "@/lib/use-creator-view";
 import type { Database } from "@/lib/supabase/types";
 
 type Conversation = Database["public"]["Tables"]["manifestation_conversations"]["Row"];
@@ -21,7 +23,9 @@ export default function AppShell({
   const [view, setView] = useState<"chat" | "training">("chat");
   const [conversations, setConversations] = useState(initialConversations);
   const [activeConversationId, setActiveConversationId] = useState(initialConversations[0]?.id ?? "");
+  const [creatorView, setCreatorView] = useCreatorView(owner);
   const initials = useMemo(() => userEmail.slice(0, 2).toUpperCase(), [userEmail]);
+  const canSeeTraining = owner && creatorView;
 
   return (
     <main className="app-shell">
@@ -46,7 +50,7 @@ export default function AppShell({
               <Music2 size={18} />
               <span>Sublimify</span>
             </Link>
-            {owner && (
+            {canSeeTraining && (
               <button className={view === "training" ? "active" : ""} onClick={() => setView("training")} title="Training">
                 <Settings2 size={18} />
                 <span>Training</span>
@@ -54,6 +58,8 @@ export default function AppShell({
             )}
           </nav>
         </div>
+
+        {owner && <CreatorViewToggle enabled={creatorView} onChange={setCreatorView} />}
 
         <div className="conversation-list">
           <button
@@ -89,7 +95,7 @@ export default function AppShell({
       </aside>
 
       <section className="workspace">
-        {view === "chat" ? (
+        {view === "chat" || !canSeeTraining ? (
           <ChatPanel
             activeConversationId={activeConversationId}
             onConversationCreated={(conversation) => {

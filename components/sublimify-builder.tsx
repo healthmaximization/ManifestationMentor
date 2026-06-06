@@ -16,7 +16,9 @@ import {
   Upload,
   Wand2
 } from "lucide-react";
+import CreatorViewToggle from "@/components/creator-view-toggle";
 import { DEFAULT_SUBLIMINAL_PROMPT } from "@/lib/config";
+import { useCreatorView } from "@/lib/use-creator-view";
 
 type Mode = "record" | "paste" | "generate";
 type Style = "normal" | "silent" | "layered" | "ultra_layered";
@@ -138,6 +140,7 @@ function createRobotNarratorBuffer(context: BaseAudioContext, text: string) {
 }
 
 export default function SublimifyBuilder({ userEmail, owner }: { userEmail: string; owner: boolean }) {
+  const [creatorView, setCreatorView] = useCreatorView(owner);
   const [mode, setMode] = useState<Mode>("generate");
   const [topic, setTopic] = useState("");
   const [affirmations, setAffirmations] = useState("");
@@ -168,13 +171,13 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
 
   useEffect(() => {
     async function loadPrompt() {
-      if (!owner) return;
+      if (!owner || !creatorView) return;
       const response = await fetch("/api/sublimify/config");
       const data = await response.json();
       if (data.config?.prompt) setPrompt(data.config.prompt);
     }
     loadPrompt();
-  }, [owner]);
+  }, [owner, creatorView]);
 
   async function generateAffirmations() {
     if (!topic.trim()) return;
@@ -393,6 +396,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
           <span>Signed in</span>
           <strong>{userEmail}</strong>
         </div>
+        {owner && <CreatorViewToggle enabled={creatorView} onChange={setCreatorView} />}
       </aside>
 
       <section className="sublimify-workspace">
@@ -507,7 +511,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
             <input type="range" min="0" max="1" step="0.01" value={noiseVolume} onChange={(event) => setNoiseVolume(Number(event.target.value))} />
           </section>
 
-          {owner && (
+          {owner && creatorView && (
             <section className="tool-surface owner-prompt-panel">
               <div className="section-title-row">
                 <h2>Owner AI Prompt</h2>
