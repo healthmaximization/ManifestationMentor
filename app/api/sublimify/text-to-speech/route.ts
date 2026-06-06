@@ -11,37 +11,35 @@ export async function POST(request: Request) {
 
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-  const voiceId = process.env.ELEVENLABS_VOICE_ID;
+  const apiKey = process.env.OPENAI_API_KEY;
+  const model = process.env.OPENAI_TTS_MODEL ?? "tts-1";
+  const voice = process.env.OPENAI_TTS_VOICE ?? "echo";
 
-  if (!apiKey || !voiceId) {
+  if (!apiKey) {
     return NextResponse.json(
-      { error: "Missing ELEVENLABS_API_KEY or ELEVENLABS_VOICE_ID. Add them in Vercel env vars to enable AI voice export." },
+      { error: "Missing OPENAI_API_KEY. Add it in Vercel env vars to enable basic narrator export." },
       { status: 501 }
     );
   }
 
-  const { text, stability = 0.45, similarity = 0.82 } = await request.json();
+  const { text } = await request.json();
 
   if (!text?.trim()) {
     return NextResponse.json({ error: "Text is required" }, { status: 400 });
   }
 
-  const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`, {
+  const response = await fetch("https://api.openai.com/v1/audio/speech", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "xi-api-key": apiKey
+      Authorization: `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      text,
-      model_id: "eleven_multilingual_v2",
-      voice_settings: {
-        stability,
-        similarity_boost: similarity,
-        style: 0.18,
-        use_speaker_boost: true
-      }
+      model,
+      voice,
+      input: text,
+      response_format: "mp3",
+      instructions: "Speak slowly, calmly, and evenly like a simple meditation narrator. Keep the delivery neutral and clear."
     })
   });
 
@@ -57,4 +55,3 @@ export async function POST(request: Request) {
     }
   });
 }
-

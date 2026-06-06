@@ -59,11 +59,12 @@ Sublimify lives at:
 
 Run the latest `supabase/schema.sql` again after pulling this version. It adds `subliminal_generation_config`, which stores the owner-editable affirmation prompt.
 
-AI affirmation generation uses OpenRouter. AI voice export uses ElevenLabs when configured:
+AI affirmation generation uses OpenRouter. Basic narrator export uses OpenAI TTS when configured:
 
 ```text
-ELEVENLABS_API_KEY=
-ELEVENLABS_VOICE_ID=
+OPENAI_API_KEY=
+OPENAI_TTS_MODEL=tts-1
+OPENAI_TTS_VOICE=echo
 ```
 
-Without ElevenLabs keys, users can still paste affirmations, generate affirmations, record their own voice, mix binaural beats/noise/background audio, and export WAV files. AI text-to-voice will show a setup message until those keys are set.
+Without OpenAI keys, users can still paste affirmations, generate affirmations, record their own voice, mix binaural beats/noise/background audio, and export WAV files. Text-to-narrator will show a setup message until `OPENAI_API_KEY` is set.

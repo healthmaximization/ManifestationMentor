@@ -171,7 +171,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     setLoading("");
     if (!response.ok) {
       const data = await response.json();
-      setStatus(data.error ?? "AI voice is not configured yet.");
+      setStatus(data.error ?? "Basic narrator is not configured yet.");
       return;
     }
     setVoiceBlob(await response.blob());
@@ -422,7 +422,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
 
             <button className="secondary-button" onClick={generateVoice} disabled={!script || loading === "voice"}>
               {loading === "voice" ? <Loader2 className="spin" size={17} /> : <Sparkles size={17} />}
-              Convert text to AI voice
+              Convert text to basic narrator
             </button>
             {voiceBlob && <audio controls src={URL.createObjectURL(voiceBlob)} />}
           </section>
