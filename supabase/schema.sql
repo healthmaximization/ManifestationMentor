@@ -136,6 +136,12 @@ create table if not exists public.subliminal_exports (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.subliminal_generation_config (
+  id text primary key default 'main',
+  prompt text not null default '',
+  updated_at timestamptz not null default now()
+);
+
 alter table public.profiles enable row level security;
 alter table public.products enable row level security;
 alter table public.subscriptions enable row level security;
@@ -148,6 +154,7 @@ alter table public.subliminal_projects enable row level security;
 alter table public.subliminal_scripts enable row level security;
 alter table public.subliminal_audio_jobs enable row level security;
 alter table public.subliminal_exports enable row level security;
+alter table public.subliminal_generation_config enable row level security;
 
 drop policy if exists "Users read own profile" on public.profiles;
 create policy "Users read own profile"
@@ -263,3 +270,9 @@ values (
 )
 on conflict (id) do nothing;
 
+insert into public.subliminal_generation_config (id, prompt)
+values (
+  'main',
+  'You are an expert subliminal affirmation writer. Generate first-person affirmations that are positive, present-tense, emotionally believable, direct, safe, and suitable for looping in a subliminal audio track. Return only the affirmations, one per line.'
+)
+on conflict (id) do nothing;

@@ -48,3 +48,22 @@ https://your-domain.com/api/stripe/webhook
 ```
 
 Listen for `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, and `customer.subscription.deleted`.
+
+## Sublimify
+
+Sublimify lives at:
+
+```text
+/sublimify
+```
+
+Run the latest `supabase/schema.sql` again after pulling this version. It adds `subliminal_generation_config`, which stores the owner-editable affirmation prompt.
+
+AI affirmation generation uses OpenRouter. AI voice export uses ElevenLabs when configured:
+
+```text
+ELEVENLABS_API_KEY=
+ELEVENLABS_VOICE_ID=
+```
+
+Without ElevenLabs keys, users can still paste affirmations, generate affirmations, record their own voice, mix binaural beats/noise/background audio, and export WAV files. AI text-to-voice will show a setup message until those keys are set.

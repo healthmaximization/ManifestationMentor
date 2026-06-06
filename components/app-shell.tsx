@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { LogOut, MessageCircle, Settings2, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { Home, LogOut, MessageCircle, Music2, Settings2, Sparkles } from "lucide-react";
 import ChatPanel from "@/components/chat-panel";
 import TrainingPanel from "@/components/training-panel";
 import type { Database } from "@/lib/supabase/types";
@@ -33,10 +34,18 @@ export default function AppShell({
             <strong>Manifest</strong>
           </div>
           <nav className="nav-tabs" aria-label="Main">
+            <Link href="/" title="Home">
+              <Home size={18} />
+              <span>Home</span>
+            </Link>
             <button className={view === "chat" ? "active" : ""} onClick={() => setView("chat")} title="Chat">
               <MessageCircle size={18} />
               <span>Chat</span>
             </button>
+            <Link href="/sublimify" title="Sublimify">
+              <Music2 size={18} />
+              <span>Sublimify</span>
+            </Link>
             {owner && (
               <button className={view === "training" ? "active" : ""} onClick={() => setView("training")} title="Training">
                 <Settings2 size={18} />

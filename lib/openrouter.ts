@@ -3,7 +3,7 @@ type ChatMessage = {
   content: string;
 };
 
-export async function askOpenRouter(messages: ChatMessage[]) {
+export async function askOpenRouter(messages: ChatMessage[]): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY;
 
   if (!apiKey) {
@@ -33,4 +33,3 @@ export async function askOpenRouter(messages: ChatMessage[]) {
   const data = await response.json();
   return data.choices?.[0]?.message?.content?.trim() ?? "I could not generate a response yet.";
 }
-

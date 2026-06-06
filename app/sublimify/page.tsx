@@ -1,9 +1,10 @@
 import { createServerSupabase } from "@/lib/supabase/server";
+import { isOwner } from "@/lib/auth";
 import AuthScreen from "@/components/auth-screen";
 import SetupScreen from "@/components/setup-screen";
-import ToolSelector from "@/components/tool-selector";
+import SublimifyBuilder from "@/components/sublimify-builder";
 
-export default async function Home() {
+export default async function SublimifyPage() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     return <SetupScreen />;
   }
@@ -17,7 +18,8 @@ export default async function Home() {
     return <AuthScreen />;
   }
 
-  return <ToolSelector userEmail={user.email ?? ""} />;
+  return <SublimifyBuilder userEmail={user.email ?? ""} owner={isOwner(user.email)} />;
 }
 
 export const dynamic = "force-dynamic";
+
