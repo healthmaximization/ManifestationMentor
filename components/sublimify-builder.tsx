@@ -102,6 +102,41 @@ function createNoiseBuffer(context: BaseAudioContext, duration: number, ambience
   return buffer;
 }
 
+function createRobotNarratorBuffer(context: BaseAudioContext, text: string) {
+  const words = text
+    .replace(/[^\w\s'.-]/g, " ")
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter(Boolean)
+    .slice(0, 260);
+  const wordDuration = 0.24;
+  const gapDuration = 0.065;
+  const duration = Math.max(1.2, words.length * (wordDuration + gapDuration));
+  const buffer = context.createBuffer(1, Math.ceil(duration * context.sampleRate), context.sampleRate);
+  const data = buffer.getChannelData(0);
+
+  words.forEach((word, wordIndex) => {
+    const start = Math.floor(wordIndex * (wordDuration + gapDuration) * context.sampleRate);
+    const letters = word.toLowerCase().replace(/[^a-z]/g, "");
+    const hash = [...letters].reduce((sum, character) => sum + character.charCodeAt(0), 0);
+    const base = 92 + (hash % 50);
+    const vowelLift = /[aeiou]/.test(letters) ? 38 : 12;
+    const frequency = base + vowelLift;
+
+    for (let i = 0; i < wordDuration * context.sampleRate && start + i < data.length; i += 1) {
+      const t = i / context.sampleRate;
+      const envelope = Math.min(1, i / 900) * Math.min(1, (wordDuration * context.sampleRate - i) / 1200);
+      const pulse = Math.sin(2 * Math.PI * frequency * t);
+      const buzz = Math.sin(2 * Math.PI * frequency * 2.03 * t) * 0.42;
+      const formant = Math.sin(2 * Math.PI * (frequency * 3.7) * t) * 0.16;
+      const gate = Math.sin(2 * Math.PI * 9 * t) > -0.45 ? 1 : 0.62;
+      data[start + i] += (pulse + buzz + formant) * envelope * gate * 0.18;
+    }
+  });
+
+  return buffer;
+}
+
 export default function SublimifyBuilder({ userEmail, owner }: { userEmail: string; owner: boolean }) {
   const [mode, setMode] = useState<Mode>("generate");
   const [topic, setTopic] = useState("");
@@ -163,19 +198,14 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     if (!script) return;
     setLoading("voice");
     setStatus("");
-    const response = await fetch("/api/sublimify/text-to-speech", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: script })
-    });
+    await new Promise((resolve) => setTimeout(resolve, 40));
+    const context = new OfflineAudioContext(1, 1, 44100);
+    const voice = createRobotNarratorBuffer(context, script);
+    const wav = audioBufferToWav(voice);
     setLoading("");
-    if (!response.ok) {
-      const data = await response.json();
-      setStatus(data.error ?? "Basic narrator is not configured yet.");
-      return;
-    }
-    setVoiceBlob(await response.blob());
+    setVoiceBlob(wav);
     setMode("paste");
+    setStatus("Free robot narrator generated locally.");
   }
 
   async function savePrompt() {
@@ -422,7 +452,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
 
             <button className="secondary-button" onClick={generateVoice} disabled={!script || loading === "voice"}>
               {loading === "voice" ? <Loader2 className="spin" size={17} /> : <Sparkles size={17} />}
-              Convert text to basic narrator
+              Generate free robot narrator
             </button>
             {voiceBlob && <audio controls src={URL.createObjectURL(voiceBlob)} />}
           </section>
