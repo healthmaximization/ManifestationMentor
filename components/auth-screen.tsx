@@ -8,7 +8,10 @@ import { createBrowserSupabase } from "@/lib/supabase/browser";
 export default function AuthScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const requestedNext = searchParams.get("next");
+  const nextPath = requestedNext?.startsWith("/") && !requestedNext.startsWith("//") ? requestedNext : "/";
+  const initialMode = searchParams.get("authMode") === "signup" ? "signup" : "signin";
+  const [mode, setMode] = useState<"signin" | "signup">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -39,6 +42,7 @@ export default function AuthScreen() {
       }
 
       if (data.session) {
+        router.push(nextPath);
         router.refresh();
       }
 
@@ -49,7 +53,7 @@ export default function AuthScreen() {
       email: normalizedEmail,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
       }
     });
 
@@ -61,6 +65,7 @@ export default function AuthScreen() {
 
     if (data.session) {
       setLoading(false);
+      router.push(nextPath);
       router.refresh();
       return;
     }
@@ -73,6 +78,7 @@ export default function AuthScreen() {
     setLoading(false);
 
     if (signInData.session) {
+      router.push(nextPath);
       router.refresh();
       return;
     }

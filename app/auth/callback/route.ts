@@ -10,7 +10,9 @@ export async function GET(request: Request) {
   const tokenHash = url.searchParams.get("token_hash");
   const type = url.searchParams.get("type") as EmailOtpType | null;
   const error = url.searchParams.get("error_description") ?? url.searchParams.get("error");
-  const redirectUrl = new URL("/", request.url);
+  const next = url.searchParams.get("next");
+  const safeNext = next?.startsWith("/") && !next.startsWith("//") ? next : "/";
+  const redirectUrl = new URL(safeNext, request.url);
   const supabase = createRouteSupabase();
 
   if (error) {
