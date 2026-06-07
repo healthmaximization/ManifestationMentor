@@ -12,12 +12,14 @@ const steps = [
 ];
 
 const previewTopics = [
-  "Confidence Reset",
-  "Deep Sleep Rewire",
-  "Magnetic Self Worth",
-  "Calm Focus Loop",
-  "Abundance Identity",
-  "Social Ease Primer"
+  "Slim Waist Identity",
+  "Clear Skin Glow",
+  "Magnetic Relationship",
+  "Money Flow Mindset",
+  "Deep Sleep Reset",
+  "Social Confidence",
+  "Fit Body Routine",
+  "Self Worth Upgrade"
 ];
 
 export default function SublimifyLanding() {
@@ -65,17 +67,16 @@ export default function SublimifyLanding() {
 
       <section className="sublimify-public-hero">
         <div className="landing-copy">
-          <p className="eyebrow">Subliminal creator studio</p>
           <h1>Make a complete subliminal in a few simple steps.</h1>
           <p>
             Turn an intention into affirmations, voice, ambience, binaural beats, and a finished audio file without a messy timeline or complicated editor.
           </p>
           <div className="landing-actions">
-            <Link className="primary-button" href="/login?next=%2Fsublimify&authMode=signup">
+            <Link className="primary-button landing-primary" href="/login?next=%2Fsublimify&authMode=signup">
               Get started for free <ArrowRight size={18} />
             </Link>
             <Link className="secondary-button" href="/login?next=%2Fsublimify">
-              Open my studio
+              Already have an account?
             </Link>
           </div>
         </div>

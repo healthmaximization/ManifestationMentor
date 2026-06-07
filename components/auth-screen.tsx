@@ -98,16 +98,16 @@ export default function AuthScreen() {
           <div className="brand-mark">
             <Sparkles size={22} />
           </div>
-          <span>Private beta</span>
+          <span>Member access</span>
         </div>
-        <h1>Subliminal Academy</h1>
-        <p>Log in to access your private creation space, saved tools, and audio projects.</p>
+        <h1>{mode === "signin" ? "Welcome back." : "Start creating."}</h1>
+        <p>{mode === "signin" ? "Log in to open your private Subliminal Academy studio." : "Create your account and start building your first subliminal."}</p>
         <div className="auth-tabs" role="tablist" aria-label="Authentication mode">
           <button className={mode === "signin" ? "active" : ""} onClick={() => setMode("signin")} type="button">
-            Log in
+            Existing account
           </button>
           <button className={mode === "signup" ? "active" : ""} onClick={() => setMode("signup")} type="button">
-            Sign up
+            New account
           </button>
         </div>
         <form onSubmit={submit} className="auth-form">
@@ -136,7 +136,7 @@ export default function AuthScreen() {
             </button>
           </div>
           <button type="submit" disabled={loading}>
-            {loading ? "Working..." : mode === "signin" ? "Log in" : "Create account"}
+            {loading ? "Working..." : mode === "signin" ? "Enter studio" : "Create free account"}
           </button>
         </form>
         {notice && <p className="notice">{notice}</p>}
