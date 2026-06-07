@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Download,
+  CheckCircle2,
+  ChevronRight,
   Home,
   Loader2,
   Mic,
@@ -12,6 +14,7 @@ import {
   Play,
   Save,
   Settings2,
+  SlidersHorizontal,
   Sparkles,
   Upload,
   Wand2
@@ -23,12 +26,22 @@ import { useCreatorView } from "@/lib/use-creator-view";
 type Mode = "record" | "paste" | "generate";
 type Style = "normal" | "silent" | "layered" | "ultra_layered";
 type Ambience = "none" | "rain" | "brown";
+type BuilderStep = "intention" | "affirmations" | "voice" | "style" | "sound" | "export";
 
 const STYLES: { key: Style; label: string; description: string }[] = [
-  { key: "normal", label: "Normal", description: "Clear affirmations under music or ambience." },
-  { key: "silent", label: "Silent", description: "Very low voice level with filtered texture." },
-  { key: "layered", label: "Layered", description: "Multiple offset affirmation layers for density." },
-  { key: "ultra_layered", label: "Ultra layered", description: "Dense stacks with wider stereo spread." }
+  { key: "normal", label: "Normal Subliminal", description: "Audible affirmations blended beneath music, rain, or noise for a classic listening experience." },
+  { key: "silent", label: "Silent Subliminal", description: "Affirmations are pushed very low in the mix so the track feels almost like pure ambience." },
+  { key: "layered", label: "Layered Subliminal", description: "Multiple offset affirmation layers create a denser subconscious imprint while staying smooth." },
+  { key: "ultra_layered", label: "Ultra Layered", description: "A high-density, stereo-spread stack for users who want a more intense subliminal build." }
+];
+
+const BUILDER_STEPS: { key: BuilderStep; title: string; description: string }[] = [
+  { key: "intention", title: "Intention", description: "Define the exact transformation this subliminal is built around." },
+  { key: "affirmations", title: "Affirmations", description: "Generate or refine the phrases that become the subconscious script." },
+  { key: "voice", title: "Voice Source", description: "Record yourself or create a free robotic narrator from the text." },
+  { key: "style", title: "Subliminal Style", description: "Choose how deeply and visibly the affirmations sit in the mix." },
+  { key: "sound", title: "Sound Bed", description: "Shape the listening environment with music, rain, noise, and binaural beats." },
+  { key: "export", title: "Export", description: "Review the recipe, preview the bed, then render your tailored WAV." }
 ];
 
 function linesToScript(text: string) {
@@ -141,6 +154,7 @@ function createRobotNarratorBuffer(context: BaseAudioContext, text: string) {
 
 export default function SublimifyBuilder({ userEmail, owner }: { userEmail: string; owner: boolean }) {
   const [creatorView, setCreatorView] = useCreatorView(owner);
+  const [activeStep, setActiveStep] = useState<BuilderStep>("intention");
   const [mode, setMode] = useState<Mode>("generate");
   const [topic, setTopic] = useState("");
   const [affirmations, setAffirmations] = useState("");
@@ -168,6 +182,17 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   const script = useMemo(() => linesToScript(affirmations), [affirmations]);
   const activeVoiceBlob = voiceBlob ?? recordedBlob;
   const activeVoiceUrl = useMemo(() => (activeVoiceBlob ? URL.createObjectURL(activeVoiceBlob) : ""), [activeVoiceBlob]);
+  const affirmationCount = useMemo(() => affirmations.split("\n").filter((line) => line.trim()).length, [affirmations]);
+  const selectedStyle = STYLES.find((item) => item.key === style) ?? STYLES[0];
+  const activeStepIndex = BUILDER_STEPS.findIndex((step) => step.key === activeStep);
+  const completedSteps = {
+    intention: Boolean(topic.trim() || affirmationCount > 0),
+    affirmations: affirmationCount >= 3,
+    voice: Boolean(activeVoiceBlob),
+    style: Boolean(style),
+    sound: Boolean(ambience !== "none" || musicFile || binaural),
+    export: false
+  } satisfies Record<BuilderStep, boolean>;
 
   useEffect(() => {
     async function loadPrompt() {
@@ -396,19 +421,28 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
           <span>Signed in</span>
           <strong>{userEmail}</strong>
         </div>
+        <div className="mini-stat">
+          <span>Progress</span>
+          <strong>{activeStepIndex + 1} / {BUILDER_STEPS.length}</strong>
+        </div>
         {owner && <CreatorViewToggle enabled={creatorView} onChange={setCreatorView} />}
       </aside>
 
       <section className="sublimify-workspace">
         <header className="panel-header">
           <div>
-            <p className="eyebrow">Subliminal Builder</p>
-            <h1>Design the audio beneath the belief.</h1>
+            <p className="eyebrow">Tailored Subliminal Creator</p>
+            <h1>Build a subliminal like a guided studio session.</h1>
+            <p className="header-subcopy">Move step by step from intention to final WAV. Each choice shapes the affirmations, voice layer, subconscious delivery style, and listening atmosphere.</p>
           </div>
           <div className="header-actions">
             <button className="secondary-button" onClick={previewing ? stopPreview : startPreview}>
               {previewing ? <Pause size={17} /> : <Play size={17} />}
-              {previewing ? "Stop" : "Preview bed"}
+              {previewing ? "Stop preview" : "Preview current bed"}
+            </button>
+            <button className="primary-button" onClick={() => setActiveStep("export")}>
+              <ChevronRight size={17} />
+              Review export
             </button>
             <button className="primary-button" onClick={exportWav} disabled={loading === "export"}>
               {loading === "export" ? <Loader2 className="spin" size={17} /> : <Download size={17} />}
@@ -417,113 +451,247 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
           </div>
         </header>
 
-        <div className="sublimify-grid">
-          <section className="tool-surface creation-panel">
-            <h2>Affirmation Source</h2>
-            <div className="segmented three">
-              <button className={mode === "generate" ? "active" : ""} onClick={() => setMode("generate")}>Generate</button>
-              <button className={mode === "paste" ? "active" : ""} onClick={() => setMode("paste")}>Paste</button>
-              <button className={mode === "record" ? "active" : ""} onClick={() => setMode("record")}>Record</button>
-            </div>
-
-            {mode === "generate" && (
-              <div className="field-row">
-                <label>Topic</label>
-                <input value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="self-love, wealth, deep confidence..." />
-                <button className="primary-button" onClick={generateAffirmations} disabled={!topic.trim() || loading === "generate"}>
-                  {loading === "generate" ? <Loader2 className="spin" size={17} /> : <Wand2 size={17} />}
-                  Generate affirmations
-                </button>
-              </div>
-            )}
-
-            {mode === "record" && (
-              <div className="record-panel">
-                <button className={recording ? "danger-button" : "primary-button"} onClick={recording ? stopRecording : startRecording}>
-                  <Mic size={17} />
-                  {recording ? "Stop recording" : "Record my affirmations"}
-                </button>
-                {recordedBlob && <audio controls src={URL.createObjectURL(recordedBlob)} />}
-              </div>
-            )}
-
-            <textarea
-              value={affirmations}
-              onChange={(event) => setAffirmations(event.target.value)}
-              rows={12}
-              placeholder="I am deeply confident.\nI naturally choose aligned action.\nMy mind accepts success as normal."
-            />
-
-            <button className="secondary-button" onClick={generateVoice} disabled={!script || loading === "voice"}>
-              {loading === "voice" ? <Loader2 className="spin" size={17} /> : <Sparkles size={17} />}
-              Generate free robot narrator
-            </button>
-            {voiceBlob && <audio controls src={URL.createObjectURL(voiceBlob)} />}
-          </section>
-
-          <section className="tool-surface">
-            <h2>Subliminal Style</h2>
-            <div className="style-list">
-              {STYLES.map((item) => (
-                <button key={item.key} className={style === item.key ? "style-card active" : "style-card"} onClick={() => setStyle(item.key)}>
-                  <strong>{item.label}</strong>
-                  <span>{item.description}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section className="tool-surface">
-            <h2>Sound Bed</h2>
-            <div className="field-row">
-              <label>Ambience</label>
-              <select value={ambience} onChange={(event) => setAmbience(event.target.value as Ambience)}>
-                <option value="none">None</option>
-                <option value="rain">Rain texture</option>
-                <option value="brown">Brown noise</option>
-              </select>
-            </div>
-            <label className="drop-zone">
-              <Upload size={22} />
-              <span>{musicFile ? musicFile.name : "Upload MP3/WAV background music"}</span>
-              <input type="file" accept="audio/*" onChange={(event) => setMusicFile(event.target.files?.[0] ?? null)} />
-            </label>
-            <label>Binaural beats</label>
-            <div className="toggle-row">
-              <input type="checkbox" checked={binaural} onChange={(event) => setBinaural(event.target.checked)} />
-              <span>{binaural ? "Enabled" : "Disabled"}</span>
-            </div>
-            <label>Beat frequency: {beatFrequency} Hz</label>
-            <input type="range" min="1" max="14" step="0.5" value={beatFrequency} onChange={(event) => setBeatFrequency(Number(event.target.value))} />
-            <label>Carrier: {carrierFrequency} Hz</label>
-            <input type="range" min="110" max="440" step="5" value={carrierFrequency} onChange={(event) => setCarrierFrequency(Number(event.target.value))} />
-          </section>
-
-          <section className="tool-surface">
-            <h2>Mix Controls</h2>
-            <label>Duration: {duration}s</label>
-            <input type="range" min="30" max="1800" step="30" value={duration} onChange={(event) => setDuration(Number(event.target.value))} />
-            <label>Affirmations: {Math.round(voiceVolume * 100)}%</label>
-            <input type="range" min="0" max="1" step="0.01" value={voiceVolume} onChange={(event) => setVoiceVolume(Number(event.target.value))} />
-            <label>Music: {Math.round(musicVolume * 100)}%</label>
-            <input type="range" min="0" max="1" step="0.01" value={musicVolume} onChange={(event) => setMusicVolume(Number(event.target.value))} />
-            <label>Noise/rain: {Math.round(noiseVolume * 100)}%</label>
-            <input type="range" min="0" max="1" step="0.01" value={noiseVolume} onChange={(event) => setNoiseVolume(Number(event.target.value))} />
-          </section>
-
-          {owner && creatorView && (
-            <section className="tool-surface owner-prompt-panel">
-              <div className="section-title-row">
-                <h2>Owner AI Prompt</h2>
-                <Settings2 size={18} />
-              </div>
-              <textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} rows={8} />
-              <button className="secondary-button" onClick={savePrompt} disabled={loading === "prompt"}>
-                <Save size={17} />
-                Save generation prompt
+        <div className="sublimify-builder-grid">
+          <nav className="builder-stepper" aria-label="Subliminal builder steps">
+            {BUILDER_STEPS.map((step, index) => (
+              <button
+                key={step.key}
+                className={activeStep === step.key ? "builder-step active" : "builder-step"}
+                onClick={() => setActiveStep(step.key)}
+              >
+                <span className="step-number">{completedSteps[step.key] ? <CheckCircle2 size={17} /> : index + 1}</span>
+                <span>
+                  <strong>{step.title}</strong>
+                  <small>{step.description}</small>
+                </span>
               </button>
-            </section>
-          )}
+            ))}
+          </nav>
+
+          <section className="builder-stage">
+            {activeStep === "intention" && (
+              <div className="lux-step-panel">
+                <p className="eyebrow">Step 1</p>
+                <h2>Start with the exact identity shift.</h2>
+                <p className="step-copy">A powerful subliminal starts with a clean target. Write the theme as if you are briefing a private audio engineer: what should the listener begin to feel, choose, and believe automatically?</p>
+                <div className="field-row">
+                  <label>Your subliminal topic</label>
+                  <input value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="Example: effortless confidence in sales calls" />
+                </div>
+                <div className="guidance-grid">
+                  <div>
+                    <strong>Better topics are specific</strong>
+                    <span>“I feel calm and persuasive on sales calls” beats “confidence”.</span>
+                  </div>
+                  <div>
+                    <strong>Keep it emotionally believable</strong>
+                    <span>The generator will create present-tense affirmations that feel direct, grounded, and repeatable.</span>
+                  </div>
+                </div>
+                <button className="primary-button" onClick={() => setActiveStep("affirmations")} disabled={!topic.trim()}>
+                  Continue to affirmations
+                  <ChevronRight size={17} />
+                </button>
+              </div>
+            )}
+
+            {activeStep === "affirmations" && (
+              <div className="lux-step-panel">
+                <p className="eyebrow">Step 2</p>
+                <h2>Create the subconscious script.</h2>
+                <p className="step-copy">Choose how the affirmations enter the project. Generate from your topic, paste your own script, or refine the AI result by hand. The final text here becomes the voice layer.</p>
+                <div className="segmented three">
+                  <button className={mode === "generate" ? "active" : ""} onClick={() => setMode("generate")}>Generate</button>
+                  <button className={mode === "paste" ? "active" : ""} onClick={() => setMode("paste")}>Paste</button>
+                  <button className={mode === "record" ? "active" : ""} onClick={() => setMode("record")}>Record</button>
+                </div>
+                {mode === "generate" && (
+                  <button className="primary-button" onClick={generateAffirmations} disabled={!topic.trim() || loading === "generate"}>
+                    {loading === "generate" ? <Loader2 className="spin" size={17} /> : <Wand2 size={17} />}
+                    Generate tailored affirmations
+                  </button>
+                )}
+                <textarea
+                  value={affirmations}
+                  onChange={(event) => setAffirmations(event.target.value)}
+                  rows={14}
+                  placeholder="I naturally trust myself.\nI act with calm certainty.\nMy desired identity feels safe and familiar."
+                />
+                <div className="step-footer">
+                  <span>{affirmationCount} affirmations in the script</span>
+                  <button className="primary-button" onClick={() => setActiveStep("voice")} disabled={affirmationCount === 0}>
+                    Continue to voice
+                    <ChevronRight size={17} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeStep === "voice" && (
+              <div className="lux-step-panel">
+                <p className="eyebrow">Step 3</p>
+                <h2>Choose the voice layer.</h2>
+                <p className="step-copy">Your voice is the most personal option. The free robot narrator is intentionally simple, but useful when you want a fast no-cost voice layer for hidden or layered subliminals.</p>
+                <div className="voice-choice-grid">
+                  <div className="choice-card">
+                    <Mic size={22} />
+                    <strong>Record yourself</strong>
+                    <span>Best for emotional resonance and personal authority.</span>
+                    <button className={recording ? "danger-button" : "primary-button"} onClick={recording ? stopRecording : startRecording}>
+                      <Mic size={17} />
+                      {recording ? "Stop recording" : "Start recording"}
+                    </button>
+                  </div>
+                  <div className="choice-card">
+                    <Sparkles size={22} />
+                    <strong>Free robot narrator</strong>
+                    <span>Fast, free, synthetic, and good enough for hidden/layered use.</span>
+                    <button className="secondary-button" onClick={generateVoice} disabled={!script || loading === "voice"}>
+                      {loading === "voice" ? <Loader2 className="spin" size={17} /> : <Sparkles size={17} />}
+                      Generate narrator
+                    </button>
+                  </div>
+                </div>
+                {recordedBlob && (
+                  <div className="audio-preview-row">
+                    <span>Your recording</span>
+                    <audio controls src={URL.createObjectURL(recordedBlob)} />
+                  </div>
+                )}
+                {voiceBlob && (
+                  <div className="audio-preview-row">
+                    <span>Robot narrator</span>
+                    <audio controls src={URL.createObjectURL(voiceBlob)} />
+                  </div>
+                )}
+                <button className="primary-button" onClick={() => setActiveStep("style")} disabled={!activeVoiceBlob}>
+                  Continue to subliminal style
+                  <ChevronRight size={17} />
+                </button>
+              </div>
+            )}
+
+            {activeStep === "style" && (
+              <div className="lux-step-panel">
+                <p className="eyebrow">Step 4</p>
+                <h2>Select how the affirmations are delivered.</h2>
+                <p className="step-copy">This determines whether the listener consciously hears the affirmations, barely notices them, or receives several offset layers blended into the atmosphere.</p>
+                <div className="style-list luxury">
+                  {STYLES.map((item) => (
+                    <button key={item.key} className={style === item.key ? "style-card active" : "style-card"} onClick={() => setStyle(item.key)}>
+                      <strong>{item.label}</strong>
+                      <span>{item.description}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="mix-explainer">
+                  <SlidersHorizontal size={18} />
+                  <span>{selectedStyle.label} will use {style === "ultra_layered" ? "7 stereo-spread layers" : style === "layered" ? "4 offset layers" : "1 voice layer"} in the final render.</span>
+                </div>
+                <button className="primary-button" onClick={() => setActiveStep("sound")}>
+                  Continue to sound bed
+                  <ChevronRight size={17} />
+                </button>
+              </div>
+            )}
+
+            {activeStep === "sound" && (
+              <div className="lux-step-panel">
+                <p className="eyebrow">Step 5</p>
+                <h2>Design the listening environment.</h2>
+                <p className="step-copy">The sound bed is what makes the subliminal feel wearable. Add rain, brown noise, binaural beats, or upload your own music to sit above the affirmation layer.</p>
+                <div className="sound-grid">
+                  <div className="field-row">
+                    <label>Ambience texture</label>
+                    <select value={ambience} onChange={(event) => setAmbience(event.target.value as Ambience)}>
+                      <option value="none">None</option>
+                      <option value="rain">Rain texture</option>
+                      <option value="brown">Brown noise</option>
+                    </select>
+                  </div>
+                  <label className="drop-zone">
+                    <Upload size={22} />
+                    <span>{musicFile ? musicFile.name : "Upload MP3/WAV music or sound"}</span>
+                    <input type="file" accept="audio/*" onChange={(event) => setMusicFile(event.target.files?.[0] ?? null)} />
+                  </label>
+                </div>
+                <div className="toggle-row">
+                  <input type="checkbox" checked={binaural} onChange={(event) => setBinaural(event.target.checked)} />
+                  <span>Binaural beats {binaural ? "enabled" : "disabled"}</span>
+                </div>
+                <label>Beat frequency: {beatFrequency} Hz</label>
+                <input type="range" min="1" max="14" step="0.5" value={beatFrequency} onChange={(event) => setBeatFrequency(Number(event.target.value))} />
+                <label>Carrier tone: {carrierFrequency} Hz</label>
+                <input type="range" min="110" max="440" step="5" value={carrierFrequency} onChange={(event) => setCarrierFrequency(Number(event.target.value))} />
+                <div className="mix-controls-grid">
+                  <label>Duration: {duration}s</label>
+                  <input type="range" min="30" max="1800" step="30" value={duration} onChange={(event) => setDuration(Number(event.target.value))} />
+                  <label>Affirmations: {Math.round(voiceVolume * 100)}%</label>
+                  <input type="range" min="0" max="1" step="0.01" value={voiceVolume} onChange={(event) => setVoiceVolume(Number(event.target.value))} />
+                  <label>Music: {Math.round(musicVolume * 100)}%</label>
+                  <input type="range" min="0" max="1" step="0.01" value={musicVolume} onChange={(event) => setMusicVolume(Number(event.target.value))} />
+                  <label>Noise/rain: {Math.round(noiseVolume * 100)}%</label>
+                  <input type="range" min="0" max="1" step="0.01" value={noiseVolume} onChange={(event) => setNoiseVolume(Number(event.target.value))} />
+                </div>
+                <button className="primary-button" onClick={() => setActiveStep("export")}>
+                  Continue to export
+                  <ChevronRight size={17} />
+                </button>
+              </div>
+            )}
+
+            {activeStep === "export" && (
+              <div className="lux-step-panel">
+                <p className="eyebrow">Step 6</p>
+                <h2>Review and render your subliminal.</h2>
+                <p className="step-copy">This is your tailored recipe. Preview the bed first, then export a WAV file with your selected voice layer, subliminal style, ambience, music, and binaural settings.</p>
+                <div className="export-review-grid">
+                  <div><span>Intention</span><strong>{topic || "Custom affirmation script"}</strong></div>
+                  <div><span>Affirmations</span><strong>{affirmationCount}</strong></div>
+                  <div><span>Voice</span><strong>{recordedBlob ? "Your recording" : voiceBlob ? "Free robot narrator" : "Not selected"}</strong></div>
+                  <div><span>Style</span><strong>{selectedStyle.label}</strong></div>
+                  <div><span>Sound bed</span><strong>{ambience}{musicFile ? " + uploaded audio" : ""}</strong></div>
+                  <div><span>Binaural</span><strong>{binaural ? `${beatFrequency} Hz` : "Off"}</strong></div>
+                </div>
+                <div className="header-actions">
+                  <button className="secondary-button" onClick={previewing ? stopPreview : startPreview}>
+                    {previewing ? <Pause size={17} /> : <Play size={17} />}
+                    {previewing ? "Stop preview" : "Preview current bed"}
+                  </button>
+                  <button className="primary-button" onClick={exportWav} disabled={loading === "export"}>
+                    {loading === "export" ? <Loader2 className="spin" size={17} /> : <Download size={17} />}
+                    Export tailored WAV
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+
+          <aside className="sublimify-recipe">
+            <p className="eyebrow">Live Recipe</p>
+            <h2>{topic || "Untitled subliminal"}</h2>
+            <div className="recipe-list">
+              <div><span>Script</span><strong>{affirmationCount || 0} lines</strong></div>
+              <div><span>Voice</span><strong>{recordedBlob ? "Self-recorded" : voiceBlob ? "Robot narrator" : "Pending"}</strong></div>
+              <div><span>Style</span><strong>{selectedStyle.label}</strong></div>
+              <div><span>Ambience</span><strong>{ambience === "none" ? "Clean" : ambience}</strong></div>
+              <div><span>Duration</span><strong>{Math.round(duration / 60)} min</strong></div>
+            </div>
+            <p className="recipe-note">Every selection updates the final audio render. Think of this as a premium studio preset built around one subconscious outcome.</p>
+            {owner && creatorView && (
+              <div className="owner-prompt-mini">
+                <div className="section-title-row">
+                  <h3>Creator Prompt</h3>
+                  <Settings2 size={17} />
+                </div>
+                <textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} rows={7} />
+                <button className="secondary-button" onClick={savePrompt} disabled={loading === "prompt"}>
+                  <Save size={17} />
+                  Save prompt
+                </button>
+              </div>
+            )}
+          </aside>
         </div>
 
         {status && <p className="floating-status">{status}</p>}
