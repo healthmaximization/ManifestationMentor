@@ -29,7 +29,7 @@ import { useCreatorView } from "@/lib/use-creator-view";
 type Mode = "record" | "paste" | "generate";
 type Style = "normal" | "silent" | "layered" | "ultra_layered";
 type Ambience = "none" | "rain" | "brown";
-type Step = "intention" | "affirmations" | "voice" | "style" | "sound" | "export";
+type Step = "intention" | "source" | "paste" | "generate" | "voice" | "style" | "sound" | "export";
 
 type SubliminalProject = {
   id: string;
@@ -42,7 +42,8 @@ type SubliminalProject = {
   binaural?: boolean;
 };
 
-const STEPS: Step[] = ["intention", "affirmations", "voice", "style", "sound", "export"];
+const BASE_STEPS: Step[] = ["intention", "source"];
+const FINISH_STEPS: Step[] = ["voice", "style", "sound", "export"];
 
 const STYLES: { key: Style; label: string; description: string }[] = [
   { key: "normal", label: "Normal subliminal", description: "Audible affirmations beneath ambience or music." },
@@ -163,6 +164,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   const [activeStep, setActiveStep] = useState<Step>("intention");
   const [mode, setMode] = useState<Mode>("generate");
   const [topic, setTopic] = useState("");
+  const [generationNotes, setGenerationNotes] = useState("");
   const [affirmations, setAffirmations] = useState("");
   const [style, setStyle] = useState<Style>("layered");
   const [ambience, setAmbience] = useState<Ambience>("brown");
@@ -191,7 +193,11 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   const activeVoiceUrl = useMemo(() => (activeVoiceBlob ? URL.createObjectURL(activeVoiceBlob) : ""), [activeVoiceBlob]);
   const affirmationCount = useMemo(() => affirmations.split("\n").filter((line) => line.trim()).length, [affirmations]);
   const selectedStyle = STYLES.find((item) => item.key === style) ?? STYLES[0];
-  const activeStepIndex = STEPS.indexOf(activeStep);
+  const currentSteps = useMemo<Step[]>(() => {
+    const sourceStep: Step[] = mode === "record" ? [] : mode === "paste" ? ["paste"] : ["generate"];
+    return [...BASE_STEPS, ...sourceStep, ...FINISH_STEPS];
+  }, [mode]);
+  const activeStepIndex = Math.max(0, currentSteps.indexOf(activeStep));
 
   useEffect(() => {
     async function loadProjects() {
@@ -214,16 +220,17 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   }, [owner, creatorView]);
 
   function goNext() {
-    setActiveStep(STEPS[Math.min(STEPS.length - 1, activeStepIndex + 1)]);
+    setActiveStep(currentSteps[Math.min(currentSteps.length - 1, activeStepIndex + 1)]);
   }
 
   function goBack() {
-    setActiveStep(STEPS[Math.max(0, activeStepIndex - 1)]);
+    setActiveStep(currentSteps[Math.max(0, activeStepIndex - 1)]);
   }
 
   function startNewProject() {
     stopPreview();
     setTopic("");
+    setGenerationNotes("");
     setAffirmations("");
     setMode("generate");
     setStyle("layered");
@@ -264,10 +271,11 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     if (!topic.trim()) return;
     setLoading("generate");
     setStatus("");
+    const guidedTopic = generationNotes.trim() ? `${topic.trim()}\nGuidance: ${generationNotes.trim()}` : topic.trim();
     const response = await fetch("/api/sublimify/generate-affirmations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topic, count: 28 })
+      body: JSON.stringify({ topic: guidedTopic, count: 28 })
     });
     const data = await response.json();
     setLoading("");
@@ -276,6 +284,27 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
       return;
     }
     setAffirmations(data.affirmations.join("\n"));
+    setStatus("Affirmations generated. Edit anything that does not feel true yet.");
+  }
+
+  function selectMode(nextMode: Mode) {
+    setMode(nextMode);
+    setStatus("");
+    if (nextMode === "record") {
+      setAffirmations("");
+      setVoiceBlob(null);
+    }
+    if (nextMode !== "record") {
+      setRecordedBlob(null);
+    }
+  }
+
+  function canContinue() {
+    if (activeStep === "intention") return Boolean(topic.trim());
+    if (activeStep === "paste") return affirmationCount > 0;
+    if (activeStep === "generate") return affirmationCount > 0;
+    if (activeStep === "voice") return Boolean(activeVoiceBlob);
+    return true;
   }
 
   async function generateVoice() {
@@ -504,9 +533,9 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
         <section className="minimal-builder">
           <div className="minimal-progress">
             <button className="secondary-button" onClick={() => setScreen("library")}><ArrowLeft size={17} /> My Subliminals</button>
-            <span>Step {activeStepIndex + 1} of {STEPS.length}</span>
+            <span>Step {activeStepIndex + 1} of {currentSteps.length}</span>
           </div>
-          <div className="quiet-progress-bar"><span style={{ width: `${((activeStepIndex + 1) / STEPS.length) * 100}%` }} /></div>
+          <div className="quiet-progress-bar"><span style={{ width: `${((activeStepIndex + 1) / currentSteps.length) * 100}%` }} /></div>
 
           <div className="single-step-card">
             {activeStep === "intention" && (
@@ -518,18 +547,36 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
               </>
             )}
 
-            {activeStep === "affirmations" && (
+            {activeStep === "source" && (
               <>
                 <p className="eyebrow">Affirmation Source</p>
                 <h1>How do you want to create the affirmations?</h1>
-                <p>Pick the path that feels easiest. You can still edit the script before creating the audio.</p>
+                <p>Choose one path. The next screen adapts to this choice so the flow stays quiet and focused.</p>
                 <div className="quiz-options">
-                  <button className={mode === "generate" ? "quiz-option active" : "quiz-option"} onClick={() => setMode("generate")}><Wand2 size={22} /><strong>Generate them for me</strong><span>Use your topic and creator prompt.</span></button>
-                  <button className={mode === "paste" ? "quiz-option active" : "quiz-option"} onClick={() => setMode("paste")}><Sparkles size={22} /><strong>I already have affirmations</strong><span>Paste or write your own lines.</span></button>
-                  <button className={mode === "record" ? "quiz-option active" : "quiz-option"} onClick={() => setMode("record")}><Mic size={22} /><strong>I want to speak them</strong><span>Record your own voice next.</span></button>
+                  <button className={mode === "generate" ? "quiz-option active" : "quiz-option"} onClick={() => selectMode("generate")}><Wand2 size={22} /><strong>Generate them for me</strong><span>Build a script from your intention with guided details.</span></button>
+                  <button className={mode === "paste" ? "quiz-option active" : "quiz-option"} onClick={() => selectMode("paste")}><Sparkles size={22} /><strong>I already have affirmations</strong><span>Paste or write your own lines on the next screen.</span></button>
+                  <button className={mode === "record" ? "quiz-option active" : "quiz-option"} onClick={() => selectMode("record")}><Mic size={22} /><strong>I want to speak them</strong><span>Go straight to recording your voice.</span></button>
                 </div>
-                {mode === "generate" && <button className="primary-button" onClick={generateAffirmations} disabled={!topic.trim() || loading === "generate"}>{loading === "generate" ? <Loader2 className="spin" size={17} /> : <Wand2 size={17} />} Generate script</button>}
-                <textarea value={affirmations} onChange={(event) => setAffirmations(event.target.value)} rows={8} placeholder="Your affirmations will appear here..." />
+              </>
+            )}
+
+            {activeStep === "paste" && (
+              <>
+                <p className="eyebrow">Your Affirmations</p>
+                <h1>Paste the exact lines you want in the subliminal.</h1>
+                <p>Use one affirmation per line. Short, present-tense statements usually layer best in the final audio.</p>
+                <textarea value={affirmations} onChange={(event) => setAffirmations(event.target.value)} rows={10} placeholder={"I feel calm and powerful.\nI trust my timing.\nI naturally take aligned action."} autoFocus />
+              </>
+            )}
+
+            {activeStep === "generate" && (
+              <>
+                <p className="eyebrow">Guided Script</p>
+                <h1>Help the AI shape the affirmations.</h1>
+                <p>Add the feeling, identity shift, or situation this subliminal should reinforce. Then generate and refine the script before creating the voice layer.</p>
+                <textarea value={generationNotes} onChange={(event) => setGenerationNotes(event.target.value)} rows={5} placeholder="Example: make it calm but confident, focused on self-worth, emotional safety, and taking bold action without overthinking." autoFocus />
+                <button className="primary-button" onClick={generateAffirmations} disabled={!topic.trim() || loading === "generate"}>{loading === "generate" ? <Loader2 className="spin" size={17} /> : <Wand2 size={17} />} Generate script</button>
+                <textarea value={affirmations} onChange={(event) => setAffirmations(event.target.value)} rows={9} placeholder="Your generated affirmations will appear here..." />
               </>
             )}
 
@@ -599,7 +646,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
 
             <div className="wizard-nav">
               <button className="secondary-button" onClick={goBack} disabled={activeStepIndex === 0}>Back</button>
-              {activeStep !== "export" && <button className="primary-button" onClick={goNext} disabled={(activeStep === "intention" && !topic.trim()) || (activeStep === "affirmations" && mode !== "record" && affirmationCount === 0) || (activeStep === "voice" && !activeVoiceBlob)}>Continue <ChevronRight size={17} /></button>}
+              {activeStep !== "export" && <button className="primary-button" onClick={goNext} disabled={!canContinue()}>Continue <ChevronRight size={17} /></button>}
             </div>
           </div>
 
