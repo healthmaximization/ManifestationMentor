@@ -23,9 +23,11 @@ import {
   Wand2
 } from "lucide-react";
 import { DEFAULT_SUBLIMINAL_PROMPT } from "@/lib/config";
+import SamJs from "sam-js";
 
 type Mode = "record" | "paste" | "generate";
 type VoiceChoice = "record" | "tts";
+type NarratorVoice = "soft" | "robot" | "low" | "bright";
 type Style = "normal" | "silent" | "layered" | "ultra_layered";
 type Ambience = "none" | "rain" | "brown";
 type Step = "intention" | "source" | "paste" | "generate" | "voice" | "style" | "sound" | "export";
@@ -51,6 +53,13 @@ const STYLES: { key: Style; label: string; description: string; available: boole
   { key: "silent", label: "Silent subliminal", description: "Voice layer is pushed very low into the background.", available: false },
   { key: "layered", label: "Layered subliminal", description: "Several offset voice layers for a denser effect.", available: false },
   { key: "ultra_layered", label: "Ultra layered", description: "A high-density stereo stack for a stronger build.", available: false }
+];
+
+const NARRATOR_VOICES: { key: NarratorVoice; label: string; options: ConstructorParameters<typeof SamJs>[0] }[] = [
+  { key: "soft", label: "Simple narrator", options: { speed: 78, pitch: 55, throat: 128, mouth: 135 } },
+  { key: "robot", label: "Little robot", options: { speed: 92, pitch: 60, throat: 190, mouth: 190 } },
+  { key: "low", label: "Low narrator", options: { speed: 82, pitch: 42, throat: 125, mouth: 115 } },
+  { key: "bright", label: "Bright narrator", options: { speed: 84, pitch: 72, throat: 110, mouth: 155 } }
 ];
 
 function linesToScript(text: string) {
@@ -126,42 +135,24 @@ function createNoiseBuffer(context: BaseAudioContext, duration: number, ambience
   return buffer;
 }
 
-function createTextToSpeechBuffer(context: BaseAudioContext, text: string) {
-  const words = text
-    .replace(/[^\w\s'.-]/g, " ")
-    .split(/\s+/)
-    .map((word) => word.trim())
-    .filter(Boolean)
-    .slice(0, 340);
-  const wordDuration = 0.31;
-  const gapDuration = 0.055;
-  const duration = Math.max(1.5, words.length * (wordDuration + gapDuration));
-  const buffer = context.createBuffer(1, Math.ceil(duration * context.sampleRate), context.sampleRate);
-  const data = buffer.getChannelData(0);
+function normalizeNarratorText(text: string) {
+  return text
+    .replace(/[“”]/g, "\"")
+    .replace(/[‘’]/g, "'")
+    .replace(/&/g, " and ")
+    .replace(/[^a-zA-Z0-9.,!?'\-\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 2600);
+}
 
-  words.forEach((word, wordIndex) => {
-    const start = Math.floor(wordIndex * (wordDuration + gapDuration) * context.sampleRate);
-    const letters = word.toLowerCase().replace(/[^a-z]/g, "");
-    const hash = [...letters].reduce((sum, character) => sum + character.charCodeAt(0), 0);
-    const baseFrequency = 145 + (hash % 36);
-    const vowelLift = /[aeiou]/.test(letters) ? 24 : 0;
-    const frequency = baseFrequency + vowelLift;
-
-    for (let i = 0; i < wordDuration * context.sampleRate && start + i < data.length; i += 1) {
-      const t = i / context.sampleRate;
-      const progress = i / (wordDuration * context.sampleRate);
-      const attack = Math.min(1, i / 1400);
-      const release = Math.min(1, (wordDuration * context.sampleRate - i) / 1800);
-      const envelope = attack * release * (0.72 + Math.sin(Math.PI * progress) * 0.28);
-      const vibrato = Math.sin(2 * Math.PI * 4.3 * t) * 2.2;
-      const fundamental = Math.sin(2 * Math.PI * (frequency + vibrato) * t);
-      const warmth = Math.sin(2 * Math.PI * (frequency * 1.98 + vibrato) * t) * 0.22;
-      const air = Math.sin(2 * Math.PI * (frequency * 3.02) * t) * 0.07;
-      data[start + i] += (fundamental + warmth + air) * envelope * 0.105;
-    }
-  });
-
-  return buffer;
+function createTextToSpeechBlob(text: string, voice: NarratorVoice) {
+  const preset = NARRATOR_VOICES.find((item) => item.key === voice) ?? NARRATOR_VOICES[0];
+  const narrator = new SamJs(preset.options);
+  const wav = narrator.wav(normalizeNarratorText(text));
+  if (!wav || typeof wav === "boolean") throw new Error("Could not create narrator audio.");
+  const audioBytes = new Uint8Array(wav);
+  return new Blob([audioBytes.buffer.slice(0)], { type: "audio/wav" });
 }
 
 export default function SublimifyBuilder({ userEmail, owner }: { userEmail: string; owner: boolean }) {
@@ -185,6 +176,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   const [loading, setLoading] = useState("");
   const [recording, setRecording] = useState(false);
   const [voiceChoice, setVoiceChoice] = useState<VoiceChoice | null>(null);
+  const [narratorVoice, setNarratorVoice] = useState<NarratorVoice>("soft");
   const [showRecordingScript, setShowRecordingScript] = useState(false);
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [ttsBlob, setTtsBlob] = useState<Blob | null>(null);
@@ -391,11 +383,14 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     setShowRecordingScript(false);
     setRecordedBlob(null);
     await new Promise((resolve) => setTimeout(resolve, 40));
-    const context = new OfflineAudioContext(1, 1, 44100);
-    const voice = createTextToSpeechBuffer(context, script);
-    setTtsBlob(audioBufferToWav(voice));
-    setLoading("");
-    setStatus("Text to speech voice created.");
+    try {
+      setTtsBlob(createTextToSpeechBlob(script, narratorVoice));
+      setStatus("Simple narrator voice created.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Could not create narrator audio.");
+    } finally {
+      setLoading("");
+    }
   }
 
   function stopPreview() {
@@ -652,6 +647,22 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
                 <p className="eyebrow">Voice Layer</p>
                 <h1>How should the affirmations become audio?</h1>
                 <p>Choose your own voice for a personal recording, or create an automatic text-to-speech voice from the affirmations.</p>
+                <div className="narrator-panel">
+                  <label htmlFor="narrator-voice">Automatic narrator voice</label>
+                  <select
+                    id="narrator-voice"
+                    value={narratorVoice}
+                    onChange={(event) => {
+                      setNarratorVoice(event.target.value as NarratorVoice);
+                      setTtsBlob(null);
+                      if (voiceChoice === "tts") setStatus("Choose Text to speech again to create this narrator voice.");
+                    }}
+                  >
+                    {NARRATOR_VOICES.map((voice) => (
+                      <option key={voice.key} value={voice.key}>{voice.label}</option>
+                    ))}
+                  </select>
+                </div>
                 {voiceChoice === "record" && showRecordingScript && affirmationCount > 0 && (
                   <div className="recording-script">
                     <div>
@@ -667,7 +678,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
                 )}
                 <div className="quiz-options two">
                   <button className={voiceChoice === "record" ? "quiz-option active" : "quiz-option"} onClick={toggleRecording}><Mic size={22} /><strong>{recording ? "Stop recording" : recordedBlob ? "Record again" : "Record my voice"}</strong><span>Use your microphone and read the affirmations yourself.</span></button>
-                  <button className={voiceChoice === "tts" ? "quiz-option active" : "quiz-option"} onClick={generateTextToSpeech} disabled={!script || loading === "tts"}>{loading === "tts" ? <Loader2 className="spin" size={22} /> : <Sparkles size={22} />}<strong>Text to speech</strong><span>Create an automatic spoken voice from your affirmations.</span></button>
+                  <button className={voiceChoice === "tts" ? "quiz-option active" : "quiz-option"} onClick={generateTextToSpeech} disabled={!script || loading === "tts"}>{loading === "tts" ? <Loader2 className="spin" size={22} /> : <Sparkles size={22} />}<strong>Text to speech</strong><span>Create a simple narrator voice from your affirmations.</span></button>
                 </div>
                 {activeVoiceBlob && <audio controls src={URL.createObjectURL(activeVoiceBlob)} />}
               </>
