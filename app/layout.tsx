@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./styles.css";
 
 export const metadata: Metadata = {
-  title: "AI Manifestation Advisor",
-  description: "A manifestation coaching chat app with owner training controls."
+  title: "Subliminal Academy",
+  description: "Create subliminals and access your private audio creation tools."
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -13,4 +13,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-

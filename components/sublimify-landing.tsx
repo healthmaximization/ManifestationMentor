@@ -16,7 +16,7 @@ export default function SublimifyLanding() {
           <span className="brand-mark small"><Music2 size={18} /></span>
           <strong>Sublimify</strong>
         </Link>
-        <Link className="secondary-button" href="/?next=%2Fsublimify">
+        <Link className="secondary-button" href="/login?next=%2Fsublimify">
           Log in
         </Link>
       </header>
@@ -29,10 +29,10 @@ export default function SublimifyLanding() {
             Turn an intention into affirmations, voice, ambience, binaural beats, and a finished audio file without a messy timeline or complicated editor.
           </p>
           <div className="landing-actions">
-            <Link className="primary-button" href="/?next=%2Fsublimify&authMode=signup">
+            <Link className="primary-button" href="/login?next=%2Fsublimify&authMode=signup">
               Get started for free <ArrowRight size={18} />
             </Link>
-            <Link className="secondary-button" href="/?next=%2Fsublimify">
+            <Link className="secondary-button" href="/login?next=%2Fsublimify">
               Open my studio
             </Link>
           </div>
@@ -70,15 +70,11 @@ export default function SublimifyLanding() {
       <section className="landing-proof">
         <div>
           <CheckCircle2 size={20} />
-          <span>Record your own voice or use the free simple narrator</span>
+          <span>Record your own voice or import existing subliminal audio</span>
         </div>
         <div>
           <CheckCircle2 size={20} />
-          <span>Import existing subliminals into your private library</span>
-        </div>
-        <div>
-          <CheckCircle2 size={20} />
-          <span>Saved per account with Supabase, ready after login</span>
+          <span>Guided step-by-step creation without a complicated audio editor</span>
         </div>
       </section>
     </main>

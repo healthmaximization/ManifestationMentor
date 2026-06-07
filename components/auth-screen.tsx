@@ -100,8 +100,8 @@ export default function AuthScreen() {
           </div>
           <span>Private beta</span>
         </div>
-        <h1>AI Manifestation Advisor</h1>
-        <p>Chat with a trained manifestation coach for clarity, alignment, and focused action.</p>
+        <h1>Subliminal Academy</h1>
+        <p>Log in to access your private creation space, saved tools, and audio projects.</p>
         <div className="auth-tabs" role="tablist" aria-label="Authentication mode">
           <button className={mode === "signin" ? "active" : ""} onClick={() => setMode("signin")} type="button">
             Log in

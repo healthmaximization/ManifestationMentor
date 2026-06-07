@@ -7,8 +7,8 @@ export default function SetupScreen() {
         <div className="brand-mark">
           <Sparkles size={22} />
         </div>
-        <h1>AI Manifestation Advisor</h1>
-        <p>Add your environment variables to connect Supabase and OpenRouter.</p>
+        <h1>Subliminal Academy</h1>
+        <p>Add your environment variables to connect Supabase, OpenRouter, and your creation tools.</p>
         <div className="setup-list">
           <div>
             <Database size={18} />
@@ -31,4 +31,3 @@ export default function SetupScreen() {
     </main>
   );
 }
-

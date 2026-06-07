@@ -1,6 +1,6 @@
 import { createServerSupabase } from "@/lib/supabase/server";
-import AuthScreen from "@/components/auth-screen";
 import SetupScreen from "@/components/setup-screen";
+import SublimifyLanding from "@/components/sublimify-landing";
 import ToolSelector from "@/components/tool-selector";
 
 export default async function Home() {
@@ -14,7 +14,7 @@ export default async function Home() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return <AuthScreen />;
+    return <SublimifyLanding />;
   }
 
   return <ToolSelector userEmail={user.email ?? ""} />;
