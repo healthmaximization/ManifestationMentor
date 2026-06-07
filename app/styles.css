@@ -1868,6 +1868,41 @@ input[type="range"] {
   color: var(--ink);
 }
 
+.mix-controls {
+  display: grid;
+  gap: 12px;
+}
+
+.mix-slider {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(197, 163, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.mix-slider > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mix-slider span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.mix-slider strong {
+  color: var(--ink);
+}
+
+.mix-slider input:disabled {
+  opacity: 0.4;
+}
+
 .preview-panel > div {
   display: grid;
   gap: 4px;

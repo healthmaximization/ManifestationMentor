@@ -165,9 +165,9 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   const [style, setStyle] = useState<Style>("normal");
   const [ambience, setAmbience] = useState<Ambience>("brown");
   const duration = 180;
-  const [voiceVolume] = useState(0.18);
-  const [musicVolume] = useState(0.38);
-  const [noiseVolume] = useState(0.22);
+  const [voiceVolume, setVoiceVolume] = useState(0.18);
+  const [soundVolume, setSoundVolume] = useState(0.38);
+  const [beatVolume, setBeatVolume] = useState(0.3);
   const [beatFrequency] = useState(6);
   const [carrierFrequency] = useState(220);
   const [binaural, setBinaural] = useState(true);
@@ -185,7 +185,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   const [projects, setProjects] = useState<SubliminalProject[]>([]);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const previewRef = useRef<{ context: AudioContext; audio?: HTMLAudioElement } | null>(null);
+  const previewRef = useRef<{ context: AudioContext; audios: HTMLAudioElement[]; urls: string[] } | null>(null);
 
   const initials = useMemo(() => userEmail.slice(0, 2).toUpperCase(), [userEmail]);
   const script = useMemo(() => linesToScript(affirmations), [affirmations]);
@@ -236,6 +236,9 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     setStyle("normal");
     setAmbience("brown");
     setBinaural(true);
+    setVoiceVolume(0.18);
+    setSoundVolume(0.38);
+    setBeatVolume(0.3);
     setRecordedBlob(null);
     setTtsBlob(null);
     setVoiceChoice(null);
@@ -260,7 +263,10 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
         ambience,
         binaural,
         musicFileName: musicFile?.name ?? null,
-        voiceSource: recordedBlob ? "recorded" : ttsBlob ? "text_to_speech" : "none"
+        voiceSource: recordedBlob ? "recorded" : ttsBlob ? "text_to_speech" : "none",
+        voiceVolume,
+        soundVolume,
+        beatVolume
       })
     });
     const data = await response.json();
@@ -393,7 +399,8 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   }
 
   function stopPreview() {
-    previewRef.current?.audio?.pause();
+    previewRef.current?.audios.forEach((audio) => audio.pause());
+    previewRef.current?.urls.forEach((url) => URL.revokeObjectURL(url));
     previewRef.current?.context.close();
     previewRef.current = null;
     setPreviewing(false);
@@ -408,7 +415,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
       const gain = context.createGain();
       source.buffer = createNoiseBuffer(context, 12, ambience);
       source.loop = true;
-      gain.gain.value = noiseVolume;
+      gain.gain.value = soundVolume;
       source.connect(gain).connect(context.destination);
       source.start();
     }
@@ -420,7 +427,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
       const gain = context.createGain();
       left.frequency.value = carrierFrequency;
       right.frequency.value = carrierFrequency + beatFrequency;
-      gain.gain.value = 0.035;
+      gain.gain.value = beatVolume * 0.12;
       left.connect(merger, 0, 0);
       right.connect(merger, 0, 1);
       merger.connect(gain).connect(context.destination);
@@ -428,15 +435,27 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
       right.start();
     }
 
-    let audio: HTMLAudioElement | undefined;
+    const audios: HTMLAudioElement[] = [];
+    const urls: string[] = [];
     if (activeVoiceUrl) {
-      audio = new Audio(activeVoiceUrl);
+      const audio = new Audio(activeVoiceUrl);
       audio.loop = true;
       audio.volume = style === "silent" ? 0.04 : Math.min(1, voiceVolume);
       audio.play();
+      audios.push(audio);
     }
 
-    previewRef.current = { context, audio };
+    if (musicFile) {
+      const musicUrl = URL.createObjectURL(musicFile);
+      const music = new Audio(musicUrl);
+      music.loop = true;
+      music.volume = Math.min(1, soundVolume);
+      music.play();
+      audios.push(music);
+      urls.push(musicUrl);
+    }
+
+    previewRef.current = { context, audios, urls };
     setPreviewing(true);
   }
 
@@ -451,7 +470,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
       const source = context.createBufferSource();
       const gain = context.createGain();
       source.buffer = createNoiseBuffer(context, renderDuration, ambience);
-      gain.gain.value = noiseVolume;
+      gain.gain.value = soundVolume;
       source.connect(gain).connect(context.destination);
       source.start(0);
     }
@@ -463,7 +482,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
       const gain = context.createGain();
       left.frequency.value = carrierFrequency;
       right.frequency.value = carrierFrequency + beatFrequency;
-      gain.gain.value = 0.035;
+      gain.gain.value = beatVolume * 0.12;
       left.connect(merger, 0, 0);
       right.connect(merger, 0, 1);
       merger.connect(gain).connect(context.destination);
@@ -479,7 +498,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
         const source = context.createBufferSource();
         const gain = context.createGain();
         source.buffer = music;
-        gain.gain.value = musicVolume;
+        gain.gain.value = soundVolume;
         source.connect(gain).connect(context.destination);
         source.start(start);
       }
@@ -724,6 +743,29 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
                       <span>Keep the audio bed cleaner and simpler.</span>
                     </button>
                   </div>
+                  <div className="mix-controls">
+                    <div className="mix-slider">
+                      <div>
+                        <span>Affirmations</span>
+                        <strong>{Math.round(voiceVolume * 100)}%</strong>
+                      </div>
+                      <input type="range" min="0" max="1" step="0.01" value={voiceVolume} onChange={(event) => setVoiceVolume(Number(event.target.value))} />
+                    </div>
+                    <div className="mix-slider">
+                      <div>
+                        <span>Binaural beats</span>
+                        <strong>{Math.round(beatVolume * 100)}%</strong>
+                      </div>
+                      <input type="range" min="0" max="1" step="0.01" value={beatVolume} onChange={(event) => setBeatVolume(Number(event.target.value))} disabled={!binaural} />
+                    </div>
+                    <div className="mix-slider">
+                      <div>
+                        <span>Music / ambience</span>
+                        <strong>{Math.round(soundVolume * 100)}%</strong>
+                      </div>
+                      <input type="range" min="0" max="1" step="0.01" value={soundVolume} onChange={(event) => setSoundVolume(Number(event.target.value))} />
+                    </div>
+                  </div>
                 </div>
               </>
             )}
@@ -741,6 +783,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
                   <div><span>Sound</span><strong>{ambience}{musicFile ? " + upload" : ""}</strong></div>
                   <div><span>Binaural beats</span><strong>{binaural ? "On" : "Off"}</strong></div>
                   <div><span>Duration</span><strong>{Math.round(duration / 60)} minutes</strong></div>
+                  <div><span>Mix</span><strong>{Math.round(voiceVolume * 100)}% voice / {binaural ? `${Math.round(beatVolume * 100)}% beats` : "no beats"} / {Math.round(soundVolume * 100)}% sound</strong></div>
                 </div>
                 <div className="preview-panel">
                   <div>
