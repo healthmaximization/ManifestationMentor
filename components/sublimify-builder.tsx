@@ -145,6 +145,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState("");
   const [recording, setRecording] = useState(false);
+  const [showRecordingScript, setShowRecordingScript] = useState(false);
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [musicFile, setMusicFile] = useState<File | null>(null);
   const [previewing, setPreviewing] = useState(false);
@@ -204,6 +205,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     setDuration(180);
     setBinaural(true);
     setRecordedBlob(null);
+    setShowRecordingScript(false);
     setMusicFile(null);
     setStatus("");
     setActiveStep("intention");
@@ -277,9 +279,11 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     setStatus("");
     if (nextMode === "record") {
       setAffirmations("");
+      setShowRecordingScript(false);
     }
     if (nextMode !== "record") {
       setRecordedBlob(null);
+      setShowRecordingScript(false);
     }
   }
 
@@ -304,6 +308,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   }
 
   async function startRecording() {
+    setShowRecordingScript(true);
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const recorder = new MediaRecorder(stream);
     chunksRef.current = [];
@@ -320,6 +325,14 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   function stopRecording() {
     mediaRecorderRef.current?.stop();
     setRecording(false);
+  }
+
+  function toggleRecording() {
+    if (recording) {
+      stopRecording();
+      return;
+    }
+    startRecording();
   }
 
   function stopPreview() {
@@ -569,7 +582,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
                 <p className="eyebrow">Voice Layer</p>
                 <h1>How should the affirmations become audio?</h1>
                 <p>Record your own voice while reading the script below. This keeps the subliminal personal and natural.</p>
-                {affirmationCount > 0 && (
+                {showRecordingScript && affirmationCount > 0 && (
                   <div className="recording-script">
                     <div>
                       <strong>Read this while recording</strong>
@@ -583,7 +596,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
                   </div>
                 )}
                 <div className="quiz-options one">
-                  <button className="quiz-option" onClick={recording ? stopRecording : startRecording}><Mic size={22} /><strong>{recording ? "Stop recording" : "Record my voice"}</strong><span>Use your microphone and speak the affirmations yourself.</span></button>
+                  <button className="quiz-option" onClick={toggleRecording}><Mic size={22} /><strong>{recording ? "Stop recording" : "Record my voice"}</strong><span>Use your microphone and speak the affirmations yourself.</span></button>
                 </div>
                 {activeVoiceBlob && <audio controls src={URL.createObjectURL(activeVoiceBlob)} />}
               </>

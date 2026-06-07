@@ -1352,6 +1352,21 @@ input[type="range"] {
   color: var(--muted);
 }
 
+.typing-title {
+  min-width: 190px;
+}
+
+.typing-title::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 3px;
+  vertical-align: -0.14em;
+  background: var(--cyan);
+  animation: caretBlink 900ms steps(2, end) infinite;
+}
+
 .wave-stack {
   height: 210px;
   display: flex;
@@ -1794,6 +1809,12 @@ input[type="range"] {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes caretBlink {
+  50% {
+    opacity: 0;
   }
 }
 

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { ArrowRight, CheckCircle2, Headphones, Layers3, Mic, Music2, Sparkles, Wand2 } from "lucide-react";
 
 const steps = [
@@ -8,7 +11,46 @@ const steps = [
   { icon: Headphones, title: "Export your audio", text: "Download the finished subliminal and keep projects in your account." }
 ];
 
+const previewTopics = [
+  "Confidence Reset",
+  "Deep Sleep Rewire",
+  "Magnetic Self Worth",
+  "Calm Focus Loop",
+  "Abundance Identity",
+  "Social Ease Primer"
+];
+
 export default function SublimifyLanding() {
+  const [topicIndex, setTopicIndex] = useState(0);
+  const [typedTopic, setTypedTopic] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    const currentTopic = previewTopics[topicIndex];
+    const doneTyping = typedTopic === currentTopic;
+    const doneDeleting = typedTopic === "";
+    const delay = doneTyping && !deleting ? 1400 : deleting ? 42 : 72;
+
+    const timer = window.setTimeout(() => {
+      if (doneTyping && !deleting) {
+        setDeleting(true);
+        return;
+      }
+
+      if (doneDeleting && deleting) {
+        setDeleting(false);
+        setTopicIndex((current) => (current + 1) % previewTopics.length);
+        return;
+      }
+
+      setTypedTopic((current) => (
+        deleting ? current.slice(0, -1) : currentTopic.slice(0, current.length + 1)
+      ));
+    }, delay);
+
+    return () => window.clearTimeout(timer);
+  }, [deleting, topicIndex, typedTopic]);
+
   return (
     <main className="sublimify-landing">
       <header className="landing-nav">
@@ -41,7 +83,7 @@ export default function SublimifyLanding() {
         <div className="subliminal-preview" aria-hidden="true">
           <div className="preview-topline">
             <span />
-            <strong>Confidence Reset</strong>
+            <strong className="typing-title">{typedTopic}</strong>
             <small>04:00</small>
           </div>
           <div className="wave-stack">
