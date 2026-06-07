@@ -1609,6 +1609,10 @@ input[type="range"] {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.quiz-options.one {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .quiz-option {
   min-height: 150px;
   padding: 18px;
@@ -1625,6 +1629,26 @@ input[type="range"] {
 .quiz-option.active {
   border-color: rgba(197, 163, 255, 0.45);
   background: rgba(155, 92, 255, 0.14);
+}
+
+.quiz-option:disabled {
+  opacity: 0.52;
+  cursor: not-allowed;
+}
+
+.quiz-option:disabled:hover {
+  transform: none;
+}
+
+.coming-soon {
+  width: max-content;
+  padding: 5px 9px;
+  border: 1px solid rgba(34, 211, 238, 0.22);
+  border-radius: 999px;
+  color: var(--cyan);
+  background: rgba(34, 211, 238, 0.08);
+  font-size: 12px;
+  font-weight: 850;
 }
 
 .quiz-option span {

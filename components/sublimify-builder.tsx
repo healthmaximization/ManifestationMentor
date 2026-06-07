@@ -47,11 +47,11 @@ type SubliminalProject = {
 const BASE_STEPS: Step[] = ["intention", "source"];
 const FINISH_STEPS: Step[] = ["voice", "style", "sound", "export"];
 
-const STYLES: { key: Style; label: string; description: string }[] = [
-  { key: "normal", label: "Normal subliminal", description: "Audible affirmations beneath ambience or music." },
-  { key: "silent", label: "Silent subliminal", description: "Voice layer is pushed very low into the background." },
-  { key: "layered", label: "Layered subliminal", description: "Several offset voice layers for a denser effect." },
-  { key: "ultra_layered", label: "Ultra layered", description: "A high-density stereo stack for a stronger build." }
+const STYLES: { key: Style; label: string; description: string; available: boolean }[] = [
+  { key: "normal", label: "Normal subliminal", description: "Audible affirmations beneath ambience or music.", available: true },
+  { key: "silent", label: "Silent subliminal", description: "Voice layer is pushed very low into the background.", available: false },
+  { key: "layered", label: "Layered subliminal", description: "Several offset voice layers for a denser effect.", available: false },
+  { key: "ultra_layered", label: "Ultra layered", description: "A high-density stereo stack for a stronger build.", available: false }
 ];
 
 function linesToScript(text: string) {
@@ -127,39 +127,6 @@ function createNoiseBuffer(context: BaseAudioContext, duration: number, ambience
   return buffer;
 }
 
-function createRobotNarratorBuffer(context: BaseAudioContext, text: string) {
-  const words = text
-    .replace(/[^\w\s'.-]/g, " ")
-    .split(/\s+/)
-    .map((word) => word.trim())
-    .filter(Boolean)
-    .slice(0, 260);
-  const wordDuration = 0.24;
-  const gapDuration = 0.065;
-  const duration = Math.max(1.2, words.length * (wordDuration + gapDuration));
-  const buffer = context.createBuffer(1, Math.ceil(duration * context.sampleRate), context.sampleRate);
-  const data = buffer.getChannelData(0);
-
-  words.forEach((word, wordIndex) => {
-    const start = Math.floor(wordIndex * (wordDuration + gapDuration) * context.sampleRate);
-    const letters = word.toLowerCase().replace(/[^a-z]/g, "");
-    const hash = [...letters].reduce((sum, character) => sum + character.charCodeAt(0), 0);
-    const frequency = 92 + (hash % 50) + (/[aeiou]/.test(letters) ? 38 : 12);
-
-    for (let i = 0; i < wordDuration * context.sampleRate && start + i < data.length; i += 1) {
-      const t = i / context.sampleRate;
-      const envelope = Math.min(1, i / 900) * Math.min(1, (wordDuration * context.sampleRate - i) / 1200);
-      const pulse = Math.sin(2 * Math.PI * frequency * t);
-      const buzz = Math.sin(2 * Math.PI * frequency * 2.03 * t) * 0.42;
-      const formant = Math.sin(2 * Math.PI * frequency * 3.7 * t) * 0.16;
-      const gate = Math.sin(2 * Math.PI * 9 * t) > -0.45 ? 1 : 0.62;
-      data[start + i] += (pulse + buzz + formant) * envelope * gate * 0.18;
-    }
-  });
-
-  return buffer;
-}
-
 export default function SublimifyBuilder({ userEmail, owner }: { userEmail: string; owner: boolean }) {
   const [creatorView, setCreatorView] = useCreatorView(owner);
   const [screen, setScreen] = useState<"library" | "builder">("library");
@@ -168,7 +135,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   const [topic, setTopic] = useState("");
   const [generationNotes, setGenerationNotes] = useState("");
   const [affirmations, setAffirmations] = useState("");
-  const [style, setStyle] = useState<Style>("layered");
+  const [style, setStyle] = useState<Style>("normal");
   const [ambience, setAmbience] = useState<Ambience>("brown");
   const [duration, setDuration] = useState(180);
   const [voiceVolume] = useState(0.18);
@@ -182,7 +149,6 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   const [loading, setLoading] = useState("");
   const [recording, setRecording] = useState(false);
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
-  const [voiceBlob, setVoiceBlob] = useState<Blob | null>(null);
   const [musicFile, setMusicFile] = useState<File | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [projects, setProjects] = useState<SubliminalProject[]>([]);
@@ -191,7 +157,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   const previewRef = useRef<{ context: AudioContext; audio?: HTMLAudioElement } | null>(null);
 
   const script = useMemo(() => linesToScript(affirmations), [affirmations]);
-  const activeVoiceBlob = voiceBlob ?? recordedBlob;
+  const activeVoiceBlob = recordedBlob;
   const activeVoiceUrl = useMemo(() => (activeVoiceBlob ? URL.createObjectURL(activeVoiceBlob) : ""), [activeVoiceBlob]);
   const affirmationCount = useMemo(() => affirmations.split("\n").filter((line) => line.trim()).length, [affirmations]);
   const selectedStyle = STYLES.find((item) => item.key === style) ?? STYLES[0];
@@ -235,12 +201,11 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     setGenerationNotes("");
     setAffirmations("");
     setMode("generate");
-    setStyle("layered");
+    setStyle("normal");
     setAmbience("brown");
     setDuration(180);
     setBinaural(true);
     setRecordedBlob(null);
-    setVoiceBlob(null);
     setMusicFile(null);
     setStatus("");
     setActiveStep("intention");
@@ -261,7 +226,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
         ambience,
         binaural,
         musicFileName: musicFile?.name ?? null,
-        voiceSource: recordedBlob ? "recorded" : voiceBlob ? "robot_narrator" : "none"
+        voiceSource: recordedBlob ? "recorded" : "none"
       })
     });
     const data = await response.json();
@@ -314,7 +279,6 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     setStatus("");
     if (nextMode === "record") {
       setAffirmations("");
-      setVoiceBlob(null);
     }
     if (nextMode !== "record") {
       setRecordedBlob(null);
@@ -327,18 +291,6 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     if (activeStep === "generate") return affirmationCount > 0;
     if (activeStep === "voice") return Boolean(activeVoiceBlob);
     return true;
-  }
-
-  async function generateVoice() {
-    if (!script) return;
-    setLoading("voice");
-    setStatus("");
-    await new Promise((resolve) => setTimeout(resolve, 40));
-    const context = new OfflineAudioContext(1, 1, 44100);
-    const voice = createRobotNarratorBuffer(context, script);
-    setVoiceBlob(audioBufferToWav(voice));
-    setLoading("");
-    setStatus("Free robot narrator generated locally.");
   }
 
   async function savePrompt() {
@@ -613,7 +565,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
               <>
                 <p className="eyebrow">Voice Layer</p>
                 <h1>How should the affirmations become audio?</h1>
-                <p>Your own voice feels most personal. The free robot narrator is intentionally simple and works well for hidden or layered subliminals.</p>
+                <p>Record your own voice while reading the script below. This keeps the subliminal personal and natural.</p>
                 {affirmationCount > 0 && (
                   <div className="recording-script">
                     <div>
@@ -627,9 +579,8 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
                     </ol>
                   </div>
                 )}
-                <div className="quiz-options two">
+                <div className="quiz-options one">
                   <button className="quiz-option" onClick={recording ? stopRecording : startRecording}><Mic size={22} /><strong>{recording ? "Stop recording" : "Record my voice"}</strong><span>Use your microphone and speak the affirmations yourself.</span></button>
-                  <button className="quiz-option" onClick={generateVoice} disabled={!script || loading === "voice"}>{loading === "voice" ? <Loader2 className="spin" size={22} /> : <Sparkles size={22} />}<strong>Use free robot narrator</strong><span>No API cost. Synthetic, simple, and good enough for layering.</span></button>
                 </div>
                 {activeVoiceBlob && <audio controls src={URL.createObjectURL(activeVoiceBlob)} />}
               </>
@@ -638,11 +589,11 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
             {activeStep === "style" && (
               <>
                 <p className="eyebrow">Subliminal Style</p>
-                <h1>What kind of subliminal are you making?</h1>
+                <h1>What kind of subliminal do you want to create?</h1>
                 <p>This decides how present or hidden the affirmation layer feels in the final mix.</p>
                 <div className="quiz-options two">
                   {STYLES.map((item) => (
-                    <button key={item.key} className={style === item.key ? "quiz-option active" : "quiz-option"} onClick={() => setStyle(item.key)}><SlidersHorizontal size={22} /><strong>{item.label}</strong><span>{item.description}</span></button>
+                    <button key={item.key} className={style === item.key ? "quiz-option active" : "quiz-option"} onClick={() => setStyle(item.key)} disabled={!item.available}><SlidersHorizontal size={22} /><strong>{item.label}</strong>{!item.available && <small className="coming-soon">Coming soon</small>}<span>{item.description}</span></button>
                   ))}
                 </div>
               </>
@@ -675,7 +626,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
                 <div className="clean-summary">
                   <div><span>Intention</span><strong>{topic || "Custom subliminal"}</strong></div>
                   <div><span>Affirmations</span><strong>{affirmationCount}</strong></div>
-                  <div><span>Voice</span><strong>{recordedBlob ? "Your voice" : voiceBlob ? "Robot narrator" : "Missing"}</strong></div>
+                  <div><span>Voice</span><strong>{recordedBlob ? "Your voice" : "Missing"}</strong></div>
                   <div><span>Style</span><strong>{selectedStyle.label}</strong></div>
                   <div><span>Sound</span><strong>{ambience}{musicFile ? " + upload" : ""}</strong></div>
                 </div>

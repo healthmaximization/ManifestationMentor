@@ -49,7 +49,7 @@ function toClientProject(project: {
     id: project.id,
     title: project.title,
     intention: project.intention,
-    style: metadata.style ?? "layered",
+    style: metadata.style ?? "normal",
     createdAt: project.created_at,
     duration: metadata.duration ?? 180,
     affirmationCount: metadata.affirmationCount ?? 0,
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
   const intention = typeof payload.intention === "string" ? payload.intention.trim() : "";
   const script = typeof payload.script === "string" ? payload.script.trim() : "";
   const metadata: SubliminalProjectMetadata = {
-    style: typeof payload.style === "string" ? payload.style : "layered",
+    style: typeof payload.style === "string" ? payload.style : "normal",
     duration: typeof payload.duration === "number" ? payload.duration : 180,
     affirmationCount: typeof payload.affirmationCount === "number" ? payload.affirmationCount : 0,
     ambience: typeof payload.ambience === "string" ? payload.ambience : "none",
