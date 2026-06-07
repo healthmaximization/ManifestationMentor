@@ -4,9 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Home, LogOut, MessageCircle, Music2, Settings2, Sparkles } from "lucide-react";
 import ChatPanel from "@/components/chat-panel";
-import CreatorViewToggle from "@/components/creator-view-toggle";
 import TrainingPanel from "@/components/training-panel";
-import { useCreatorView } from "@/lib/use-creator-view";
 import type { Database } from "@/lib/supabase/types";
 
 type Conversation = Database["public"]["Tables"]["manifestation_conversations"]["Row"];
@@ -23,9 +21,8 @@ export default function AppShell({
   const [view, setView] = useState<"chat" | "training">("chat");
   const [conversations, setConversations] = useState(initialConversations);
   const [activeConversationId, setActiveConversationId] = useState(initialConversations[0]?.id ?? "");
-  const [creatorView, setCreatorView] = useCreatorView(owner);
   const initials = useMemo(() => userEmail.slice(0, 2).toUpperCase(), [userEmail]);
-  const canSeeTraining = owner && creatorView;
+  const canSeeTraining = owner;
 
   return (
     <main className="app-shell">
@@ -58,8 +55,6 @@ export default function AppShell({
             )}
           </nav>
         </div>
-
-        {owner && <CreatorViewToggle enabled={creatorView} onChange={setCreatorView} />}
 
         <div className="conversation-list">
           <button

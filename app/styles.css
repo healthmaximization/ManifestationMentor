@@ -1230,6 +1230,29 @@ input[type="range"] {
   gap: 12px;
 }
 
+.minimal-account-row {
+  min-width: min(320px, 44vw);
+  min-height: 42px;
+  padding: 4px 5px 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid rgba(197, 163, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.minimal-account-row button {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  background: transparent;
+}
+
 .minimal-brand {
   color: var(--ink);
   text-decoration: none;
@@ -1896,6 +1919,15 @@ input[type="range"] {
 
   .landing-nav .secondary-button {
     min-width: 82px;
+  }
+
+  .minimal-account-row {
+    min-width: 0;
+    width: auto;
+  }
+
+  .minimal-account-row .account-email {
+    display: none;
   }
 
   .sublimify-public-hero,

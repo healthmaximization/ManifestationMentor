@@ -7,9 +7,9 @@ import {
   ChevronRight,
   Clock,
   Download,
-  Home,
   Library,
   Loader2,
+  LogOut,
   Mic,
   Music2,
   Pause,
@@ -22,9 +22,7 @@ import {
   Upload,
   Wand2
 } from "lucide-react";
-import CreatorViewToggle from "@/components/creator-view-toggle";
 import { DEFAULT_SUBLIMINAL_PROMPT } from "@/lib/config";
-import { useCreatorView } from "@/lib/use-creator-view";
 
 type Mode = "record" | "paste" | "generate";
 type Style = "normal" | "silent" | "layered" | "ultra_layered";
@@ -128,7 +126,6 @@ function createNoiseBuffer(context: BaseAudioContext, duration: number, ambience
 }
 
 export default function SublimifyBuilder({ userEmail, owner }: { userEmail: string; owner: boolean }) {
-  const [creatorView, setCreatorView] = useCreatorView(owner);
   const [screen, setScreen] = useState<"library" | "builder">("library");
   const [activeStep, setActiveStep] = useState<Step>("intention");
   const [mode, setMode] = useState<Mode>("generate");
@@ -156,6 +153,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   const chunksRef = useRef<Blob[]>([]);
   const previewRef = useRef<{ context: AudioContext; audio?: HTMLAudioElement } | null>(null);
 
+  const initials = useMemo(() => userEmail.slice(0, 2).toUpperCase(), [userEmail]);
   const script = useMemo(() => linesToScript(affirmations), [affirmations]);
   const activeVoiceBlob = recordedBlob;
   const activeVoiceUrl = useMemo(() => (activeVoiceBlob ? URL.createObjectURL(activeVoiceBlob) : ""), [activeVoiceBlob]);
@@ -179,13 +177,13 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
 
   useEffect(() => {
     async function loadPrompt() {
-      if (!owner || !creatorView) return;
+      if (!owner) return;
       const response = await fetch("/api/sublimify/config");
       const data = await response.json();
       if (data.config?.prompt) setPrompt(data.config.prompt);
     }
     loadPrompt();
-  }, [owner, creatorView]);
+  }, [owner]);
 
   function goNext() {
     setActiveStep(currentSteps[Math.min(currentSteps.length - 1, activeStepIndex + 1)]);
@@ -461,8 +459,13 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
           <strong>Sublimify</strong>
         </Link>
         <div className="minimal-top-actions">
-          <Link href="/manifestation" className="secondary-button"><Sparkles size={17} /> Mentor</Link>
-          {owner && <CreatorViewToggle enabled={creatorView} onChange={setCreatorView} />}
+          <form action="/api/auth/signout" method="post" className="minimal-account-row">
+            <span className="avatar">{initials}</span>
+            <span className="account-email">{userEmail}</span>
+            <button title="Sign out">
+              <LogOut size={17} />
+            </button>
+          </form>
         </div>
       </header>
 
@@ -643,7 +646,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
             </div>
           </div>
 
-          {owner && creatorView && (
+          {owner && (
             <details className="creator-prompt-drawer">
               <summary><Settings2 size={17} /> Creator affirmation prompt</summary>
               <textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} rows={7} />
