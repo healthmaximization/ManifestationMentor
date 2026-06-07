@@ -614,6 +614,19 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
                 <p className="eyebrow">Voice Layer</p>
                 <h1>How should the affirmations become audio?</h1>
                 <p>Your own voice feels most personal. The free robot narrator is intentionally simple and works well for hidden or layered subliminals.</p>
+                {affirmationCount > 0 && (
+                  <div className="recording-script">
+                    <div>
+                      <strong>Read this while recording</strong>
+                      <span>{affirmationCount} affirmations</span>
+                    </div>
+                    <ol>
+                      {affirmations.split("\n").filter((line) => line.trim()).map((line, index) => (
+                        <li key={`${line}-${index}`}>{line.trim()}</li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
                 <div className="quiz-options two">
                   <button className="quiz-option" onClick={recording ? stopRecording : startRecording}><Mic size={22} /><strong>{recording ? "Stop recording" : "Record my voice"}</strong><span>Use your microphone and speak the affirmations yourself.</span></button>
                   <button className="quiz-option" onClick={generateVoice} disabled={!script || loading === "voice"}>{loading === "voice" ? <Loader2 className="spin" size={22} /> : <Sparkles size={22} />}<strong>Use free robot narrator</strong><span>No API cost. Synthetic, simple, and good enough for layering.</span></button>
