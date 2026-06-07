@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { hasProductAccess } from "@/lib/access";
 import { createAdminSupabase, createRouteSupabase } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,19 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminSupabase();
+  const hasPro = await hasProductAccess(admin, { id: user.id, email: user.email }, "subliminal_maker");
+
+  if (!hasPro) {
+    const { count } = await admin
+      .from("subliminal_projects")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id);
+
+    if ((count ?? 0) >= 1) {
+      return NextResponse.json({ error: "Free includes 1 custom subliminal in your library. Upgrade to Pro for more." }, { status: 403 });
+    }
+  }
+
   const storagePath = `${user.id}/${Date.now()}-${safeFileName(file.name)}`;
   const bytes = await file.arrayBuffer();
 
@@ -68,6 +82,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  const signed = await admin.storage.from("subliminal-imports").createSignedUrl(storagePath, 60 * 60);
+
   return NextResponse.json({
     project: {
       id: project.id,
@@ -80,7 +96,8 @@ export async function POST(request: Request) {
       ambience: "none",
       binaural: false,
       imported: true,
-      fileName: file.name
+      fileName: file.name,
+      audioUrl: signed.data?.signedUrl ?? null
     }
   });
 }

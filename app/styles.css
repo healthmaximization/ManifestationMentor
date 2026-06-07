@@ -1596,8 +1596,91 @@ input[type="range"] {
   cursor: pointer;
 }
 
+.library-import.disabled {
+  opacity: 0.52;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .library-import input {
   display: none;
+}
+
+.membership-panel {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.membership-status,
+.price-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.membership-status {
+  padding: 16px;
+  display: grid;
+  gap: 5px;
+}
+
+.membership-status span,
+.price-card span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.price-card {
+  position: relative;
+  min-height: 230px;
+  padding: 18px;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.price-card.recommended {
+  border-color: rgba(197, 163, 255, 0.58);
+  background:
+    linear-gradient(180deg, rgba(155, 92, 255, 0.2), rgba(255, 255, 255, 0.04)),
+    rgba(255, 255, 255, 0.035);
+  box-shadow: 0 18px 60px rgba(155, 92, 255, 0.22);
+  transform: translateY(-6px);
+}
+
+.price-card strong {
+  font-size: 28px;
+}
+
+.price-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.price-badge {
+  width: max-content;
+  padding: 5px 9px;
+  border: 1px solid rgba(197, 163, 255, 0.32);
+  border-radius: 999px;
+  color: var(--purple-soft);
+  background: rgba(155, 92, 255, 0.16);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.price-badge.muted {
+  color: var(--cyan);
+  border-color: rgba(34, 211, 238, 0.24);
+  background: rgba(34, 211, 238, 0.08);
 }
 
 .library-list {
@@ -1654,6 +1737,23 @@ input[type="range"] {
 .subliminal-row div {
   display: grid;
   gap: 5px;
+}
+
+.library-audio {
+  width: min(520px, 100%);
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.library-audio audio {
+  width: 100%;
+}
+
+.library-audio span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .subliminal-row span,
@@ -1993,6 +2093,14 @@ input[type="range"] {
   .landing-steps,
   .landing-proof {
     grid-template-columns: 1fr;
+  }
+
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .price-card.recommended {
+    transform: none;
   }
 
   .sublimify-public-hero {

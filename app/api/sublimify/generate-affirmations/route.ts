@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { hasProductAccess } from "@/lib/access";
 import { DEFAULT_SUBLIMINAL_PROMPT } from "@/lib/config";
 import { askOpenRouter } from "@/lib/openrouter";
 import { createAdminSupabase, createRouteSupabase } from "@/lib/supabase/server";
@@ -13,13 +14,20 @@ export async function POST(request: Request) {
 
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const admin = createAdminSupabase();
+  const hasPro = await hasProductAccess(admin, { id: user.id, email: user.email }, "subliminal_maker");
+
+  if (!hasPro) {
+    return NextResponse.json({ error: "AI-generated affirmations are included in Pro." }, { status: 403 });
+  }
+
   const { topic, count = 24, tone = "calm, confident, emotionally believable" } = await request.json();
 
   if (!topic?.trim()) {
     return NextResponse.json({ error: "Topic is required" }, { status: 400 });
   }
 
-  const { data: config } = await createAdminSupabase()
+  const { data: config } = await admin
     .from("subliminal_generation_config")
     .select("*")
     .eq("id", "main")
@@ -43,4 +51,3 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ affirmations });
 }
-

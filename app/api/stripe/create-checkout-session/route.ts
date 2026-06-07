@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getStripePriceId, isProductKey, type PlanKey } from "@/lib/billing";
+import { getStripePriceId, isPlanKey, isProductKey, type PlanKey } from "@/lib/billing";
 import { createAdminSupabase, createRouteSupabase } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe";
 
@@ -22,8 +22,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid productKey" }, { status: 400 });
   }
 
+  if (!isPlanKey(planKey)) {
+    return NextResponse.json({ error: "Invalid planKey" }, { status: 400 });
+  }
+
   const stripe = getStripe();
-  const priceId = getStripePriceId(productKey);
+  const priceId = getStripePriceId(productKey, planKey);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
 
   const { data: existingSubscription } = await admin
@@ -51,8 +55,8 @@ export async function POST(request: Request) {
     customer: customerId,
     line_items: [{ price: priceId, quantity: 1 }],
     allow_promotion_codes: true,
-    success_url: `${siteUrl}/manifestation?checkout=success`,
-    cancel_url: `${siteUrl}/manifestation?checkout=cancelled`,
+    success_url: `${siteUrl}/sublimify?checkout=success`,
+    cancel_url: `${siteUrl}/sublimify?checkout=cancelled`,
     client_reference_id: user.id,
     subscription_data: {
       metadata: {
@@ -70,4 +74,3 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ url: session.url });
 }
-

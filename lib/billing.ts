@@ -1,6 +1,6 @@
 export type ProductKey = "manifestation_advisor" | "subliminal_maker" | "pro_bundle";
 
-export type PlanKey = "monthly";
+export type PlanKey = "monthly" | "yearly";
 
 export const PRODUCT_ACCESS: Record<ProductKey, ProductKey[]> = {
   manifestation_advisor: ["manifestation_advisor"],
@@ -8,14 +8,23 @@ export const PRODUCT_ACCESS: Record<ProductKey, ProductKey[]> = {
   pro_bundle: ["manifestation_advisor", "subliminal_maker", "pro_bundle"]
 };
 
-const PRICE_ENV_BY_PRODUCT: Record<ProductKey, string> = {
-  manifestation_advisor: "STRIPE_PRICE_MANIFESTATION_MONTHLY",
-  subliminal_maker: "STRIPE_PRICE_SUBLIMIFY_MONTHLY",
-  pro_bundle: "STRIPE_PRICE_PRO_MONTHLY"
+const PRICE_ENV_BY_PRODUCT: Record<ProductKey, Record<PlanKey, string>> = {
+  manifestation_advisor: {
+    monthly: "STRIPE_PRICE_MANIFESTATION_MONTHLY",
+    yearly: "STRIPE_PRICE_MANIFESTATION_YEARLY"
+  },
+  subliminal_maker: {
+    monthly: "STRIPE_PRICE_SUBLIMIFY_MONTHLY",
+    yearly: "STRIPE_PRICE_SUBLIMIFY_YEARLY"
+  },
+  pro_bundle: {
+    monthly: "STRIPE_PRICE_PRO_MONTHLY",
+    yearly: "STRIPE_PRICE_PRO_YEARLY"
+  }
 };
 
-export function getStripePriceId(productKey: ProductKey) {
-  const envName = PRICE_ENV_BY_PRODUCT[productKey];
+export function getStripePriceId(productKey: ProductKey, planKey: PlanKey = "monthly") {
+  const envName = PRICE_ENV_BY_PRODUCT[productKey][planKey];
   const priceId = process.env[envName];
 
   if (!priceId) {
@@ -29,7 +38,10 @@ export function isProductKey(value: unknown): value is ProductKey {
   return value === "manifestation_advisor" || value === "subliminal_maker" || value === "pro_bundle";
 }
 
+export function isPlanKey(value: unknown): value is PlanKey {
+  return value === "monthly" || value === "yearly";
+}
+
 export function isActiveSubscriptionStatus(status: string) {
   return status === "active" || status === "trialing" || status === "manual";
 }
-

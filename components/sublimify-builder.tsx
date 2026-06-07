@@ -6,15 +6,18 @@ import {
   ArrowLeft,
   ChevronRight,
   Clock,
+  Crown,
   Download,
   Library,
   Loader2,
+  Lock,
   LogOut,
   Mic,
   Music2,
   Pause,
   Play,
   Plus,
+  Repeat2,
   Save,
   Settings2,
   SlidersHorizontal,
@@ -43,6 +46,7 @@ type SubliminalProject = {
   binaural?: boolean;
   imported?: boolean;
   fileName?: string;
+  audioUrl?: string | null;
 };
 
 const BASE_STEPS: Step[] = ["intention", "source"];
@@ -155,10 +159,10 @@ function createTextToSpeechBlob(text: string, voice: NarratorVoice) {
   return new Blob([audioBytes.buffer.slice(0)], { type: "audio/wav" });
 }
 
-export default function SublimifyBuilder({ userEmail, owner }: { userEmail: string; owner: boolean }) {
+export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEmail: string; owner: boolean; hasPro: boolean }) {
   const [screen, setScreen] = useState<"library" | "builder">("library");
   const [activeStep, setActiveStep] = useState<Step>("intention");
-  const [mode, setMode] = useState<Mode>("generate");
+  const [mode, setMode] = useState<Mode>(hasPro ? "generate" : "paste");
   const [topic, setTopic] = useState("");
   const [generationNotes, setGenerationNotes] = useState("");
   const [affirmations, setAffirmations] = useState("");
@@ -198,6 +202,8 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     return [...BASE_STEPS, ...sourceStep, ...FINISH_STEPS];
   }, [mode]);
   const activeStepIndex = Math.max(0, currentSteps.indexOf(activeStep));
+  const isFree = !hasPro;
+  const libraryLimitReached = isFree && projects.length >= 1;
 
   useEffect(() => {
     async function loadProjects() {
@@ -227,12 +233,33 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     setActiveStep(currentSteps[Math.max(0, activeStepIndex - 1)]);
   }
 
+  async function startCheckout(planKey: "monthly" | "yearly") {
+    setLoading(`checkout-${planKey}`);
+    setStatus("");
+    const response = await fetch("/api/stripe/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productKey: "pro_bundle", planKey })
+    });
+    const data = await response.json();
+    setLoading("");
+    if (!response.ok || !data.url) {
+      setStatus(data.error ?? "Could not start checkout.");
+      return;
+    }
+    window.location.href = data.url;
+  }
+
   function startNewProject() {
+    if (libraryLimitReached) {
+      setStatus("Free includes 1 custom subliminal in your library. Upgrade to Pro for unlimited creations.");
+      return;
+    }
     stopPreview();
     setTopic("");
     setGenerationNotes("");
     setAffirmations("");
-    setMode("generate");
+    setMode(hasPro ? "generate" : "paste");
     setStyle("normal");
     setAmbience("brown");
     setBinaural(true);
@@ -249,26 +276,51 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     setScreen("builder");
   }
 
-  async function saveProjectSnapshot() {
-    const response = await fetch("/api/sublimify/projects", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: topic || "Untitled subliminal",
-        intention: topic,
-        style,
-        duration,
-        affirmationCount,
-        script,
-        ambience,
-        binaural,
-        musicFileName: musicFile?.name ?? null,
-        voiceSource: recordedBlob ? "recorded" : ttsBlob ? "text_to_speech" : "none",
-        voiceVolume,
-        soundVolume,
-        beatVolume
-      })
-    });
+  async function saveProjectSnapshot(audioBlob?: Blob) {
+    let response: Response;
+
+    if (audioBlob) {
+      const form = new FormData();
+      form.set("audio", audioBlob, `sublimify-${style}.wav`);
+      form.set("title", topic || "Untitled subliminal");
+      form.set("intention", topic);
+      form.set("style", style);
+      form.set("duration", String(duration));
+      form.set("affirmationCount", String(affirmationCount));
+      form.set("script", script);
+      form.set("ambience", ambience);
+      form.set("binaural", String(binaural));
+      form.set("musicFileName", musicFile?.name ?? "");
+      form.set("voiceSource", recordedBlob ? "recorded" : ttsBlob ? "text_to_speech" : "none");
+      form.set("voiceVolume", String(voiceVolume));
+      form.set("soundVolume", String(soundVolume));
+      form.set("beatVolume", String(beatVolume));
+      response = await fetch("/api/sublimify/projects", {
+        method: "POST",
+        body: form
+      });
+    } else {
+      response = await fetch("/api/sublimify/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: topic || "Untitled subliminal",
+          intention: topic,
+          style,
+          duration,
+          affirmationCount,
+          script,
+          ambience,
+          binaural,
+          musicFileName: musicFile?.name ?? null,
+          voiceSource: recordedBlob ? "recorded" : ttsBlob ? "text_to_speech" : "none",
+          voiceVolume,
+          soundVolume,
+          beatVolume
+        })
+      });
+    }
+
     const data = await response.json();
     if (!response.ok) throw new Error(data.error ?? "Could not save subliminal.");
     setProjects((current) => [data.project as SubliminalProject, ...current].slice(0, 50));
@@ -276,6 +328,10 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
 
   async function importSubliminal(file: File | null) {
     if (!file) return;
+    if (libraryLimitReached) {
+      setStatus("Free includes 1 custom subliminal in your library. Upgrade to Pro for more saved subliminals.");
+      return;
+    }
     setLoading("import");
     setStatus("");
     const form = new FormData();
@@ -295,6 +351,10 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   }
 
   async function generateAffirmations() {
+    if (isFree) {
+      setStatus("AI-generated affirmations are included in Pro.");
+      return;
+    }
     if (!topic.trim()) return;
     setLoading("generate");
     setStatus("");
@@ -315,6 +375,10 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   }
 
   function selectMode(nextMode: Mode) {
+    if (nextMode === "generate" && isFree) {
+      setStatus("AI-generated affirmations are a Pro feature. You can paste affirmations or record your own voice on Free.");
+      return;
+    }
     setMode(nextMode);
     setStatus("");
     if (nextMode === "record") {
@@ -459,9 +523,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     setPreviewing(true);
   }
 
-  async function exportWav() {
-    setLoading("export");
-    setStatus("");
+  async function renderSubliminalWav() {
     const sampleRate = 44100;
     const renderDuration = Math.max(30, Math.min(3600, duration));
     const context = new OfflineAudioContext(2, renderDuration * sampleRate, sampleRate);
@@ -524,17 +586,28 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     }
 
     const rendered = await context.startRendering();
-    const url = URL.createObjectURL(audioBufferToWav(rendered));
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `sublimify-${style}.wav`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    return audioBufferToWav(rendered);
+  }
+
+  async function exportWav() {
+    setLoading("export");
+    setStatus("");
     try {
-      await saveProjectSnapshot();
-      setStatus("WAV exported and saved to your account.");
+      const wavBlob = await renderSubliminalWav();
+
+      if (hasPro) {
+        const url = URL.createObjectURL(wavBlob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = `sublimify-${style}.wav`;
+        anchor.click();
+        URL.revokeObjectURL(url);
+      }
+
+      await saveProjectSnapshot(wavBlob);
+      setStatus(hasPro ? "WAV exported and saved to your account." : "Subliminal saved to your library. Upgrade to Pro to download.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "WAV exported, but could not save to your account.");
+      setStatus(error instanceof Error ? error.message : hasPro ? "WAV exported, but could not save to your account." : "Could not save to your library.");
     } finally {
       setLoading("");
     }
@@ -572,16 +645,53 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
             <h1>Your private subliminal studio.</h1>
             <p>Create deeply tailored subliminals through a quiet step-by-step flow. Start with one intention, answer a few focused questions, and export your audio when it feels right.</p>
             <div className="library-actions">
-              <button className="primary-button library-create" onClick={startNewProject}>
+              <button className="primary-button library-create" onClick={startNewProject} disabled={libraryLimitReached}>
                 <Plus size={18} /> Create subliminal
               </button>
-              <label className="secondary-button library-import">
+              <label className={libraryLimitReached ? "secondary-button library-import disabled" : "secondary-button library-import"}>
                 {loading === "import" ? <Loader2 className="spin" size={18} /> : <Upload size={18} />}
                 Import subliminal
-                <input type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.flac" onChange={(event) => importSubliminal(event.target.files?.[0] ?? null)} />
+                <input type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.flac" disabled={libraryLimitReached} onChange={(event) => importSubliminal(event.target.files?.[0] ?? null)} />
               </label>
+              <button className="secondary-button" disabled>
+                <Lock size={18} /> Playlists {hasPro ? "coming soon" : "Pro"}
+              </button>
             </div>
           </div>
+
+          <section className="membership-panel">
+            <div className="membership-status">
+              <span>{hasPro ? "Pro access" : "Free plan"}</span>
+              <strong>{hasPro ? "Unlimited creation and downloads are unlocked." : "1 library subliminal, manual creation, no downloads."}</strong>
+            </div>
+            {!hasPro && (
+              <div className="pricing-grid">
+                <article className="price-card free">
+                  <span>Free</span>
+                  <strong>Start</strong>
+                  <p>Listen in your library, create manually, and keep 1 custom subliminal saved.</p>
+                </article>
+                <article className="price-card recommended">
+                  <div className="price-badge">Recommended</div>
+                  <span>Pro monthly</span>
+                  <strong>Monthly</strong>
+                  <p>AI affirmations, downloads, playlists, and unlimited saved subliminals.</p>
+                  <button className="primary-button" onClick={() => startCheckout("monthly")} disabled={loading === "checkout-monthly"}>
+                    {loading === "checkout-monthly" ? <Loader2 className="spin" size={17} /> : <Crown size={17} />} Upgrade monthly
+                  </button>
+                </article>
+                <article className="price-card">
+                  <div className="price-badge muted">Discount</div>
+                  <span>Pro yearly</span>
+                  <strong>99/year</strong>
+                  <p>Same Pro access with the yearly discount applied.</p>
+                  <button className="secondary-button" onClick={() => startCheckout("yearly")} disabled={loading === "checkout-yearly"}>
+                    {loading === "checkout-yearly" ? <Loader2 className="spin" size={17} /> : <Crown size={17} />} Upgrade yearly
+                  </button>
+                </article>
+              </div>
+            )}
+          </section>
 
           <div className="library-list">
             <div className="library-list-header">
@@ -600,6 +710,14 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
                   <div>
                     <strong>{project.title}</strong>
                     <span>{project.imported ? "Imported audio" : `${project.affirmationCount} affirmations | ${project.style.replace("_", " ")} | ${Math.round(project.duration / 60)} min`}</span>
+                    {project.audioUrl ? (
+                      <div className="library-audio">
+                        <audio controls loop src={project.audioUrl} controlsList={hasPro ? undefined : "nodownload"} />
+                        <span><Repeat2 size={14} /> Loop enabled</span>
+                      </div>
+                    ) : (
+                      <span>{project.imported ? "Audio is processing." : "Audio will appear here after saving/exporting."}</span>
+                    )}
                   </div>
                   <small><Clock size={14} /> {new Date(project.createdAt).toLocaleDateString()}</small>
                 </article>
@@ -633,7 +751,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
                 <h1>How do you want to create the affirmations?</h1>
                 <p>Choose one path. The next screen adapts to this choice so the flow stays quiet and focused.</p>
                 <div className="quiz-options">
-                  <button className={mode === "generate" ? "quiz-option active" : "quiz-option"} onClick={() => selectMode("generate")}><Wand2 size={22} /><strong>Generate them for me</strong><span>Build a script from your intention with guided details.</span></button>
+                  <button className={mode === "generate" ? "quiz-option active" : "quiz-option"} onClick={() => selectMode("generate")} disabled={isFree}><Wand2 size={22} /><strong>Generate them for me</strong>{isFree && <small className="coming-soon">Pro</small>}<span>Build a script from your intention with guided details.</span></button>
                   <button className={mode === "paste" ? "quiz-option active" : "quiz-option"} onClick={() => selectMode("paste")}><Sparkles size={22} /><strong>I already have affirmations</strong><span>Paste or write your own lines on the next screen.</span></button>
                   <button className={mode === "record" ? "quiz-option active" : "quiz-option"} onClick={() => selectMode("record")}><Mic size={22} /><strong>I want to speak them</strong><span>Go straight to recording your voice.</span></button>
                 </div>
@@ -655,7 +773,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
                 <h1>Help the AI shape the affirmations.</h1>
                 <p>Add the feeling, identity shift, or situation this subliminal should reinforce. Then generate and refine the script before creating the voice layer.</p>
                 <textarea value={generationNotes} onChange={(event) => setGenerationNotes(event.target.value)} rows={5} placeholder="Example: make it calm but confident, focused on self-worth, emotional safety, and taking bold action without overthinking." autoFocus />
-                <button className="primary-button" onClick={generateAffirmations} disabled={!topic.trim() || loading === "generate"}>{loading === "generate" ? <Loader2 className="spin" size={17} /> : <Wand2 size={17} />} Generate script</button>
+                <button className="primary-button" onClick={generateAffirmations} disabled={isFree || !topic.trim() || loading === "generate"}>{loading === "generate" ? <Loader2 className="spin" size={17} /> : isFree ? <Lock size={17} /> : <Wand2 size={17} />} {isFree ? "Upgrade for AI affirmations" : "Generate script"}</button>
                 <textarea value={affirmations} onChange={(event) => setAffirmations(event.target.value)} rows={9} placeholder="Your generated affirmations will appear here..." />
               </>
             )}
@@ -796,7 +914,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
                   </button>
                 </div>
                 <div className="minimal-actions">
-                  <button className="primary-button" onClick={exportWav} disabled={loading === "export"}>{loading === "export" ? <Loader2 className="spin" size={17} /> : <Download size={17} />} Export WAV</button>
+                  <button className="primary-button" onClick={exportWav} disabled={loading === "export"}>{loading === "export" ? <Loader2 className="spin" size={17} /> : hasPro ? <Download size={17} /> : <Library size={17} />} {hasPro ? "Export WAV" : "Save to library"}</button>
                 </div>
               </>
             )}
