@@ -96,6 +96,10 @@ create table if not exists public.manifestation_training_documents (
 
 -- Reserved Subliminal Maker app tables. The other project can extend these
 -- instead of inventing a conflicting subscription/auth structure.
+insert into storage.buckets (id, name, public)
+values ('subliminal-imports', 'subliminal-imports', false)
+on conflict (id) do nothing;
+
 create table if not exists public.subliminal_projects (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,

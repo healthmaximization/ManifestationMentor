@@ -1268,8 +1268,24 @@ input[type="range"] {
   line-height: 1.58;
 }
 
-.library-create {
+.library-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.library-create,
+.library-import {
   min-width: 210px;
+}
+
+.library-import {
+  position: relative;
+  cursor: pointer;
+}
+
+.library-import input {
+  display: none;
 }
 
 .library-list {

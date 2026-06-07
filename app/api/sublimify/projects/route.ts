@@ -11,6 +11,11 @@ type SubliminalProjectMetadata = {
   binaural?: boolean;
   musicFileName?: string | null;
   voiceSource?: string;
+  importSource?: string;
+  storagePath?: string;
+  fileName?: string;
+  fileSize?: number;
+  mimeType?: string;
 };
 
 function normalizeMetadata(value: unknown): SubliminalProjectMetadata {
@@ -23,7 +28,12 @@ function normalizeMetadata(value: unknown): SubliminalProjectMetadata {
     ambience: typeof metadata.ambience === "string" ? metadata.ambience : undefined,
     binaural: typeof metadata.binaural === "boolean" ? metadata.binaural : undefined,
     musicFileName: typeof metadata.musicFileName === "string" ? metadata.musicFileName : null,
-    voiceSource: typeof metadata.voiceSource === "string" ? metadata.voiceSource : undefined
+    voiceSource: typeof metadata.voiceSource === "string" ? metadata.voiceSource : undefined,
+    importSource: typeof metadata.importSource === "string" ? metadata.importSource : undefined,
+    storagePath: typeof metadata.storagePath === "string" ? metadata.storagePath : undefined,
+    fileName: typeof metadata.fileName === "string" ? metadata.fileName : undefined,
+    fileSize: typeof metadata.fileSize === "number" ? metadata.fileSize : undefined,
+    mimeType: typeof metadata.mimeType === "string" ? metadata.mimeType : undefined
   };
 }
 
@@ -44,7 +54,9 @@ function toClientProject(project: {
     duration: metadata.duration ?? 180,
     affirmationCount: metadata.affirmationCount ?? 0,
     ambience: metadata.ambience ?? "none",
-    binaural: metadata.binaural ?? false
+    binaural: metadata.binaural ?? false,
+    imported: metadata.importSource === "upload",
+    fileName: metadata.fileName
   };
 }
 

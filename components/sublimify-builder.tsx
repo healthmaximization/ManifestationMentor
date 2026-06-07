@@ -40,6 +40,8 @@ type SubliminalProject = {
   affirmationCount: number;
   ambience?: Ambience;
   binaural?: boolean;
+  imported?: boolean;
+  fileName?: string;
 };
 
 const BASE_STEPS: Step[] = ["intention", "source"];
@@ -265,6 +267,26 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     const data = await response.json();
     if (!response.ok) throw new Error(data.error ?? "Could not save subliminal.");
     setProjects((current) => [data.project as SubliminalProject, ...current].slice(0, 50));
+  }
+
+  async function importSubliminal(file: File | null) {
+    if (!file) return;
+    setLoading("import");
+    setStatus("");
+    const form = new FormData();
+    form.append("file", file);
+    const response = await fetch("/api/sublimify/import", {
+      method: "POST",
+      body: form
+    });
+    const data = await response.json();
+    setLoading("");
+    if (!response.ok) {
+      setStatus(data.error ?? "Could not import subliminal.");
+      return;
+    }
+    setProjects((current) => [data.project as SubliminalProject, ...current].slice(0, 50));
+    setStatus("Subliminal imported and saved to your account.");
   }
 
   async function generateAffirmations() {
@@ -498,9 +520,16 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
             <p className="eyebrow">My Subliminals</p>
             <h1>Your private subliminal studio.</h1>
             <p>Create deeply tailored subliminals through a quiet step-by-step flow. Start with one intention, answer a few focused questions, and export your audio when it feels right.</p>
-            <button className="primary-button library-create" onClick={startNewProject}>
-              <Plus size={18} /> Create subliminal
-            </button>
+            <div className="library-actions">
+              <button className="primary-button library-create" onClick={startNewProject}>
+                <Plus size={18} /> Create subliminal
+              </button>
+              <label className="secondary-button library-import">
+                {loading === "import" ? <Loader2 className="spin" size={18} /> : <Upload size={18} />}
+                Import subliminal
+                <input type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.flac" onChange={(event) => importSubliminal(event.target.files?.[0] ?? null)} />
+              </label>
+            </div>
           </div>
 
           <div className="library-list">
@@ -519,7 +548,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
                 <article key={project.id} className="subliminal-row">
                   <div>
                     <strong>{project.title}</strong>
-                    <span>{project.affirmationCount} affirmations | {project.style.replace("_", " ")} | {Math.round(project.duration / 60)} min</span>
+                    <span>{project.imported ? "Imported audio" : `${project.affirmationCount} affirmations | ${project.style.replace("_", " ")} | ${Math.round(project.duration / 60)} min`}</span>
                   </div>
                   <small><Clock size={14} /> {new Date(project.createdAt).toLocaleDateString()}</small>
                 </article>
