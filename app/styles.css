@@ -1205,6 +1205,263 @@ input[type="range"] {
   animation: spin 850ms linear infinite;
 }
 
+.sublimify-minimal {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.minimal-topbar {
+  min-height: 72px;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(8, 9, 15, 0.78);
+  backdrop-filter: blur(16px);
+}
+
+.minimal-brand,
+.minimal-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.minimal-brand {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.subliminal-library,
+.minimal-builder {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: 56px 24px;
+}
+
+.library-hero {
+  min-height: 360px;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 18px;
+}
+
+.library-hero h1,
+.single-step-card h1 {
+  max-width: 780px;
+  margin: 0;
+  font-size: clamp(44px, 8vw, 88px);
+  line-height: 0.94;
+  letter-spacing: 0;
+}
+
+.library-hero p,
+.single-step-card p {
+  max-width: 650px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.58;
+}
+
+.library-create {
+  min-width: 210px;
+}
+
+.library-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.library-list-header,
+.subliminal-row,
+.empty-library {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.library-list-header {
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+}
+
+.library-list-header div,
+.subliminal-row small {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.empty-library {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  padding: 28px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.empty-library strong {
+  color: var(--ink);
+}
+
+.subliminal-row {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.subliminal-row div {
+  display: grid;
+  gap: 5px;
+}
+
+.subliminal-row span,
+.subliminal-row small {
+  color: var(--muted);
+}
+
+.minimal-builder {
+  display: grid;
+  gap: 18px;
+}
+
+.minimal-progress,
+.minimal-actions,
+.wizard-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.minimal-progress span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.quiet-progress-bar {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.quiet-progress-bar span {
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--purple), var(--cyan));
+  transition: width 220ms ease;
+}
+
+.single-step-card {
+  min-height: min(680px, calc(100vh - 210px));
+  padding: clamp(28px, 6vw, 72px);
+  display: grid;
+  align-content: center;
+  gap: 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.018)),
+    var(--surface);
+  box-shadow: var(--shadow);
+  animation: riseIn 220ms ease both;
+}
+
+.quiz-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.quiz-options.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.quiz-option {
+  min-height: 150px;
+  padding: 18px;
+  display: grid;
+  align-content: start;
+  gap: 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  text-align: left;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.quiz-option.active {
+  border-color: rgba(197, 163, 255, 0.45);
+  background: rgba(155, 92, 255, 0.14);
+}
+
+.quiz-option span {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.simple-controls,
+.clean-summary,
+.creator-prompt-drawer {
+  display: grid;
+  gap: 12px;
+}
+
+.simple-controls label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.clean-summary {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.clean-summary div {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.clean-summary span {
+  color: var(--muted);
+}
+
+.creator-prompt-drawer {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.creator-prompt-drawer summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--muted);
+  font-weight: 800;
+}
+
 @keyframes pulse {
   50% {
     opacity: 0.35;
