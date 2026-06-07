@@ -25,6 +25,7 @@ import {
 import { DEFAULT_SUBLIMINAL_PROMPT } from "@/lib/config";
 
 type Mode = "record" | "paste" | "generate";
+type VoiceChoice = "record" | "tts";
 type Style = "normal" | "silent" | "layered" | "ultra_layered";
 type Ambience = "none" | "rain" | "brown";
 type Step = "intention" | "source" | "paste" | "generate" | "voice" | "style" | "sound" | "export";
@@ -125,6 +126,44 @@ function createNoiseBuffer(context: BaseAudioContext, duration: number, ambience
   return buffer;
 }
 
+function createTextToSpeechBuffer(context: BaseAudioContext, text: string) {
+  const words = text
+    .replace(/[^\w\s'.-]/g, " ")
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter(Boolean)
+    .slice(0, 340);
+  const wordDuration = 0.31;
+  const gapDuration = 0.055;
+  const duration = Math.max(1.5, words.length * (wordDuration + gapDuration));
+  const buffer = context.createBuffer(1, Math.ceil(duration * context.sampleRate), context.sampleRate);
+  const data = buffer.getChannelData(0);
+
+  words.forEach((word, wordIndex) => {
+    const start = Math.floor(wordIndex * (wordDuration + gapDuration) * context.sampleRate);
+    const letters = word.toLowerCase().replace(/[^a-z]/g, "");
+    const hash = [...letters].reduce((sum, character) => sum + character.charCodeAt(0), 0);
+    const baseFrequency = 145 + (hash % 36);
+    const vowelLift = /[aeiou]/.test(letters) ? 24 : 0;
+    const frequency = baseFrequency + vowelLift;
+
+    for (let i = 0; i < wordDuration * context.sampleRate && start + i < data.length; i += 1) {
+      const t = i / context.sampleRate;
+      const progress = i / (wordDuration * context.sampleRate);
+      const attack = Math.min(1, i / 1400);
+      const release = Math.min(1, (wordDuration * context.sampleRate - i) / 1800);
+      const envelope = attack * release * (0.72 + Math.sin(Math.PI * progress) * 0.28);
+      const vibrato = Math.sin(2 * Math.PI * 4.3 * t) * 2.2;
+      const fundamental = Math.sin(2 * Math.PI * (frequency + vibrato) * t);
+      const warmth = Math.sin(2 * Math.PI * (frequency * 1.98 + vibrato) * t) * 0.22;
+      const air = Math.sin(2 * Math.PI * (frequency * 3.02) * t) * 0.07;
+      data[start + i] += (fundamental + warmth + air) * envelope * 0.105;
+    }
+  });
+
+  return buffer;
+}
+
 export default function SublimifyBuilder({ userEmail, owner }: { userEmail: string; owner: boolean }) {
   const [screen, setScreen] = useState<"library" | "builder">("library");
   const [activeStep, setActiveStep] = useState<Step>("intention");
@@ -145,8 +184,10 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState("");
   const [recording, setRecording] = useState(false);
+  const [voiceChoice, setVoiceChoice] = useState<VoiceChoice | null>(null);
   const [showRecordingScript, setShowRecordingScript] = useState(false);
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const [ttsBlob, setTtsBlob] = useState<Blob | null>(null);
   const [musicFile, setMusicFile] = useState<File | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [projects, setProjects] = useState<SubliminalProject[]>([]);
@@ -156,7 +197,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
 
   const initials = useMemo(() => userEmail.slice(0, 2).toUpperCase(), [userEmail]);
   const script = useMemo(() => linesToScript(affirmations), [affirmations]);
-  const activeVoiceBlob = recordedBlob;
+  const activeVoiceBlob = recordedBlob ?? ttsBlob;
   const activeVoiceUrl = useMemo(() => (activeVoiceBlob ? URL.createObjectURL(activeVoiceBlob) : ""), [activeVoiceBlob]);
   const affirmationCount = useMemo(() => affirmations.split("\n").filter((line) => line.trim()).length, [affirmations]);
   const selectedStyle = STYLES.find((item) => item.key === style) ?? STYLES[0];
@@ -205,6 +246,8 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     setDuration(180);
     setBinaural(true);
     setRecordedBlob(null);
+    setTtsBlob(null);
+    setVoiceChoice(null);
     setShowRecordingScript(false);
     setMusicFile(null);
     setStatus("");
@@ -226,7 +269,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
         ambience,
         binaural,
         musicFileName: musicFile?.name ?? null,
-        voiceSource: recordedBlob ? "recorded" : "none"
+        voiceSource: recordedBlob ? "recorded" : ttsBlob ? "text_to_speech" : "none"
       })
     });
     const data = await response.json();
@@ -285,6 +328,8 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
       setRecordedBlob(null);
       setShowRecordingScript(false);
     }
+    setTtsBlob(null);
+    setVoiceChoice(null);
   }
 
   function canContinue() {
@@ -308,7 +353,9 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   }
 
   async function startRecording() {
+    setVoiceChoice("record");
     setShowRecordingScript(true);
+    setTtsBlob(null);
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const recorder = new MediaRecorder(stream);
     chunksRef.current = [];
@@ -333,6 +380,22 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
       return;
     }
     startRecording();
+  }
+
+  async function generateTextToSpeech() {
+    if (!script) return;
+    setLoading("tts");
+    setStatus("");
+    stopPreview();
+    setVoiceChoice("tts");
+    setShowRecordingScript(false);
+    setRecordedBlob(null);
+    await new Promise((resolve) => setTimeout(resolve, 40));
+    const context = new OfflineAudioContext(1, 1, 44100);
+    const voice = createTextToSpeechBuffer(context, script);
+    setTtsBlob(audioBufferToWav(voice));
+    setLoading("");
+    setStatus("Text to speech voice created.");
   }
 
   function stopPreview() {
@@ -581,8 +644,8 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
               <>
                 <p className="eyebrow">Voice Layer</p>
                 <h1>How should the affirmations become audio?</h1>
-                <p>Record your own voice while reading the script below. This keeps the subliminal personal and natural.</p>
-                {showRecordingScript && affirmationCount > 0 && (
+                <p>Choose your own voice for a personal recording, or create an automatic text-to-speech voice from the affirmations.</p>
+                {voiceChoice === "record" && showRecordingScript && affirmationCount > 0 && (
                   <div className="recording-script">
                     <div>
                       <strong>Read this while recording</strong>
@@ -595,8 +658,9 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
                     </ol>
                   </div>
                 )}
-                <div className="quiz-options one">
-                  <button className="quiz-option" onClick={toggleRecording}><Mic size={22} /><strong>{recording ? "Stop recording" : "Record my voice"}</strong><span>Use your microphone and speak the affirmations yourself.</span></button>
+                <div className="quiz-options two">
+                  <button className={voiceChoice === "record" ? "quiz-option active" : "quiz-option"} onClick={toggleRecording}><Mic size={22} /><strong>{recording ? "Stop recording" : recordedBlob ? "Record again" : "Record my voice"}</strong><span>Use your microphone and read the affirmations yourself.</span></button>
+                  <button className={voiceChoice === "tts" ? "quiz-option active" : "quiz-option"} onClick={generateTextToSpeech} disabled={!script || loading === "tts"}>{loading === "tts" ? <Loader2 className="spin" size={22} /> : <Sparkles size={22} />}<strong>Text to speech</strong><span>Create an automatic spoken voice from your affirmations.</span></button>
                 </div>
                 {activeVoiceBlob && <audio controls src={URL.createObjectURL(activeVoiceBlob)} />}
               </>
@@ -642,7 +706,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
                 <div className="clean-summary">
                   <div><span>Intention</span><strong>{topic || "Custom subliminal"}</strong></div>
                   <div><span>Affirmations</span><strong>{affirmationCount}</strong></div>
-                  <div><span>Voice</span><strong>{recordedBlob ? "Your voice" : "Missing"}</strong></div>
+                  <div><span>Voice</span><strong>{recordedBlob ? "Your voice" : ttsBlob ? "Text to speech" : "Missing"}</strong></div>
                   <div><span>Style</span><strong>{selectedStyle.label}</strong></div>
                   <div><span>Sound</span><strong>{ambience}{musicFile ? " + upload" : ""}</strong></div>
                 </div>
