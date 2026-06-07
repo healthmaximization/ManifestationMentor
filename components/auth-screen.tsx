@@ -101,7 +101,7 @@ export default function AuthScreen() {
           <span>Member access</span>
         </div>
         <h1>{mode === "signin" ? "Welcome back." : "Start creating."}</h1>
-        <p>{mode === "signin" ? "Log in to open your private Subliminal Academy studio." : "Create your account and start building your first subliminal."}</p>
+        <p>{mode === "signin" ? "Log in to start creating subliminals." : "Create your account and start building your first subliminal."}</p>
         <div className="auth-tabs" role="tablist" aria-label="Authentication mode">
           <button className={mode === "signin" ? "active" : ""} onClick={() => setMode("signin")} type="button">
             Existing account
