@@ -56,10 +56,10 @@ export default function SublimifyLanding() {
   return (
     <main className="sublimify-landing">
       <header className="landing-nav">
-        <Link href="/" className="minimal-brand">
+        <div className="minimal-brand" aria-label="Sublimify">
           <span className="brand-mark small"><Music2 size={18} /></span>
           <strong>Sublimify</strong>
-        </Link>
+        </div>
         <Link className="secondary-button" href="/login?next=%2Fsublimify">
           Log in
         </Link>

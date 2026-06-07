@@ -530,10 +530,17 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   return (
     <main className="sublimify-minimal">
       <header className="minimal-topbar">
-        <Link href="/" className="minimal-brand">
-          <span className="brand-mark small"><Music2 size={18} /></span>
-          <strong>Sublimify</strong>
-        </Link>
+        {owner ? (
+          <Link href="/" className="minimal-brand">
+            <span className="brand-mark small"><Music2 size={18} /></span>
+            <strong>Sublimify</strong>
+          </Link>
+        ) : (
+          <div className="minimal-brand" aria-label="Sublimify">
+            <span className="brand-mark small"><Music2 size={18} /></span>
+            <strong>Sublimify</strong>
+          </div>
+        )}
         <div className="minimal-top-actions">
           <form action="/api/auth/signout" method="post" className="minimal-account-row">
             <span className="avatar">{initials}</span>
