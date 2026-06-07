@@ -102,9 +102,13 @@ create table if not exists public.subliminal_projects (
   title text not null default 'Untitled subliminal',
   intention text,
   status text not null default 'draft' check (status in ('draft', 'generating', 'ready', 'archived', 'error')),
+  metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.subliminal_projects
+add column if not exists metadata jsonb not null default '{}'::jsonb;
 
 create table if not exists public.subliminal_scripts (
   id uuid primary key default gen_random_uuid(),

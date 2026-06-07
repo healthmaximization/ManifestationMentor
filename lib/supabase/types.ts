@@ -162,6 +162,7 @@ export type Database = {
           title: string;
           intention: string | null;
           status: "draft" | "generating" | "ready" | "archived" | "error";
+          metadata: Json;
           created_at: string;
           updated_at: string;
         };

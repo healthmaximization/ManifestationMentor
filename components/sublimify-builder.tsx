@@ -38,6 +38,8 @@ type SubliminalProject = {
   createdAt: string;
   duration: number;
   affirmationCount: number;
+  ambience?: Ambience;
+  binaural?: boolean;
 };
 
 const STEPS: Step[] = ["intention", "affirmations", "voice", "style", "sound", "export"];
@@ -192,8 +194,13 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   const activeStepIndex = STEPS.indexOf(activeStep);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem("sublimify-projects");
-    if (stored) setProjects(JSON.parse(stored) as SubliminalProject[]);
+    async function loadProjects() {
+      const response = await fetch("/api/sublimify/projects");
+      if (!response.ok) return;
+      const data = await response.json();
+      setProjects((data.projects ?? []) as SubliminalProject[]);
+    }
+    loadProjects();
   }, []);
 
   useEffect(() => {
@@ -231,18 +238,26 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     setScreen("builder");
   }
 
-  function saveProjectSnapshot() {
-    const project: SubliminalProject = {
-      id: crypto.randomUUID(),
-      title: topic || "Untitled subliminal",
-      style,
-      createdAt: new Date().toISOString(),
-      duration,
-      affirmationCount
-    };
-    const next = [project, ...projects].slice(0, 12);
-    setProjects(next);
-    window.localStorage.setItem("sublimify-projects", JSON.stringify(next));
+  async function saveProjectSnapshot() {
+    const response = await fetch("/api/sublimify/projects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: topic || "Untitled subliminal",
+        intention: topic,
+        style,
+        duration,
+        affirmationCount,
+        script,
+        ambience,
+        binaural,
+        musicFileName: musicFile?.name ?? null,
+        voiceSource: recordedBlob ? "recorded" : voiceBlob ? "robot_narrator" : "none"
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error ?? "Could not save subliminal.");
+    setProjects((current) => [data.project as SubliminalProject, ...current].slice(0, 50));
   }
 
   async function generateAffirmations() {
@@ -425,9 +440,14 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     anchor.download = `sublimify-${style}.wav`;
     anchor.click();
     URL.revokeObjectURL(url);
-    saveProjectSnapshot();
-    setLoading("");
-    setStatus("WAV exported and added to My Subliminals.");
+    try {
+      await saveProjectSnapshot();
+      setStatus("WAV exported and saved to your account.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "WAV exported, but could not save to your account.");
+    } finally {
+      setLoading("");
+    }
   }
 
   return (
@@ -457,13 +477,13 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
           <div className="library-list">
             <div className="library-list-header">
               <div><Library size={18} /><span>Recent creations</span></div>
-              <small>{projects.length} saved locally</small>
+              <small>{projects.length} saved to your account</small>
             </div>
             {projects.length === 0 ? (
               <div className="empty-library">
                 <Music2 size={26} />
                 <strong>No subliminals yet</strong>
-                <span>Your exported creations will appear here as a simple local history.</span>
+                <span>Your exported creations will be saved privately to your account.</span>
               </div>
             ) : (
               projects.map((project) => (
