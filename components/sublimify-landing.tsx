@@ -75,7 +75,7 @@ export default function SublimifyLanding() {
             <Link className="primary-button landing-primary" href="/login?next=%2Fsublimify&authMode=signup">
               Get started for free <ArrowRight size={18} />
             </Link>
-            <Link className="secondary-button" href="/login?next=%2Fsublimify">
+            <Link className="secondary-button landing-secondary" href="/login?next=%2Fsublimify">
               Already have an account?
             </Link>
           </div>
