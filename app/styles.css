@@ -1906,28 +1906,6 @@ input[type="range"] {
   margin-top: 8px;
 }
 
-.narrator-panel {
-  display: grid;
-  gap: 8px;
-  max-width: 420px;
-}
-
-.narrator-panel label {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 850;
-}
-
-.narrator-panel select {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid rgba(197, 163, 255, 0.22);
-  border-radius: 8px;
-  color: var(--ink);
-  background: rgba(255, 255, 255, 0.055);
-  outline: none;
-}
-
 .simple-controls,
 .clean-summary,
 .creator-prompt-drawer {

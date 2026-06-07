@@ -26,11 +26,12 @@ import {
   Wand2
 } from "lucide-react";
 import { DEFAULT_SUBLIMINAL_PROMPT } from "@/lib/config";
-import SamJs from "sam-js";
+import meSpeak from "mespeak";
+import meSpeakConfig from "mespeak/src/mespeak_config.json";
+import meSpeakVoice from "mespeak/voices/en/en-us.json";
 
 type Mode = "record" | "paste" | "generate";
 type VoiceChoice = "record" | "tts";
-type NarratorVoice = "soft" | "robot" | "low" | "bright";
 type Style = "normal" | "silent" | "layered" | "ultra_layered";
 type Ambience = "none" | "rain" | "brown";
 type Step = "intention" | "source" | "paste" | "generate" | "voice" | "style" | "sound" | "export";
@@ -57,13 +58,6 @@ const STYLES: { key: Style; label: string; description: string; available: boole
   { key: "silent", label: "Silent subliminal", description: "Voice layer is pushed very low into the background.", available: false },
   { key: "layered", label: "Layered subliminal", description: "Several offset voice layers for a denser effect.", available: false },
   { key: "ultra_layered", label: "Ultra layered", description: "A high-density stereo stack for a stronger build.", available: false }
-];
-
-const NARRATOR_VOICES: { key: NarratorVoice; label: string; options: ConstructorParameters<typeof SamJs>[0] }[] = [
-  { key: "soft", label: "Simple narrator", options: { speed: 78, pitch: 55, throat: 128, mouth: 135 } },
-  { key: "robot", label: "Little robot", options: { speed: 92, pitch: 60, throat: 190, mouth: 190 } },
-  { key: "low", label: "Low narrator", options: { speed: 82, pitch: 42, throat: 125, mouth: 115 } },
-  { key: "bright", label: "Bright narrator", options: { speed: 84, pitch: 72, throat: 110, mouth: 155 } }
 ];
 
 function linesToScript(text: string) {
@@ -150,13 +144,27 @@ function normalizeNarratorText(text: string) {
     .slice(0, 2600);
 }
 
-function createTextToSpeechBlob(text: string, voice: NarratorVoice) {
-  const preset = NARRATOR_VOICES.find((item) => item.key === voice) ?? NARRATOR_VOICES[0];
-  const narrator = new SamJs(preset.options);
-  const wav = narrator.wav(normalizeNarratorText(text));
-  if (!wav || typeof wav === "boolean") throw new Error("Could not create narrator audio.");
+function createTextToSpeechBlob(text: string) {
+  if (!meSpeak.isConfigLoaded()) meSpeak.loadConfig(meSpeakConfig);
+  if (!meSpeak.isVoiceLoaded()) meSpeak.loadVoice(meSpeakVoice);
+  const wav = meSpeak.speak(normalizeNarratorText(text), {
+    rawdata: "array",
+    amplitude: 85,
+    pitch: 42,
+    speed: 140,
+    wordgap: 4
+  });
+  if (!Array.isArray(wav)) throw new Error("Could not create text to speech audio.");
   const audioBytes = new Uint8Array(wav);
   return new Blob([audioBytes.buffer.slice(0)], { type: "audio/wav" });
+}
+
+function formatDuration(seconds: number) {
+  if (!Number.isFinite(seconds) || seconds <= 0) return "matches voice length";
+  const total = Math.max(1, Math.round(seconds));
+  const minutes = Math.floor(total / 60);
+  const remaining = total % 60;
+  return minutes ? `${minutes}:${remaining.toString().padStart(2, "0")}` : `${remaining}s`;
 }
 
 export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEmail: string; owner: boolean; hasPro: boolean }) {
@@ -168,7 +176,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   const [affirmations, setAffirmations] = useState("");
   const [style, setStyle] = useState<Style>("normal");
   const [ambience, setAmbience] = useState<Ambience>("brown");
-  const duration = 180;
+  const [voiceDuration, setVoiceDuration] = useState(0);
   const [voiceVolume, setVoiceVolume] = useState(0.18);
   const [soundVolume, setSoundVolume] = useState(0.38);
   const [beatVolume, setBeatVolume] = useState(0.3);
@@ -180,7 +188,6 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   const [loading, setLoading] = useState("");
   const [recording, setRecording] = useState(false);
   const [voiceChoice, setVoiceChoice] = useState<VoiceChoice | null>(null);
-  const [narratorVoice, setNarratorVoice] = useState<NarratorVoice>("soft");
   const [showRecordingScript, setShowRecordingScript] = useState(false);
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [ttsBlob, setTtsBlob] = useState<Blob | null>(null);
@@ -195,6 +202,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   const script = useMemo(() => linesToScript(affirmations), [affirmations]);
   const activeVoiceBlob = recordedBlob ?? ttsBlob;
   const activeVoiceUrl = useMemo(() => (activeVoiceBlob ? URL.createObjectURL(activeVoiceBlob) : ""), [activeVoiceBlob]);
+  const duration = Math.max(1, Math.ceil(voiceDuration || 0));
   const affirmationCount = useMemo(() => affirmations.split("\n").filter((line) => line.trim()).length, [affirmations]);
   const selectedStyle = STYLES.find((item) => item.key === style) ?? STYLES[0];
   const currentSteps = useMemo<Step[]>(() => {
@@ -224,6 +232,22 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     }
     loadPrompt();
   }, [owner]);
+
+  useEffect(() => {
+    if (!activeVoiceBlob) {
+      setVoiceDuration(0);
+      return;
+    }
+
+    const url = URL.createObjectURL(activeVoiceBlob);
+    const audio = new Audio(url);
+    audio.preload = "metadata";
+    audio.onloadedmetadata = () => {
+      if (Number.isFinite(audio.duration)) setVoiceDuration(audio.duration);
+      URL.revokeObjectURL(url);
+    };
+    audio.onerror = () => URL.revokeObjectURL(url);
+  }, [activeVoiceBlob]);
 
   function goNext() {
     setActiveStep(currentSteps[Math.min(currentSteps.length - 1, activeStepIndex + 1)]);
@@ -276,7 +300,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     setScreen("builder");
   }
 
-  async function saveProjectSnapshot(audioBlob?: Blob) {
+  async function saveProjectSnapshot(audioBlob?: Blob, renderedDuration = duration) {
     let response: Response;
 
     if (audioBlob) {
@@ -285,7 +309,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
       form.set("title", topic || "Untitled subliminal");
       form.set("intention", topic);
       form.set("style", style);
-      form.set("duration", String(duration));
+      form.set("duration", String(renderedDuration));
       form.set("affirmationCount", String(affirmationCount));
       form.set("script", script);
       form.set("ambience", ambience);
@@ -307,7 +331,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
           title: topic || "Untitled subliminal",
           intention: topic,
           style,
-          duration,
+          duration: renderedDuration,
           affirmationCount,
           script,
           ambience,
@@ -453,10 +477,10 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     setRecordedBlob(null);
     await new Promise((resolve) => setTimeout(resolve, 40));
     try {
-      setTtsBlob(createTextToSpeechBlob(script, narratorVoice));
-      setStatus("Simple narrator voice created.");
+      setTtsBlob(createTextToSpeechBlob(script));
+      setStatus("Text to speech voice created.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Could not create narrator audio.");
+      setStatus(error instanceof Error ? error.message : "Could not create text to speech audio.");
     } finally {
       setLoading("");
     }
@@ -525,7 +549,15 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
 
   async function renderSubliminalWav() {
     const sampleRate = 44100;
-    const renderDuration = Math.max(30, Math.min(3600, duration));
+    let voiceBuffer: AudioBuffer | null = null;
+
+    if (activeVoiceBlob) {
+      const voiceContext = new AudioContext();
+      voiceBuffer = await decodeBlob(voiceContext, activeVoiceBlob);
+      await voiceContext.close();
+    }
+
+    const renderDuration = Math.max(1, Math.min(3600, Math.ceil(voiceBuffer?.duration ?? duration)));
     const context = new OfflineAudioContext(2, renderDuration * sampleRate, sampleRate);
 
     if (ambience !== "none") {
@@ -566,16 +598,15 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
       }
     }
 
-    if (activeVoiceBlob) {
-      const voice = await decodeBlob(context, activeVoiceBlob);
+    if (voiceBuffer) {
       const layerCount = style === "ultra_layered" ? 7 : style === "layered" ? 4 : 1;
       const baseVolume = style === "silent" ? 0.035 : voiceVolume;
       for (let layer = 0; layer < layerCount; layer += 1) {
-        for (let start = layer * 0.85; start < renderDuration; start += voice.duration + 1.8) {
+        for (let start = layer * 0.85; start < renderDuration; start += voiceBuffer.duration + 1.8) {
           const source = context.createBufferSource();
           const gain = context.createGain();
           const pan = context.createStereoPanner();
-          source.buffer = voice;
+          source.buffer = voiceBuffer;
           source.playbackRate.value = style === "ultra_layered" ? 0.96 + layer * 0.012 : 1;
           gain.gain.value = baseVolume / Math.sqrt(layerCount);
           pan.pan.value = layerCount === 1 ? 0 : -0.6 + (1.2 * layer) / Math.max(1, layerCount - 1);
@@ -586,17 +617,17 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     }
 
     const rendered = await context.startRendering();
-    return audioBufferToWav(rendered);
+    return { blob: audioBufferToWav(rendered), duration: renderDuration };
   }
 
   async function exportWav() {
     setLoading("export");
     setStatus("");
     try {
-      const wavBlob = await renderSubliminalWav();
+      const rendered = await renderSubliminalWav();
 
       if (hasPro) {
-        const url = URL.createObjectURL(wavBlob);
+        const url = URL.createObjectURL(rendered.blob);
         const anchor = document.createElement("a");
         anchor.href = url;
         anchor.download = `sublimify-${style}.wav`;
@@ -604,7 +635,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
         URL.revokeObjectURL(url);
       }
 
-      await saveProjectSnapshot(wavBlob);
+      await saveProjectSnapshot(rendered.blob, rendered.duration);
       setStatus(hasPro ? "WAV exported and saved to your account." : "Subliminal saved to your library. Upgrade to Pro to download.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : hasPro ? "WAV exported, but could not save to your account." : "Could not save to your library.");
@@ -709,7 +740,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                 <article key={project.id} className="subliminal-row">
                   <div>
                     <strong>{project.title}</strong>
-                    <span>{project.imported ? "Imported audio" : `${project.affirmationCount} affirmations | ${project.style.replace("_", " ")} | ${Math.round(project.duration / 60)} min`}</span>
+                    <span>{project.imported ? "Imported audio" : `${project.affirmationCount} affirmations | ${project.style.replace("_", " ")} | ${formatDuration(project.duration)}`}</span>
                     {project.audioUrl ? (
                       <div className="library-audio">
                         <audio controls loop src={project.audioUrl} controlsList={hasPro ? undefined : "nodownload"} />
@@ -782,23 +813,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
               <>
                 <p className="eyebrow">Voice Layer</p>
                 <h1>How should the affirmations become audio?</h1>
-                <p>Choose your own voice for a personal recording, or create an automatic text-to-speech voice from the affirmations.</p>
-                <div className="narrator-panel">
-                  <label htmlFor="narrator-voice">Automatic narrator voice</label>
-                  <select
-                    id="narrator-voice"
-                    value={narratorVoice}
-                    onChange={(event) => {
-                      setNarratorVoice(event.target.value as NarratorVoice);
-                      setTtsBlob(null);
-                      if (voiceChoice === "tts") setStatus("Choose Text to speech again to create this narrator voice.");
-                    }}
-                  >
-                    {NARRATOR_VOICES.map((voice) => (
-                      <option key={voice.key} value={voice.key}>{voice.label}</option>
-                    ))}
-                  </select>
-                </div>
+                <p>{mode === "record" ? "Record your own voice. The final audio will match the length of your recording." : "Record your own voice or create a simple text-to-speech voice from the affirmations."}</p>
                 {voiceChoice === "record" && showRecordingScript && affirmationCount > 0 && (
                   <div className="recording-script">
                     <div>
@@ -812,9 +827,11 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                     </ol>
                   </div>
                 )}
-                <div className="quiz-options two">
+                <div className={mode === "record" ? "quiz-options one" : "quiz-options two"}>
                   <button className={voiceChoice === "record" ? "quiz-option active" : "quiz-option"} onClick={toggleRecording}><Mic size={22} /><strong>{recording ? "Stop recording" : recordedBlob ? "Record again" : "Record my voice"}</strong><span>Use your microphone and read the affirmations yourself.</span></button>
-                  <button className={voiceChoice === "tts" ? "quiz-option active" : "quiz-option"} onClick={generateTextToSpeech} disabled={!script || loading === "tts"}>{loading === "tts" ? <Loader2 className="spin" size={22} /> : <Sparkles size={22} />}<strong>Text to speech</strong><span>Create a simple narrator voice from your affirmations.</span></button>
+                  {mode !== "record" && (
+                    <button className={voiceChoice === "tts" ? "quiz-option active" : "quiz-option"} onClick={generateTextToSpeech} disabled={!script || loading === "tts"}>{loading === "tts" ? <Loader2 className="spin" size={22} /> : <Sparkles size={22} />}<strong>Text to speech</strong><span>Create a simple spoken voice from your affirmations.</span></button>
+                  )}
                 </div>
                 {activeVoiceBlob && <audio controls src={URL.createObjectURL(activeVoiceBlob)} />}
               </>
@@ -847,7 +864,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                 <div className="simple-controls">
                   <div className="fixed-duration">
                     <span>Duration</span>
-                    <strong>{Math.round(duration / 60)} minutes</strong>
+                    <strong>{formatDuration(duration)}</strong>
                   </div>
                   <div className="quiz-options two compact">
                     <button className={binaural ? "quiz-option active" : "quiz-option"} onClick={() => setBinaural(true)}>
@@ -900,7 +917,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                   <div><span>Style</span><strong>{selectedStyle.label}</strong></div>
                   <div><span>Sound</span><strong>{ambience}{musicFile ? " + upload" : ""}</strong></div>
                   <div><span>Binaural beats</span><strong>{binaural ? "On" : "Off"}</strong></div>
-                  <div><span>Duration</span><strong>{Math.round(duration / 60)} minutes</strong></div>
+                  <div><span>Duration</span><strong>{formatDuration(duration)}</strong></div>
                   <div><span>Mix</span><strong>{Math.round(voiceVolume * 100)}% voice / {binaural ? `${Math.round(beatVolume * 100)}% beats` : "no beats"} / {Math.round(soundVolume * 100)}% sound</strong></div>
                 </div>
                 <div className="preview-panel">
