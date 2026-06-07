@@ -12,14 +12,14 @@ const steps = [
 ];
 
 const previewTopics = [
-  "Slim Waist Identity",
-  "Clear Skin Glow",
-  "Magnetic Relationship",
-  "Money Flow Mindset",
-  "Deep Sleep Reset",
-  "Social Confidence",
-  "Fit Body Routine",
-  "Self Worth Upgrade"
+  "I want a slim waist",
+  "I want clear glowing skin",
+  "I want a loving relationship",
+  "I want money to flow easily",
+  "I want deep restorative sleep",
+  "I want social confidence",
+  "I want a fit healthy body",
+  "I want unshakable self worth"
 ];
 
 export default function SublimifyLanding() {
