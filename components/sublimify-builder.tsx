@@ -164,7 +164,7 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
   const [affirmations, setAffirmations] = useState("");
   const [style, setStyle] = useState<Style>("normal");
   const [ambience, setAmbience] = useState<Ambience>("brown");
-  const [duration, setDuration] = useState(180);
+  const duration = 180;
   const [voiceVolume] = useState(0.18);
   const [musicVolume] = useState(0.38);
   const [noiseVolume] = useState(0.22);
@@ -235,7 +235,6 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
     setMode("generate");
     setStyle("normal");
     setAmbience("brown");
-    setDuration(180);
     setBinaural(true);
     setRecordedBlob(null);
     setTtsBlob(null);
@@ -709,9 +708,22 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
                 </div>
                 <label className="drop-zone"><Upload size={22} /><span>{musicFile ? musicFile.name : "Optional: upload MP3/WAV music or sound"}</span><input type="file" accept="audio/*" onChange={(event) => setMusicFile(event.target.files?.[0] ?? null)} /></label>
                 <div className="simple-controls">
-                  <label><input type="checkbox" checked={binaural} onChange={(event) => setBinaural(event.target.checked)} /> Add binaural beats</label>
-                  <label>Duration: {Math.round(duration / 60)} min</label>
-                  <input type="range" min="30" max="1800" step="30" value={duration} onChange={(event) => setDuration(Number(event.target.value))} />
+                  <div className="fixed-duration">
+                    <span>Duration</span>
+                    <strong>{Math.round(duration / 60)} minutes</strong>
+                  </div>
+                  <div className="quiz-options two compact">
+                    <button className={binaural ? "quiz-option active" : "quiz-option"} onClick={() => setBinaural(true)}>
+                      <Sparkles size={22} />
+                      <strong>Add binaural beats</strong>
+                      <span>Soft stereo tones under the mix.</span>
+                    </button>
+                    <button className={!binaural ? "quiz-option active" : "quiz-option"} onClick={() => setBinaural(false)}>
+                      <Music2 size={22} />
+                      <strong>No binaural beats</strong>
+                      <span>Keep the audio bed cleaner and simpler.</span>
+                    </button>
+                  </div>
                 </div>
               </>
             )}
@@ -727,9 +739,20 @@ export default function SublimifyBuilder({ userEmail, owner }: { userEmail: stri
                   <div><span>Voice</span><strong>{recordedBlob ? "Your voice" : ttsBlob ? "Text to speech" : "Missing"}</strong></div>
                   <div><span>Style</span><strong>{selectedStyle.label}</strong></div>
                   <div><span>Sound</span><strong>{ambience}{musicFile ? " + upload" : ""}</strong></div>
+                  <div><span>Binaural beats</span><strong>{binaural ? "On" : "Off"}</strong></div>
+                  <div><span>Duration</span><strong>{Math.round(duration / 60)} minutes</strong></div>
+                </div>
+                <div className="preview-panel">
+                  <div>
+                    <strong>Preview your subliminal</strong>
+                    <span>Listen to the voice, ambience, uploaded audio, and binaural choice before exporting.</span>
+                  </div>
+                  <button className="secondary-button" onClick={previewing ? stopPreview : startPreview}>
+                    {previewing ? <Pause size={17} /> : <Play size={17} />}
+                    {previewing ? "Stop preview" : "Play preview"}
+                  </button>
                 </div>
                 <div className="minimal-actions">
-                  <button className="secondary-button" onClick={previewing ? stopPreview : startPreview}>{previewing ? <Pause size={17} /> : <Play size={17} />}{previewing ? "Stop preview" : "Preview"}</button>
                   <button className="primary-button" onClick={exportWav} disabled={loading === "export"}>{loading === "export" ? <Loader2 className="spin" size={17} /> : <Download size={17} />} Export WAV</button>
                 </div>
               </>

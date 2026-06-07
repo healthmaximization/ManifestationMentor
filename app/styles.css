@@ -1721,6 +1721,10 @@ input[type="range"] {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.quiz-options.compact .quiz-option {
+  min-height: 128px;
+}
+
 .quiz-options.one {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -1835,6 +1839,38 @@ input[type="range"] {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.fixed-duration,
+.preview-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(197, 163, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.fixed-duration {
+  max-width: 420px;
+}
+
+.fixed-duration span,
+.preview-panel span {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.fixed-duration strong,
+.preview-panel strong {
+  color: var(--ink);
+}
+
+.preview-panel > div {
+  display: grid;
+  gap: 4px;
 }
 
 .clean-summary {
