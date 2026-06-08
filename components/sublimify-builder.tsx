@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
+  ChevronDown,
   ChevronRight,
   CheckCircle2,
   Clock,
@@ -200,6 +201,8 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [ttsBlob, setTtsBlob] = useState<Blob | null>(null);
   const [musicFile, setMusicFile] = useState<File | null>(null);
+  const [soundSectionOpen, setSoundSectionOpen] = useState(false);
+  const [beatSectionOpen, setBeatSectionOpen] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [projects, setProjects] = useState<SubliminalProject[]>([]);
   const [upgradePrompt, setUpgradePrompt] = useState("");
@@ -358,6 +361,8 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     setVoiceChoice(null);
     setShowRecordingScript(false);
     setMusicFile(null);
+    setSoundSectionOpen(false);
+    setBeatSectionOpen(false);
     setStatus("");
     setActiveStep("intention");
     setScreen("builder");
@@ -601,11 +606,12 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     setPreviewing(false);
   }
 
-  function startPreview(overrides: Partial<{ ambience: Ambience; binaural: boolean; binauralRange: BinauralRange }> = {}) {
+  function startPreview(overrides: Partial<{ ambience: Ambience; binaural: boolean; binauralRange: BinauralRange; musicFile: File | null }> = {}) {
     stopPreview();
     const previewAmbience = overrides.ambience ?? ambience;
     const previewBinaural = overrides.binaural ?? binaural;
     const previewBinauralRange = BINAURAL_OPTIONS.find((item) => item.key === (overrides.binauralRange ?? binauralRange)) ?? selectedBinaural;
+    const previewMusicFile = overrides.musicFile === undefined ? musicFile : overrides.musicFile;
     const context = new AudioContext();
     let ambienceGain: GainNode | undefined;
     let beatGain: GainNode | undefined;
@@ -650,8 +656,8 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
       voiceAudio = audio;
     }
 
-    if (musicFile) {
-      const musicUrl = URL.createObjectURL(musicFile);
+    if (previewMusicFile) {
+      const musicUrl = URL.createObjectURL(previewMusicFile);
       const music = new Audio(musicUrl);
       music.loop = true;
       music.volume = Math.min(1, soundVolume);
@@ -961,7 +967,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                   </div>
                 )}
                 <div className={mode === "record" ? "quiz-options one" : "quiz-options two"}>
-                  <button className={voiceChoice === "record" ? "quiz-option active" : "quiz-option"} onClick={toggleRecording}><Mic size={22} /><strong>{recording ? "Stop recording" : recordedBlob ? "Record again" : "Record my voice"}</strong><span>Use your microphone and read the affirmations yourself.</span></button>
+                  <button className={voiceChoice === "record" ? "quiz-option active recommended-option" : "quiz-option recommended-option"} onClick={toggleRecording}><Mic size={22} /><small className="recommended-badge">Recommended</small><strong>{recording ? "Stop recording" : recordedBlob ? "Record again" : "Record my voice"}</strong><span>Use your microphone and read the affirmations yourself.</span></button>
                   {mode !== "record" && (
                     <button className={voiceChoice === "tts" ? "quiz-option active" : "quiz-option"} onClick={generateTextToSpeech} disabled={!script || loading === "tts"}>{loading === "tts" ? <Loader2 className="spin" size={22} /> : <Sparkles size={22} />}<strong>Text to speech</strong><span>Create a simple spoken voice from your affirmations.</span></button>
                   )}
@@ -999,41 +1005,58 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                     {previewing ? "Stop preview" : "Play preview"}
                   </button>
                 </div>
-                <div className="quiz-options sound-options">
-                  {soundOptions.map((item) => (
-                    <button
-                      key={item.key}
-                      className={ambience === item.key ? "quiz-option active" : "quiz-option"}
-                      onClick={() => {
-                        const nextAmbience = ambience === item.key ? "none" : item.key;
-                        setAmbience(nextAmbience);
-                        if (previewing) startPreview({ ambience: nextAmbience });
-                      }}
-                    >
-                      <Music2 size={22} />
-                      <strong>{item.label}</strong>
-                      <span>{item.description}</span>
-                    </button>
-                  ))}
-                  <label className={musicFile ? "quiz-option upload-sound-tile active" : "quiz-option upload-sound-tile"}>
-                    <Upload size={22} />
-                    <strong>{musicFile ? "Custom audio selected" : "Upload custom audio"}</strong>
-                    <span>{musicFile ? musicFile.name : "Add your own music, soundscape, MP3, or WAV."}</span>
-                    <input
-                      type="file"
-                      accept="audio/*"
-                      onChange={(event) => {
-                        setMusicFile(event.target.files?.[0] ?? null);
-                        if (previewing) stopPreview();
-                      }}
-                    />
-                  </label>
-                </div>
                 <div className="simple-controls">
-                  <div className="quiz-options beat-options">
-                    {BINAURAL_OPTIONS.map((item) => {
-                      const activeBeat = binaural && binauralRange === item.key;
-                      return (
+                  <div className="toggle-control-group">
+                    <button className={soundSectionOpen ? "toggle-header open" : "toggle-header"} onClick={() => setSoundSectionOpen((open) => !open)}>
+                      <span><Music2 size={18} /> Music & sounds</span>
+                      <strong>{soundChoiceSummary}</strong>
+                      <ChevronDown size={18} />
+                    </button>
+                    {soundSectionOpen && (
+                      <div className="quiz-options sound-options">
+                        {soundOptions.map((item) => (
+                          <button
+                            key={item.key}
+                            className={ambience === item.key ? "quiz-option active" : "quiz-option"}
+                            onClick={() => {
+                              const nextAmbience = ambience === item.key ? "none" : item.key;
+                              setAmbience(nextAmbience);
+                              startPreview({ ambience: nextAmbience });
+                            }}
+                          >
+                            <Music2 size={22} />
+                            <strong>{item.label}</strong>
+                            <span>{item.description}</span>
+                          </button>
+                        ))}
+                        <label className={musicFile ? "quiz-option upload-sound-tile active" : "quiz-option upload-sound-tile"}>
+                          <Upload size={22} />
+                          <strong>{musicFile ? "Custom audio selected" : "Upload custom audio"}</strong>
+                          <span>{musicFile ? musicFile.name : "Add your own music, soundscape, MP3, or WAV."}</span>
+                          <input
+                            type="file"
+                            accept="audio/*"
+                            onChange={(event) => {
+                              const nextFile = event.target.files?.[0] ?? null;
+                              setMusicFile(nextFile);
+                              startPreview({ musicFile: nextFile });
+                            }}
+                          />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                  <div className="toggle-control-group">
+                    <button className={beatSectionOpen ? "toggle-header open" : "toggle-header"} onClick={() => setBeatSectionOpen((open) => !open)}>
+                      <span><SlidersHorizontal size={18} /> Binaural beats</span>
+                      <strong>{binaural ? `${selectedBinaural.label} - ${selectedBinaural.frequency} Hz` : "Off"}</strong>
+                      <ChevronDown size={18} />
+                    </button>
+                    {beatSectionOpen && (
+                      <div className="quiz-options beat-options">
+                        {BINAURAL_OPTIONS.map((item) => {
+                          const activeBeat = binaural && binauralRange === item.key;
+                          return (
                         <button
                           key={item.key}
                           className={activeBeat ? "quiz-option active" : "quiz-option"}
@@ -1041,17 +1064,20 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                             const nextBinaural = !activeBeat;
                             setBinauralRange(item.key);
                             setBinaural(nextBinaural);
-                            if (previewing) startPreview({ binaural: nextBinaural, binauralRange: item.key });
+                            startPreview({ binaural: nextBinaural, binauralRange: item.key });
                           }}
                         >
                           <SlidersHorizontal size={20} />
                           <strong>{item.label} - {item.frequency} Hz</strong>
                           <span>{item.description}</span>
                         </button>
-                      );
-                    })}
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                   <div className="mix-controls">
+                    <h2>Volume mixer</h2>
                     <div className="mix-slider">
                       <div>
                         <span>Affirmations</span>

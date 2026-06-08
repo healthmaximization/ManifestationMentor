@@ -2078,6 +2078,23 @@ input[type="range"] {
   background: rgba(155, 92, 255, 0.14);
 }
 
+.recommended-option {
+  position: relative;
+  border-color: rgba(197, 163, 255, 0.28);
+}
+
+.recommended-badge {
+  width: max-content;
+  padding: 5px 9px;
+  border: 1px solid rgba(197, 163, 255, 0.28);
+  border-radius: 999px;
+  color: rgba(231, 213, 255, 0.94);
+  background: rgba(155, 92, 255, 0.12);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 .quiz-option:disabled {
   opacity: 0.52;
   cursor: not-allowed;
@@ -2150,6 +2167,60 @@ input[type="range"] {
   gap: 8px;
 }
 
+.toggle-control-group {
+  display: grid;
+  gap: 12px;
+}
+
+.toggle-header {
+  width: 100%;
+  min-height: 62px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(197, 163, 255, 0.16);
+  border-radius: 8px;
+  color: var(--ink);
+  text-align: left;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.toggle-header:hover {
+  border-color: rgba(197, 163, 255, 0.32);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.toggle-header span,
+.toggle-header strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggle-header span {
+  min-width: 0;
+  color: rgba(245, 243, 255, 0.92);
+  font-weight: 900;
+}
+
+.toggle-header strong {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.toggle-header svg:last-child {
+  color: var(--muted);
+  transition: transform 180ms ease;
+}
+
+.toggle-header.open svg:last-child {
+  transform: rotate(180deg);
+}
+
 .preview-panel {
   display: flex;
   align-items: center;
@@ -2179,6 +2250,13 @@ input[type="range"] {
 .mix-controls {
   display: grid;
   gap: 12px;
+}
+
+.mix-controls h2 {
+  margin: 6px 0 0;
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 1.2;
 }
 
 .mix-slider {
@@ -2489,6 +2567,15 @@ input[type="range"] {
   .checkbox-grid,
   .segmented {
     grid-template-columns: 1fr;
+  }
+
+  .toggle-header {
+    grid-template-columns: 1fr auto;
+  }
+
+  .toggle-header strong {
+    grid-column: 1 / -1;
+    white-space: normal;
   }
 
   .builder-stepper {
