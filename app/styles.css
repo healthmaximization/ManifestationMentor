@@ -1316,6 +1316,24 @@ input[type="range"] {
   gap: 16px;
 }
 
+.landing-login-button {
+  min-width: 112px;
+  min-height: 44px;
+  padding: 0 22px;
+  white-space: nowrap;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.landing-login-button:hover {
+  transform: translateY(-2px);
+  border-color: rgba(197, 163, 255, 0.34);
+  background: rgba(255, 255, 255, 0.075);
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.22),
+    0 0 0 1px rgba(197, 163, 255, 0.2),
+    0 0 22px rgba(155, 92, 255, 0.12);
+}
+
 .sublimify-public-hero {
   width: min(1180px, 100%);
   min-height: 680px;
@@ -2203,8 +2221,9 @@ input[type="range"] {
     padding: 16px;
   }
 
-  .landing-nav .secondary-button {
-    min-width: 82px;
+  .landing-nav .landing-login-button {
+    min-width: 106px;
+    padding: 0 18px;
   }
 
   .minimal-account-row {

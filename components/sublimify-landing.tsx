@@ -61,7 +61,7 @@ export default function SublimifyLanding() {
           <BrandLogo size="small" />
           <strong>Sublimify</strong>
         </div>
-        <Link className="secondary-button" href="/login?next=%2Fsublimify">
+        <Link className="secondary-button landing-login-button" href="/login?next=%2Fsublimify">
           Log in
         </Link>
       </header>
