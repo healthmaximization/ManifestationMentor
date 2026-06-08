@@ -94,9 +94,9 @@ export default function SublimifyLanding() {
             ))}
           </div>
           <div className="preview-pills">
-            <span><Mic size={14} /> Voice</span>
-            <span><Layers3 size={14} /> Layered</span>
-            <span><Music2 size={14} /> Brown noise</span>
+            <span><Mic size={14} /> Custom voice</span>
+            <span><Layers3 size={14} /> Audio style</span>
+            <span><Music2 size={14} /> Music & sounds</span>
           </div>
         </div>
       </section>
