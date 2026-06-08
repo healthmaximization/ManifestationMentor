@@ -722,7 +722,16 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
               {hasPro ? <Crown size={13} /> : null}
               {hasPro ? "PRO" : "FREE"}
             </span>
-            <button title="Sign out">
+            {!hasPro && (
+              <button
+                type="button"
+                className="account-upgrade-button"
+                onClick={() => openUpgradePrompt("Upgrade to Pro to unlock AI affirmations, downloads, playlists, and unlimited saved subliminals.")}
+              >
+                <Crown size={14} /> Upgrade
+              </button>
+            )}
+            <button type="submit" title="Sign out">
               <LogOut size={17} />
             </button>
           </form>
