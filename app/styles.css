@@ -1641,6 +1641,56 @@ input[type="range"] {
   gap: 12px;
 }
 
+.idea-generator-panel {
+  width: min(720px, 100%);
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+  border: 1px solid rgba(197, 163, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.idea-generator-panel > div:first-child {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+
+.idea-generator-panel strong {
+  color: var(--ink);
+  font-size: 20px;
+}
+
+.idea-generator-panel p {
+  font-size: 15px;
+}
+
+.idea-list {
+  display: grid;
+  gap: 8px;
+}
+
+.idea-list button {
+  min-height: 44px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  text-align: left;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.idea-list button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(197, 163, 255, 0.3);
+  background: rgba(155, 92, 255, 0.1);
+}
+
 .library-create,
 .library-import {
   min-width: 210px;
@@ -2155,6 +2205,12 @@ input[type="range"] {
   cursor: pointer;
   color: var(--muted);
   font-weight: 800;
+}
+
+.creator-prompt-drawer label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 850;
 }
 
 @keyframes pulse {

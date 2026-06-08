@@ -43,3 +43,14 @@ Generate first-person affirmations that are:
 - suitable for looping in a subliminal audio track
 
 Return only the affirmations, one per line.`;
+
+export const DEFAULT_SUBLIMINAL_IDEA_PROMPT = `You are an expert product strategist for a subliminal audio creation app.
+
+Generate subliminal audio ideas that are:
+- specific, desirable, and easy for a user to understand
+- focused on outcomes people actively want
+- suitable for affirmations, voice recording, ambience, and repeated listening
+- varied across identity, confidence, body, beauty, money, sleep, relationships, focus, and emotional state
+- safe, grounded, and not framed as guaranteed results
+
+Return only concise idea titles, one per line.`;

@@ -29,7 +29,7 @@ import {
   XCircle
 } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
-import { DEFAULT_SUBLIMINAL_PROMPT } from "@/lib/config";
+import { DEFAULT_SUBLIMINAL_IDEA_PROMPT, DEFAULT_SUBLIMINAL_PROMPT } from "@/lib/config";
 import meSpeak from "mespeak";
 import meSpeakConfig from "mespeak/src/mespeak_config.json";
 import meSpeakVoice from "mespeak/voices/en/en-us.json";
@@ -199,6 +199,9 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   const [carrierFrequency] = useState(220);
   const [binaural, setBinaural] = useState(true);
   const [prompt, setPrompt] = useState(DEFAULT_SUBLIMINAL_PROMPT);
+  const [ideaPrompt, setIdeaPrompt] = useState(DEFAULT_SUBLIMINAL_IDEA_PROMPT);
+  const [ideaSeed, setIdeaSeed] = useState("");
+  const [ideas, setIdeas] = useState<string[]>([]);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState("");
   const [recording, setRecording] = useState(false);
@@ -245,6 +248,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
       const response = await fetch("/api/sublimify/config");
       const data = await response.json();
       if (data.config?.prompt) setPrompt(data.config.prompt);
+      if (data.config?.idea_prompt) setIdeaPrompt(data.config.idea_prompt);
     }
     loadPrompt();
   }, [owner]);
@@ -300,13 +304,9 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     }
   }
 
-  function startNewProject() {
-    if (libraryLimitReached) {
-      openUpgradePrompt("Free includes 1 custom subliminal in your library. Upgrade to Pro to create and save unlimited subliminals.");
-      return;
-    }
+  function openBuilderWithTopic(initialTopic = "") {
     stopPreview();
-    setTopic("");
+    setTopic(initialTopic);
     setGenerationNotes("");
     setAffirmations("");
     setMode(hasPro ? "generate" : "paste");
@@ -324,6 +324,36 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     setStatus("");
     setActiveStep("intention");
     setScreen("builder");
+  }
+
+  function startNewProject() {
+    if (libraryLimitReached) {
+      openUpgradePrompt("Free includes 1 custom subliminal in your library. Upgrade to Pro to create and save unlimited subliminals.");
+      return;
+    }
+    openBuilderWithTopic("");
+  }
+
+  function selectIdea(idea: string) {
+    openBuilderWithTopic(idea);
+  }
+
+  async function generateIdeas() {
+    if (!owner) return;
+    setLoading("ideas");
+    setStatus("");
+    const response = await fetch("/api/sublimify/generate-ideas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ seed: ideaSeed })
+    });
+    const data = await response.json();
+    setLoading("");
+    if (!response.ok) {
+      setStatus(data.error ?? "Could not generate ideas.");
+      return;
+    }
+    setIdeas(data.ideas ?? []);
   }
 
   async function saveProjectSnapshot(audioBlob?: Blob, renderedDuration = duration) {
@@ -456,7 +486,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     const response = await fetch("/api/sublimify/config", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt })
+      body: JSON.stringify({ prompt, idea_prompt: ideaPrompt })
     });
     const data = await response.json();
     setLoading("");
@@ -705,6 +735,34 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
             <p className="eyebrow">My Subliminals</p>
             <h1>Your private subliminal studio.</h1>
             <p>Create deeply tailored subliminals through a quiet step-by-step flow. Start with one intention, answer a few focused questions, and export your audio when it feels right.</p>
+            {owner && (
+              <div className="idea-generator-panel">
+                <div>
+                  <span className="price-badge muted">Owner idea step</span>
+                  <strong>Generate subliminal ideas first.</strong>
+                  <p>Use this to quickly brainstorm product-ready subliminal concepts before opening the builder.</p>
+                </div>
+                <textarea
+                  value={ideaSeed}
+                  onChange={(event) => setIdeaSeed(event.target.value)}
+                  rows={3}
+                  placeholder="Optional: audience, niche, mood, goal, or trend. Example: beauty, confidence, glow up, relationships..."
+                />
+                <button className="secondary-button" onClick={generateIdeas} disabled={loading === "ideas"}>
+                  {loading === "ideas" ? <Loader2 className="spin" size={17} /> : <Wand2 size={17} />} Generate ideas
+                </button>
+                {ideas.length > 0 && (
+                  <div className="idea-list">
+                    {ideas.map((idea) => (
+                      <button key={idea} onClick={() => selectIdea(idea)}>
+                        <span>{idea}</span>
+                        <ChevronRight size={16} />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <div className="library-actions">
               <button className="primary-button library-create" onClick={startNewProject}>
                 <Plus size={18} /> Create subliminal
@@ -948,9 +1006,12 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
 
           {owner && (
             <details className="creator-prompt-drawer">
-              <summary><Settings2 size={17} /> Creator affirmation prompt</summary>
+              <summary><Settings2 size={17} /> Creator prompts</summary>
+              <label>Subliminal idea prompt</label>
+              <textarea value={ideaPrompt} onChange={(event) => setIdeaPrompt(event.target.value)} rows={7} />
+              <label>Affirmation generation prompt</label>
               <textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} rows={7} />
-              <button className="secondary-button" onClick={savePrompt} disabled={loading === "prompt"}><Save size={17} /> Save prompt</button>
+              <button className="secondary-button" onClick={savePrompt} disabled={loading === "prompt"}><Save size={17} /> Save prompts</button>
             </details>
           )}
         </section>

@@ -147,8 +147,12 @@ create table if not exists public.subliminal_exports (
 create table if not exists public.subliminal_generation_config (
   id text primary key default 'main',
   prompt text not null default '',
+  idea_prompt text not null default '',
   updated_at timestamptz not null default now()
 );
+
+alter table public.subliminal_generation_config
+add column if not exists idea_prompt text not null default '';
 
 alter table public.profiles enable row level security;
 alter table public.products enable row level security;
