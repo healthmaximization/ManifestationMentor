@@ -148,6 +148,16 @@ function normalizeNarratorText(text: string) {
     .slice(0, 2600);
 }
 
+function speechOutputToBytes(output: unknown) {
+  if (Array.isArray(output)) return new Uint8Array(output);
+  if (output instanceof Uint8Array) return output;
+  if (output instanceof ArrayBuffer) return new Uint8Array(output);
+  if (ArrayBuffer.isView(output)) {
+    return new Uint8Array(output.buffer.slice(output.byteOffset, output.byteOffset + output.byteLength));
+  }
+  return null;
+}
+
 function createTextToSpeechBlob(text: string) {
   if (!meSpeak.isConfigLoaded()) meSpeak.loadConfig(meSpeakConfig);
   if (!meSpeak.isVoiceLoaded()) meSpeak.loadVoice(meSpeakVoice);
@@ -158,9 +168,10 @@ function createTextToSpeechBlob(text: string) {
     speed: 140,
     wordgap: 4
   });
-  if (!Array.isArray(wav)) throw new Error("Could not create text to speech audio.");
-  const audioBytes = new Uint8Array(wav);
-  return new Blob([audioBytes.buffer.slice(0)], { type: "audio/wav" });
+  const audioBytes = speechOutputToBytes(wav);
+  if (!audioBytes?.length) throw new Error("Could not create text to speech audio.");
+  const wavBytes = new Uint8Array(audioBytes);
+  return new Blob([wavBytes.buffer], { type: "audio/wav" });
 }
 
 function formatDuration(seconds: number) {
