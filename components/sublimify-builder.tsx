@@ -281,18 +281,23 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   async function startCheckout(planKey: "monthly" | "yearly") {
     setLoading(`checkout-${planKey}`);
     setStatus("");
-    const response = await fetch("/api/stripe/create-checkout-session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productKey: "pro_bundle", planKey })
-    });
-    const data = await response.json();
-    setLoading("");
-    if (!response.ok || !data.url) {
-      setStatus(data.error ?? "Could not start checkout.");
-      return;
+    try {
+      const response = await fetch("/api/stripe/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productKey: "pro_bundle", planKey })
+      });
+      const data = await response.json().catch(() => ({ error: "Checkout did not return a valid response." }));
+      if (!response.ok || !data.url) {
+        setStatus(data.error ?? "Could not start checkout.");
+        return;
+      }
+      window.location.href = data.url;
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Could not start checkout.");
+    } finally {
+      setLoading("");
     }
-    window.location.href = data.url;
   }
 
   function startNewProject() {
