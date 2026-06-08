@@ -23,7 +23,8 @@ import {
   SlidersHorizontal,
   Sparkles,
   Upload,
-  Wand2
+  Wand2,
+  X
 } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import { DEFAULT_SUBLIMINAL_PROMPT } from "@/lib/config";
@@ -195,6 +196,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   const [musicFile, setMusicFile] = useState<File | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [projects, setProjects] = useState<SubliminalProject[]>([]);
+  const [upgradePrompt, setUpgradePrompt] = useState("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const previewRef = useRef<{ context: AudioContext; audios: HTMLAudioElement[]; urls: string[] } | null>(null);
@@ -258,6 +260,11 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     setActiveStep(currentSteps[Math.max(0, activeStepIndex - 1)]);
   }
 
+  function openUpgradePrompt(message: string) {
+    setStatus("");
+    setUpgradePrompt(message);
+  }
+
   async function startCheckout(planKey: "monthly" | "yearly") {
     setLoading(`checkout-${planKey}`);
     setStatus("");
@@ -277,7 +284,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
 
   function startNewProject() {
     if (libraryLimitReached) {
-      setStatus("Free includes 1 custom subliminal in your library. Upgrade to Pro for unlimited creations.");
+      openUpgradePrompt("Free includes 1 custom subliminal in your library. Upgrade to Pro to create and save unlimited subliminals.");
       return;
     }
     stopPreview();
@@ -354,7 +361,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   async function importSubliminal(file: File | null) {
     if (!file) return;
     if (libraryLimitReached) {
-      setStatus("Free includes 1 custom subliminal in your library. Upgrade to Pro for more saved subliminals.");
+      openUpgradePrompt("Free includes 1 custom subliminal in your library. Upgrade to Pro to import and save more subliminals.");
       return;
     }
     setLoading("import");
@@ -377,7 +384,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
 
   async function generateAffirmations() {
     if (isFree) {
-      setStatus("AI-generated affirmations are included in Pro.");
+      openUpgradePrompt("AI-generated affirmations are included in Pro. Upgrade to generate tailored affirmation scripts instantly.");
       return;
     }
     if (!topic.trim()) return;
@@ -401,7 +408,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
 
   function selectMode(nextMode: Mode) {
     if (nextMode === "generate" && isFree) {
-      setStatus("AI-generated affirmations are a Pro feature. You can paste affirmations or record your own voice on Free.");
+      openUpgradePrompt("AI-generated affirmations are a Pro feature. You can paste affirmations or record your own voice on Free.");
       return;
     }
     setMode(nextMode);
@@ -663,6 +670,10 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
           <form action="/api/auth/signout" method="post" className="minimal-account-row">
             <span className="avatar">{initials}</span>
             <span className="account-email">{userEmail}</span>
+            <span className={hasPro ? "plan-badge pro" : "plan-badge free"}>
+              {hasPro ? <Crown size={13} /> : null}
+              {hasPro ? "PRO" : "FREE"}
+            </span>
             <button title="Sign out">
               <LogOut size={17} />
             </button>
@@ -677,53 +688,27 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
             <h1>Your private subliminal studio.</h1>
             <p>Create deeply tailored subliminals through a quiet step-by-step flow. Start with one intention, answer a few focused questions, and export your audio when it feels right.</p>
             <div className="library-actions">
-              <button className="primary-button library-create" onClick={startNewProject} disabled={libraryLimitReached}>
+              <button className="primary-button library-create" onClick={startNewProject}>
                 <Plus size={18} /> Create subliminal
               </button>
-              <label className={libraryLimitReached ? "secondary-button library-import disabled" : "secondary-button library-import"}>
+              <label
+                className={libraryLimitReached ? "secondary-button library-import limited" : "secondary-button library-import"}
+                onClick={(event) => {
+                  if (libraryLimitReached) {
+                    event.preventDefault();
+                    openUpgradePrompt("Free includes 1 custom subliminal in your library. Upgrade to Pro to import and save more subliminals.");
+                  }
+                }}
+              >
                 {loading === "import" ? <Loader2 className="spin" size={18} /> : <Upload size={18} />}
                 Import subliminal
                 <input type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.flac" disabled={libraryLimitReached} onChange={(event) => importSubliminal(event.target.files?.[0] ?? null)} />
               </label>
-              <button className="secondary-button" disabled>
+              <button className="secondary-button" onClick={() => !hasPro && openUpgradePrompt("Playlists are included in Pro. Upgrade to organize multiple subliminals into repeatable listening flows.")} disabled={hasPro}>
                 <Lock size={18} /> Playlists {hasPro ? "coming soon" : "Pro"}
               </button>
             </div>
           </div>
-
-          <section className="membership-panel">
-            <div className="membership-status">
-              <span>{hasPro ? "Pro access" : "Free plan"}</span>
-              <strong>{hasPro ? "Unlimited creation and downloads are unlocked." : "1 library subliminal, manual creation, no downloads."}</strong>
-            </div>
-            {!hasPro && (
-              <div className="pricing-grid">
-                <article className="price-card free">
-                  <span>Free</span>
-                  <strong>Start</strong>
-                  <p>Listen in your library, create manually, and keep 1 custom subliminal saved.</p>
-                </article>
-                <article className="price-card recommended">
-                  <div className="price-badge">Recommended</div>
-                  <span>Pro monthly</span>
-                  <strong>Monthly</strong>
-                  <p>AI affirmations, downloads, playlists, and unlimited saved subliminals.</p>
-                  <button className="primary-button" onClick={() => startCheckout("monthly")} disabled={loading === "checkout-monthly"}>
-                    {loading === "checkout-monthly" ? <Loader2 className="spin" size={17} /> : <Crown size={17} />} Upgrade monthly
-                  </button>
-                </article>
-                <article className="price-card">
-                  <div className="price-badge muted">Discount</div>
-                  <span>Pro yearly</span>
-                  <strong>99/year</strong>
-                  <p>Same Pro access with the yearly discount applied.</p>
-                  <button className="secondary-button" onClick={() => startCheckout("yearly")} disabled={loading === "checkout-yearly"}>
-                    {loading === "checkout-yearly" ? <Loader2 className="spin" size={17} /> : <Crown size={17} />} Upgrade yearly
-                  </button>
-                </article>
-              </div>
-            )}
-          </section>
 
           <div className="library-list">
             <div className="library-list-header">
@@ -783,7 +768,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                 <h1>How do you want to create the affirmations?</h1>
                 <p>Choose one path. The next screen adapts to this choice so the flow stays quiet and focused.</p>
                 <div className="quiz-options">
-                  <button className={mode === "generate" ? "quiz-option active" : "quiz-option"} onClick={() => selectMode("generate")} disabled={isFree}><Wand2 size={22} /><strong>Generate them for me</strong>{isFree && <small className="coming-soon">Pro</small>}<span>Build a script from your intention with guided details.</span></button>
+                  <button className={mode === "generate" ? "quiz-option active" : "quiz-option"} onClick={() => selectMode("generate")}><Wand2 size={22} /><strong>Generate them for me</strong>{isFree && <small className="coming-soon">Pro</small>}<span>Build a script from your intention with guided details.</span></button>
                   <button className={mode === "paste" ? "quiz-option active" : "quiz-option"} onClick={() => selectMode("paste")}><Sparkles size={22} /><strong>I already have affirmations</strong><span>Paste or write your own lines on the next screen.</span></button>
                   <button className={mode === "record" ? "quiz-option active" : "quiz-option"} onClick={() => selectMode("record")}><Mic size={22} /><strong>I want to speak them</strong><span>Go straight to recording your voice.</span></button>
                 </div>
@@ -805,7 +790,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                 <h1>Help the AI shape the affirmations.</h1>
                 <p>Add the feeling, identity shift, or situation this subliminal should reinforce. Then generate and refine the script before creating the voice layer.</p>
                 <textarea value={generationNotes} onChange={(event) => setGenerationNotes(event.target.value)} rows={5} placeholder="Example: make it calm but confident, focused on self-worth, emotional safety, and taking bold action without overthinking." autoFocus />
-                <button className="primary-button" onClick={generateAffirmations} disabled={isFree || !topic.trim() || loading === "generate"}>{loading === "generate" ? <Loader2 className="spin" size={17} /> : isFree ? <Lock size={17} /> : <Wand2 size={17} />} {isFree ? "Upgrade for AI affirmations" : "Generate script"}</button>
+                <button className="primary-button" onClick={generateAffirmations} disabled={!topic.trim() || loading === "generate"}>{loading === "generate" ? <Loader2 className="spin" size={17} /> : isFree ? <Lock size={17} /> : <Wand2 size={17} />} {isFree ? "Upgrade for AI affirmations" : "Generate script"}</button>
                 <textarea value={affirmations} onChange={(event) => setAffirmations(event.target.value)} rows={9} placeholder="Your generated affirmations will appear here..." />
               </>
             )}
@@ -951,6 +936,46 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
             </details>
           )}
         </section>
+      )}
+
+      {upgradePrompt && (
+        <div className="upgrade-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="upgrade-title">
+          <section className="upgrade-modal">
+            <button className="modal-close" onClick={() => setUpgradePrompt("")} aria-label="Close upgrade options">
+              <X size={18} />
+            </button>
+            <div className="upgrade-modal-copy">
+              <span className="price-badge">Unlock Pro</span>
+              <h2 id="upgrade-title">Upgrade your Sublimify studio.</h2>
+              <p>{upgradePrompt}</p>
+            </div>
+            <div className="pricing-grid modal-pricing">
+              <article className="price-card free">
+                <span>Free</span>
+                <strong>Start</strong>
+                <p>Listen in your library, create manually, and keep 1 custom subliminal saved.</p>
+              </article>
+              <article className="price-card recommended">
+                <div className="price-badge">Recommended</div>
+                <span>Pro monthly</span>
+                <strong>Monthly</strong>
+                <p>AI affirmations, downloads, playlists, and unlimited saved subliminals.</p>
+                <button className="primary-button" onClick={() => startCheckout("monthly")} disabled={loading === "checkout-monthly"}>
+                  {loading === "checkout-monthly" ? <Loader2 className="spin" size={17} /> : <Crown size={17} />} Upgrade monthly
+                </button>
+              </article>
+              <article className="price-card">
+                <div className="price-badge muted">Discount</div>
+                <span>Pro yearly</span>
+                <strong>99/year</strong>
+                <p>Same Pro access with the yearly discount applied.</p>
+                <button className="secondary-button" onClick={() => startCheckout("yearly")} disabled={loading === "checkout-yearly"}>
+                  {loading === "checkout-yearly" ? <Loader2 className="spin" size={17} /> : <Crown size={17} />} Upgrade yearly
+                </button>
+              </article>
+            </div>
+          </section>
+        </div>
       )}
 
       {status && <p className="floating-status">{status}</p>}
