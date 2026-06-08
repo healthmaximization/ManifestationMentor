@@ -304,7 +304,11 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   }, [activeVoiceBlob]);
 
   function goNext() {
-    setActiveStep(currentSteps[Math.min(currentSteps.length - 1, activeStepIndex + 1)]);
+    const nextStep = currentSteps[Math.min(currentSteps.length - 1, activeStepIndex + 1)];
+    if (nextStep === "generate" && !generationNotes.trim() && topic.trim()) {
+      setGenerationNotes(topic.trim());
+    }
+    setActiveStep(nextStep);
   }
 
   function handleWizardKeyDown(event: React.KeyboardEvent<HTMLElement>) {
@@ -499,7 +503,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     if (!topic.trim()) return;
     setLoading("generate");
     setStatus("");
-    const guidedTopic = generationNotes.trim() ? `${topic.trim()}\nGuidance: ${generationNotes.trim()}` : topic.trim();
+    const guidedTopic = generationNotes.trim() || topic.trim();
     const response = await fetch("/api/sublimify/generate-affirmations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -522,6 +526,9 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     }
     setMode(nextMode);
     setStatus("");
+    if (nextMode === "generate" && !generationNotes.trim() && topic.trim()) {
+      setGenerationNotes(topic.trim());
+    }
     if (nextMode === "record") {
       setAffirmations("");
       setShowRecordingScript(false);
