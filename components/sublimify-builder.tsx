@@ -743,7 +743,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
           <div className="library-hero">
             <p className="eyebrow">My Subliminals</p>
             <h1>Your private subliminal studio.</h1>
-            <p>Create deeply tailored subliminals through a quiet step-by-step flow. Start with one intention, answer a few focused questions, and export your audio when it feels right.</p>
+            <p>Create deeply tailored subliminals through a quiet step-by-step process. Start with one topic, answer a few focused questions, and export your audio when it feels right.</p>
             {owner && (
               <div className="idea-generator-panel">
                 <div>
@@ -853,7 +853,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                 <h1>How do you want to create the affirmations?</h1>
                 <p>Choose one path. The next screen adapts to this choice so the flow stays quiet and focused.</p>
                 <div className="quiz-options">
-                  <button className={mode === "generate" ? "quiz-option active" : "quiz-option"} onClick={() => selectMode("generate")}><Wand2 size={22} /><strong>Generate them for me</strong>{isFree && <small className="coming-soon">Pro</small>}<span>Build a script from your intention with guided details.</span></button>
+                  <button className={mode === "generate" ? "quiz-option active" : "quiz-option"} onClick={() => selectMode("generate")}><Wand2 size={22} /><strong>Generate them for me</strong>{isFree && <small className="coming-soon">Pro</small>}<span>Build a script from your topic with guided details.</span></button>
                   <button className={mode === "paste" ? "quiz-option active" : "quiz-option"} onClick={() => selectMode("paste")}><Sparkles size={22} /><strong>I already have affirmations</strong><span>Paste or write your own lines on the next screen.</span></button>
                   <button className={mode === "record" ? "quiz-option active" : "quiz-option"} onClick={() => selectMode("record")}><Mic size={22} /><strong>I want to speak them</strong><span>Go straight to recording your voice.</span></button>
                 </div>
@@ -982,7 +982,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                 <h1>Your tailored subliminal is ready.</h1>
                 <p>Preview the current audio bed, then export the WAV. Your creation will appear under My Subliminals after export.</p>
                 <div className="clean-summary">
-                  <div><span>Intention</span><strong>{topic || "Custom subliminal"}</strong></div>
+                  <div><span>Topic</span><strong>{topic || "Custom subliminal"}</strong></div>
                   <div><span>Affirmations</span><strong>{affirmationCount}</strong></div>
                   <div><span>Voice</span><strong>{recordedBlob ? "Your voice" : ttsBlob ? "Text to speech" : "Missing"}</strong></div>
                   <div><span>Style</span><strong>{selectedStyle.label}</strong></div>
