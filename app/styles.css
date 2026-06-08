@@ -164,17 +164,29 @@ label {
   height: 44px;
   display: inline-grid;
   place-items: center;
-  border-radius: 8px;
+  overflow: hidden;
+  border-radius: 50%;
   color: white;
-  background:
-    linear-gradient(135deg, rgba(155, 92, 255, 0.96), rgba(109, 93, 252, 0.94)),
-    #151522;
+  background: #21003f;
   box-shadow: 0 0 0 1px rgba(197, 163, 255, 0.22), var(--glow);
+}
+
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
 }
 
 .brand-mark.small {
   width: 34px;
   height: 34px;
+}
+
+.nav-tabs .brand-mark.small,
+.tool-card .brand-mark.small {
+  width: 24px;
+  height: 24px;
 }
 
 .auth-panel h1,

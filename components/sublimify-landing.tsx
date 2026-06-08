@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, CheckCircle2, Headphones, Layers3, Mic, Music2, Sparkles, Wand2 } from "lucide-react";
+import BrandLogo from "@/components/brand-logo";
 
 const steps = [
   { icon: Sparkles, title: "Choose the intention", text: "Start with the exact shift you want your mind to rehearse." },
@@ -57,7 +58,7 @@ export default function SublimifyLanding() {
     <main className="sublimify-landing">
       <header className="landing-nav">
         <div className="minimal-brand" aria-label="Sublimify">
-          <span className="brand-mark small"><Music2 size={18} /></span>
+          <BrandLogo size="small" />
           <strong>Sublimify</strong>
         </div>
         <Link className="secondary-button" href="/login?next=%2Fsublimify">

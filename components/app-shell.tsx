@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Home, LogOut, MessageCircle, Music2, Settings2, Sparkles } from "lucide-react";
+import { Home, LogOut, MessageCircle, Settings2 } from "lucide-react";
+import BrandLogo from "@/components/brand-logo";
 import ChatPanel from "@/components/chat-panel";
 import TrainingPanel from "@/components/training-panel";
 import type { Database } from "@/lib/supabase/types";
@@ -29,10 +30,8 @@ export default function AppShell({
       <aside className="sidebar">
         <div className="sidebar-top">
           <div className="logo-row">
-            <span className="brand-mark small">
-              <Sparkles size={18} />
-            </span>
-            <strong>Manifest</strong>
+            <BrandLogo size="small" />
+            <strong>Manifestation Mentor</strong>
           </div>
           <nav className="nav-tabs" aria-label="Main">
             <Link href="/" title="Home">
@@ -44,7 +43,7 @@ export default function AppShell({
               <span>Chat</span>
             </button>
             <Link href="/sublimify" title="Sublimify">
-              <Music2 size={18} />
+              <BrandLogo size="small" />
               <span>Sublimify</span>
             </Link>
             {canSeeTraining && (

@@ -1,16 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { LogOut, MessageCircle, Music2, Sparkles } from "lucide-react";
+import { LogOut } from "lucide-react";
+import BrandLogo from "@/components/brand-logo";
 
 export default function ToolSelector({ userEmail }: { userEmail: string }) {
   return (
     <main className="tool-home">
       <header className="tool-home-header">
         <div className="logo-row">
-          <span className="brand-mark small">
-            <Sparkles size={18} />
-          </span>
+          <BrandLogo size="small" />
           <strong>Subliminal Academy</strong>
         </div>
         <form action="/api/auth/signout" method="post">
@@ -29,12 +28,12 @@ export default function ToolSelector({ userEmail }: { userEmail: string }) {
 
       <section className="tool-cards">
         <Link href="/manifestation" className="tool-card">
-          <MessageCircle size={24} />
+          <BrandLogo size="small" />
           <span>Manifestation Mentor</span>
           <p>Chat, coach, train knowledge, and refine the owner-controlled AI personality.</p>
         </Link>
         <Link href="/sublimify" className="tool-card featured">
-          <Music2 size={24} />
+          <BrandLogo size="small" />
           <span>Sublimify Builder</span>
           <p>Create recorded, AI voice, silent, layered, binaural, and ambient subliminals.</p>
         </Link>
@@ -42,4 +41,3 @@ export default function ToolSelector({ userEmail }: { userEmail: string }) {
     </main>
   );
 }
-

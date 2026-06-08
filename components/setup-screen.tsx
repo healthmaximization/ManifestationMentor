@@ -1,12 +1,11 @@
-import { Database, KeyRound, Sparkles } from "lucide-react";
+import { Database, KeyRound } from "lucide-react";
+import BrandLogo from "@/components/brand-logo";
 
 export default function SetupScreen() {
   return (
     <main className="auth-page">
       <section className="auth-panel setup-panel">
-        <div className="brand-mark">
-          <Sparkles size={22} />
-        </div>
+        <BrandLogo />
         <h1>Subliminal Academy</h1>
         <p>Add your environment variables to connect Supabase, OpenRouter, and your creation tools.</p>
         <div className="setup-list">

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, EyeOff, Sparkles } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import BrandLogo from "@/components/brand-logo";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 
 export default function AuthScreen() {
@@ -95,9 +96,7 @@ export default function AuthScreen() {
     <main className="auth-page">
       <section className="auth-panel">
         <div className="auth-card-top">
-          <div className="brand-mark">
-            <Sparkles size={22} />
-          </div>
+          <BrandLogo />
           <span>Member access</span>
         </div>
         <h1>{mode === "signin" ? "Welcome back." : "Start creating."}</h1>

@@ -25,6 +25,7 @@ import {
   Upload,
   Wand2
 } from "lucide-react";
+import BrandLogo from "@/components/brand-logo";
 import { DEFAULT_SUBLIMINAL_PROMPT } from "@/lib/config";
 import meSpeak from "mespeak";
 import meSpeakConfig from "mespeak/src/mespeak_config.json";
@@ -649,12 +650,12 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
       <header className="minimal-topbar">
         {owner ? (
           <Link href="/" className="minimal-brand">
-            <span className="brand-mark small"><Music2 size={18} /></span>
+            <BrandLogo size="small" />
             <strong>Sublimify</strong>
           </Link>
         ) : (
           <div className="minimal-brand" aria-label="Sublimify">
-            <span className="brand-mark small"><Music2 size={18} /></span>
+            <BrandLogo size="small" />
             <strong>Sublimify</strong>
           </div>
         )}
