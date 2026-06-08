@@ -6,12 +6,13 @@ A Next.js app for an AI manifestation coach with owner-only training controls, S
 
 1. Create a Supabase project and run `supabase/schema.sql` in the SQL editor.
 2. Create a storage bucket named `training-files`.
-3. In Supabase Auth, enable the Email provider. Turn off "Confirm email" if you want instant email/password signup without confirmation links.
+3. In Supabase Auth, enable the Email provider. Keep "Confirm email" on for production accounts.
 4. Add these redirect URLs in Supabase Auth:
 
 ```text
 http://localhost:3000/auth/callback
 https://your-vercel-domain.vercel.app/auth/callback
+https://subliminal-academy.com/auth/callback
 ```
 
 5. Copy `.env.example` to `.env.local` and fill in the values.
@@ -60,6 +61,21 @@ Sublimify lives at:
 /sublimify
 ```
 
-Run the latest `supabase/schema.sql` again after pulling this version. It adds `subliminal_generation_config`, which stores the owner-editable affirmation prompt.
+Run the latest `supabase/schema.sql` again after pulling this version. It adds `subliminal_generation_config`, which stores the owner-editable affirmation and idea prompts.
 
-AI affirmation generation uses OpenRouter. Narrator audio is generated locally in the browser as a simple robotic WAV voice, so it does not require ElevenLabs, OpenAI TTS, or any paid voice API.
+AI affirmation generation uses OpenRouter. Text-to-speech narrator audio uses Google Cloud Text-to-Speech through the server route at `/api/sublimify/tts`.
+
+Add this in Vercel when you enable Google Cloud TTS:
+
+```text
+GOOGLE_TTS_API_KEY=your_google_cloud_api_key
+```
+
+Optional tuning values:
+
+```text
+GOOGLE_TTS_VOICE=en-US-Standard-J
+GOOGLE_TTS_LANGUAGE_CODE=en-US
+GOOGLE_TTS_SPEAKING_RATE=0.92
+GOOGLE_TTS_PITCH=-2
+```
