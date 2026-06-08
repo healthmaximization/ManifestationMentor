@@ -952,8 +952,8 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
               <>
                 <p className="eyebrow">Guided Script</p>
                 <h1>Help the AI shape the affirmations.</h1>
-                <p>Add the feeling, identity shift, or situation this subliminal should reinforce. Then generate and refine the script before creating the voice layer.</p>
-                <textarea value={generationNotes} onChange={(event) => setGenerationNotes(event.target.value)} rows={5} placeholder="Example: make it calm but confident, focused on self-worth, emotional safety, and taking bold action without overthinking." autoFocus />
+                <p>Add examples, preferred wording, topics to include, or any requirements you have for the affirmations. Then generate and edit the script before creating the voice layer.</p>
+                <textarea value={generationNotes} onChange={(event) => setGenerationNotes(event.target.value)} rows={5} placeholder="Example: include short present-tense lines, avoid complicated words, make it calm and confident, and focus on clear skin and daily self-care." autoFocus />
                 <button className="primary-button" onClick={generateAffirmations} disabled={!topic.trim() || loading === "generate"}>{loading === "generate" ? <Loader2 className="spin" size={17} /> : isFree ? <Lock size={17} /> : <Wand2 size={17} />} {isFree ? "Upgrade for AI affirmations" : "Generate script"}</button>
                 <textarea value={affirmations} onChange={(event) => setAffirmations(event.target.value)} rows={9} placeholder="Your generated affirmations will appear here..." />
               </>
