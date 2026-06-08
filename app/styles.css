@@ -1268,6 +1268,9 @@ input[type="range"] {
 }
 
 .minimal-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
   min-height: 72px;
   padding: 16px 24px;
   display: flex;
@@ -1372,6 +1375,9 @@ input[type="range"] {
 }
 
 .landing-nav {
+  position: sticky;
+  top: 0;
+  z-index: 30;
   width: min(1180px, 100%);
   margin: 0 auto;
   padding: 22px 24px;
@@ -1379,6 +1385,9 @@ input[type="range"] {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  background: rgba(8, 9, 15, 0.78);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(197, 163, 255, 0.12);
 }
 
 .landing-login-button {
