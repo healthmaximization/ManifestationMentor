@@ -50,29 +50,34 @@ export default function AuthScreen() {
       return;
     }
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
+    const signupResponse = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: normalizedEmail, password })
+    });
+    const signupData = await signupResponse.json().catch(() => ({ error: "Could not create account." }));
+
+    if (!signupResponse.ok) {
+      setLoading(false);
+      setError(signupData.error ?? "Could not create account.");
+      return;
+    }
+
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email: normalizedEmail,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`
-      }
+      password
     });
 
-    if (signUpError) {
-      setLoading(false);
-      setError(signUpError.message);
-      return;
-    }
-
-    if (data.session) {
-      setLoading(false);
-      router.push(nextPath);
-      router.refresh();
-      return;
-    }
-
     setLoading(false);
-    setNotice("Almost there. Check your email to confirm your account, then log in to open the studio.");
+
+    if (signInError || !signInData.session) {
+      setNotice("Account created. Log in with your email and password to open the studio.");
+      setMode("signin");
+      return;
+    }
+
+    router.push(nextPath);
+    router.refresh();
   }
 
   return (
