@@ -815,7 +815,6 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
           <div className="library-hero">
             <p className="eyebrow">My Subliminals</p>
             <h1>Your private subliminal studio.</h1>
-            <p>Create deeply tailored subliminals through a quiet step-by-step process. Start with one topic, answer a few focused questions, and export your audio when it feels right.</p>
             {owner && (
               <div className="idea-generator-panel">
                 <div>
