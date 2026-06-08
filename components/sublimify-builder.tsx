@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   Clock,
   Crown,
-  Download,
   Library,
   Loader2,
   Lock,
@@ -282,6 +281,9 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     const nextStep = currentSteps[Math.min(currentSteps.length - 1, activeStepIndex + 1)];
     if (nextStep === "generate" && !generationNotes.trim() && topic.trim()) {
       setGenerationNotes(topic.trim());
+    }
+    if (nextStep === "export") {
+      stopPreview();
     }
     setActiveStep(nextStep);
   }
@@ -745,6 +747,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   }
 
   async function exportWav() {
+    stopPreview();
     setLoading("export");
     setStatus("");
     try {
@@ -760,9 +763,10 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
       }
 
       await saveProjectSnapshot(rendered.blob, rendered.duration);
-      setStatus(hasPro ? "WAV exported and saved to your account." : "Subliminal saved to your library. Upgrade to Pro to download.");
+      setStatus(hasPro ? "Subliminal saved to your studio and downloaded." : "Subliminal saved to your studio. Upgrade to Pro to download.");
+      setScreen("library");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : hasPro ? "WAV exported, but could not save to your account." : "Could not save to your library.");
+      setStatus(error instanceof Error ? error.message : hasPro ? "WAV exported, but could not save to your studio." : "Could not save to your studio.");
     } finally {
       setLoading("");
     }
@@ -900,7 +904,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
       {screen === "builder" && (
         <section className="minimal-builder">
           <div className="minimal-progress">
-            <button className="secondary-button" onClick={() => setScreen("library")}><ArrowLeft size={17} /> My Subliminals</button>
+            <button className="secondary-button" onClick={() => { stopPreview(); setScreen("library"); }}><ArrowLeft size={17} /> My Subliminals</button>
             <span>Step {activeStepIndex + 1} of {currentSteps.length}</span>
           </div>
           <div className="quiet-progress-bar"><span style={{ width: `${((activeStepIndex + 1) / currentSteps.length) * 100}%` }} /></div>
@@ -1112,7 +1116,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
               <>
                 <p className="eyebrow">Final Review</p>
                 <h1>Your tailored subliminal is ready.</h1>
-                <p>Preview the current audio bed, then export the WAV. Your creation will appear under My Subliminals after export.</p>
+                <p>Review the final setup, then save it to your studio. Your creation will appear under My Subliminals.</p>
                 <div className="clean-summary">
                   <div><span>Topic</span><strong>{topic || "Custom subliminal"}</strong></div>
                   <div><span>Affirmations</span><strong>{affirmationCount}</strong></div>
@@ -1124,7 +1128,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                   <div><span>Mix</span><strong>{Math.round(voiceVolume * 100)}% voice / {binaural ? `${Math.round(beatVolume * 100)}% beats` : "no beats"} / {hasSoundBed ? `${Math.round(soundVolume * 100)}% sound` : "no sound"}</strong></div>
                 </div>
                 <div className="minimal-actions">
-                  <button className="primary-button" onClick={exportWav} disabled={loading === "export"}>{loading === "export" ? <Loader2 className="spin" size={17} /> : hasPro ? <Download size={17} /> : <Library size={17} />} {hasPro ? "Export WAV" : "Save to library"}</button>
+                  <button className="primary-button" onClick={exportWav} disabled={loading === "export"}>{loading === "export" ? <Loader2 className="spin" size={17} /> : <Save size={17} />} Save to studio</button>
                 </div>
               </>
             )}
