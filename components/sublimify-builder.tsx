@@ -263,6 +263,12 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   }, [owner]);
 
   useEffect(() => {
+    if (!status) return;
+    const timer = window.setTimeout(() => setStatus(""), 4500);
+    return () => window.clearTimeout(timer);
+  }, [status]);
+
+  useEffect(() => {
     if (!activeVoiceBlob) {
       setVoiceDuration(0);
       return;
