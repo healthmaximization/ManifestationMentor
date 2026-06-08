@@ -778,12 +778,12 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
         {owner ? (
           <Link href="/" className="minimal-brand">
             <BrandLogo size="small" />
-            <strong>Sublimify</strong>
+            <strong>Subliminal Academy</strong>
           </Link>
         ) : (
-          <div className="minimal-brand" aria-label="Sublimify">
+          <div className="minimal-brand" aria-label="Subliminal Academy">
             <BrandLogo size="small" />
-            <strong>Sublimify</strong>
+            <strong>Subliminal Academy</strong>
           </div>
         )}
         <div className="minimal-top-actions">
@@ -1159,7 +1159,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
             </button>
             <div className="upgrade-modal-copy">
               <span className="price-badge">Unlock Pro</span>
-              <h2 id="upgrade-title">Upgrade your Sublimify studio.</h2>
+              <h2 id="upgrade-title">Upgrade your Subliminal studio.</h2>
               <p>{upgradePrompt}</p>
             </div>
             <div className="pricing-grid modal-pricing">

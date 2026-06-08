@@ -57,9 +57,9 @@ export default function SublimifyLanding() {
   return (
     <main className="sublimify-landing">
       <header className="landing-nav">
-        <div className="minimal-brand" aria-label="Sublimify">
+        <div className="minimal-brand" aria-label="Subliminal Academy">
           <BrandLogo size="small" />
-          <strong>Sublimify</strong>
+          <strong>Subliminal Academy</strong>
         </div>
         <Link className="secondary-button landing-login-button" href="/login?next=%2Fsublimify">
           Log in
