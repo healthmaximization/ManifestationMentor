@@ -753,27 +753,18 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     return { blob: audioBufferToWav(rendered), duration: renderDuration };
   }
 
-  async function exportWav() {
+  async function saveToStudio() {
     stopPreview();
     setLoading("export");
     setStatus("");
     try {
       const rendered = await renderSubliminalWav();
 
-      if (hasPro) {
-        const url = URL.createObjectURL(rendered.blob);
-        const anchor = document.createElement("a");
-        anchor.href = url;
-        anchor.download = `sublimify-${style}.wav`;
-        anchor.click();
-        URL.revokeObjectURL(url);
-      }
-
       await saveProjectSnapshot(rendered.blob, rendered.duration);
-      setStatus(hasPro ? "Subliminal saved to your studio and downloaded." : "Subliminal saved to your studio. Upgrade to Pro to download.");
+      setStatus(hasPro ? "Subliminal saved to your studio." : "Subliminal saved to your studio. Upgrade to Pro to download.");
       setScreen("library");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : hasPro ? "WAV exported, but could not save to your studio." : "Could not save to your studio.");
+      setStatus(error instanceof Error ? error.message : "Could not save to your studio.");
     } finally {
       setLoading("");
     }
@@ -1157,7 +1148,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                   <div><span>Mix</span><strong>{Math.round(voiceVolume * 100)}% voice / {binaural ? `${Math.round(beatVolume * 100)}% beats` : "no beats"} / {hasSoundBed ? `${Math.round(soundVolume * 100)}% sound` : "no sound"}</strong></div>
                 </div>
                 <div className="minimal-actions">
-                  <button className="primary-button" onClick={exportWav} disabled={loading === "export"}>{loading === "export" ? <Loader2 className="spin" size={17} /> : <Save size={17} />} Save to studio</button>
+                  <button className="primary-button" onClick={saveToStudio} disabled={loading === "export"}>{loading === "export" ? <Loader2 className="spin" size={17} /> : <Save size={17} />} Save to studio</button>
                 </div>
               </>
             )}
