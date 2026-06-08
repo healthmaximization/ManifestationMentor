@@ -1706,6 +1706,33 @@ input[type="range"] {
   line-height: 1.5;
 }
 
+.plan-feature-list {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+  list-style: none;
+  color: rgba(245, 243, 255, 0.86);
+  line-height: 1.42;
+}
+
+.plan-feature-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.plan-feature-list svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--cyan);
+}
+
+.plan-feature-list svg.lucide-circle-x,
+.plan-feature-list svg.lucide-x-circle {
+  color: #fb7185;
+}
+
 .price-badge {
   width: max-content;
   padding: 5px 9px;

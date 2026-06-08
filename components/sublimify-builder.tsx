@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   ChevronRight,
+  CheckCircle2,
   Clock,
   Crown,
   Download,
@@ -24,7 +25,8 @@ import {
   Sparkles,
   Upload,
   Wand2,
-  X
+  X,
+  XCircle
 } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import { DEFAULT_SUBLIMINAL_PROMPT } from "@/lib/config";
@@ -953,13 +955,25 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
               <article className="price-card free">
                 <span>Free</span>
                 <strong>Start</strong>
-                <p>Listen in your library, create manually, and keep 1 custom subliminal saved.</p>
+                <ul className="plan-feature-list">
+                  <li><CheckCircle2 size={16} /> Listen in your library</li>
+                  <li><CheckCircle2 size={16} /> Manual creation</li>
+                  <li><XCircle size={16} /> 1 saved custom subliminal</li>
+                  <li><XCircle size={16} /> No AI affirmations</li>
+                  <li><XCircle size={16} /> No downloads or playlists</li>
+                </ul>
               </article>
               <article className="price-card recommended">
                 <div className="price-badge">Recommended</div>
                 <span>Pro monthly</span>
                 <strong>Monthly</strong>
-                <p>AI affirmations, downloads, playlists, and unlimited saved subliminals.</p>
+                <ul className="plan-feature-list">
+                  <li><CheckCircle2 size={16} /> AI affirmation generation</li>
+                  <li><CheckCircle2 size={16} /> Unlimited saved subliminals</li>
+                  <li><CheckCircle2 size={16} /> Download finished audio</li>
+                  <li><CheckCircle2 size={16} /> Playlists access</li>
+                  <li><CheckCircle2 size={16} /> Best for monthly flexibility</li>
+                </ul>
                 <button className="primary-button" onClick={() => startCheckout("monthly")} disabled={loading === "checkout-monthly"}>
                   {loading === "checkout-monthly" ? <Loader2 className="spin" size={17} /> : <Crown size={17} />} Upgrade monthly
                 </button>
@@ -968,7 +982,13 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                 <div className="price-badge muted">Discount</div>
                 <span>Pro yearly</span>
                 <strong>99/year</strong>
-                <p>Same Pro access with the yearly discount applied.</p>
+                <ul className="plan-feature-list">
+                  <li><CheckCircle2 size={16} /> All Pro monthly features</li>
+                  <li><CheckCircle2 size={16} /> AI affirmation generation</li>
+                  <li><CheckCircle2 size={16} /> Unlimited library</li>
+                  <li><CheckCircle2 size={16} /> Downloads and playlists</li>
+                  <li><CheckCircle2 size={16} /> Yearly discount included</li>
+                </ul>
                 <button className="secondary-button" onClick={() => startCheckout("yearly")} disabled={loading === "checkout-yearly"}>
                   {loading === "checkout-yearly" ? <Loader2 className="spin" size={17} /> : <Crown size={17} />} Upgrade yearly
                 </button>
