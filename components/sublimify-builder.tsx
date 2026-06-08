@@ -1052,7 +1052,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
               <article className="price-card recommended">
                 <div className="price-badge">Recommended</div>
                 <span>Pro monthly</span>
-                <strong>Monthly</strong>
+                <strong>$9/month</strong>
                 <ul className="plan-feature-list">
                   <li><CheckCircle2 size={16} /> AI affirmation generation</li>
                   <li><CheckCircle2 size={16} /> Unlimited saved subliminals</li>
@@ -1067,7 +1067,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
               <article className="price-card">
                 <div className="price-badge muted">Discount</div>
                 <span>Pro yearly</span>
-                <strong>99/year</strong>
+                <strong>€99/year</strong>
                 <ul className="plan-feature-list">
                   <li><CheckCircle2 size={16} /> All Pro monthly features</li>
                   <li><CheckCircle2 size={16} /> AI affirmation generation</li>
