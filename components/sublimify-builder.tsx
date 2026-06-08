@@ -182,7 +182,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   const [style, setStyle] = useState<Style>("normal");
   const [ambience, setAmbience] = useState<Ambience>("none");
   const [voiceDuration, setVoiceDuration] = useState(0);
-  const [voiceVolume, setVoiceVolume] = useState(0.1);
+  const [voiceVolume, setVoiceVolume] = useState(0.13);
   const [soundVolume, setSoundVolume] = useState(0.5);
   const [beatVolume, setBeatVolume] = useState(0.25);
   const [binauralRange, setBinauralRange] = useState<BinauralRange>("theta");
@@ -355,7 +355,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     setAmbience("none");
     setBinaural(false);
     setBinauralRange("theta");
-    setVoiceVolume(0.1);
+    setVoiceVolume(0.13);
     setSoundVolume(0.5);
     setBeatVolume(0.25);
     setRecordedBlob(null);
