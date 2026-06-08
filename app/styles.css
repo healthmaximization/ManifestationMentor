@@ -2052,6 +2052,14 @@ input[type="range"] {
   min-height: 132px;
 }
 
+.upload-sound-tile {
+  cursor: pointer;
+}
+
+.upload-sound-tile input {
+  display: none;
+}
+
 .quiz-option {
   min-height: 150px;
   padding: 18px;
@@ -2142,7 +2150,6 @@ input[type="range"] {
   gap: 8px;
 }
 
-.fixed-duration,
 .preview-panel {
   display: flex;
   align-items: center;
@@ -2154,17 +2161,17 @@ input[type="range"] {
   background: rgba(255, 255, 255, 0.035);
 }
 
-.fixed-duration {
-  max-width: 420px;
-}
-
-.fixed-duration span,
 .preview-panel span {
   color: var(--muted);
   line-height: 1.45;
 }
 
-.fixed-duration strong,
+.preview-panel small {
+  color: rgba(245, 243, 255, 0.66);
+  font-size: 12px;
+  font-weight: 850;
+}
+
 .preview-panel strong {
   color: var(--ink);
 }
@@ -2399,6 +2406,8 @@ input[type="range"] {
   .guidance-grid,
   .voice-choice-grid,
   .sound-grid,
+  .quiz-options.sound-options,
+  .quiz-options.beat-options,
   .export-review-grid,
   .style-list.luxury {
     grid-template-columns: 1fr;
