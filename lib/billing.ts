@@ -31,6 +31,10 @@ export function getStripePriceId(productKey: ProductKey, planKey: PlanKey = "mon
     throw new Error(`Missing ${envName}.`);
   }
 
+  if (!priceId.startsWith("price_")) {
+    throw new Error(`${envName} must be a Stripe Price ID starting with price_, not a number or amount.`);
+  }
+
   return priceId;
 }
 
