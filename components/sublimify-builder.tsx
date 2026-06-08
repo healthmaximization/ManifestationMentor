@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Clock,
   Crown,
+  Download,
   Library,
   Loader2,
   Lock,
@@ -772,6 +773,23 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     }
   }
 
+  function downloadProject(project: SubliminalProject) {
+    if (!hasPro) {
+      openUpgradePrompt("Downloads are included in Pro. Upgrade to download finished subliminals as audio files.");
+      return;
+    }
+
+    if (!project.audioUrl) {
+      setStatus("Audio is still processing. Try downloading again once it is ready.");
+      return;
+    }
+
+    const anchor = document.createElement("a");
+    anchor.href = project.audioUrl;
+    anchor.download = `${project.title || "subliminal"}.wav`;
+    anchor.click();
+  }
+
   return (
     <main className="sublimify-minimal">
       <header className="minimal-topbar">
@@ -892,7 +910,13 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                       <span>{project.imported ? "Audio is processing." : "Audio will appear here after saving/exporting."}</span>
                     )}
                   </div>
-                  <small><Clock size={14} /> {new Date(project.createdAt).toLocaleDateString()}</small>
+                  <div className="subliminal-row-actions">
+                    <button className="secondary-button" onClick={() => downloadProject(project)}>
+                      {hasPro ? <Download size={16} /> : <Lock size={16} />}
+                      Download
+                    </button>
+                    <small><Clock size={14} /> {new Date(project.createdAt).toLocaleDateString()}</small>
+                  </div>
                 </article>
               ))
             )}
