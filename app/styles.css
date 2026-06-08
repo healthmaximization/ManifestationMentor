@@ -2039,6 +2039,19 @@ input[type="range"] {
   grid-template-columns: minmax(0, 1fr);
 }
 
+.quiz-options.sound-options {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.quiz-options.beat-options {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.quiz-options.sound-options .quiz-option,
+.quiz-options.beat-options .quiz-option {
+  min-height: 132px;
+}
+
 .quiz-option {
   min-height: 150px;
   padding: 18px;

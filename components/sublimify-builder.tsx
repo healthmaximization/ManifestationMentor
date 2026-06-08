@@ -37,7 +37,8 @@ import meSpeakVoice from "mespeak/voices/en/en-us.json";
 type Mode = "record" | "paste" | "generate";
 type VoiceChoice = "record" | "tts";
 type Style = "normal" | "silent" | "layered" | "ultra_layered";
-type Ambience = "none" | "rain" | "brown";
+type Ambience = "none" | "rain_soft" | "rain_heavy" | "rain_window" | "brown_soft" | "brown_deep" | "brown_warm";
+type BinauralRange = "delta" | "theta" | "alpha" | "beta";
 type Step = "intention" | "source" | "paste" | "generate" | "voice" | "style" | "sound" | "export";
 
 type SubliminalProject = {
@@ -62,6 +63,23 @@ const STYLES: { key: Style; label: string; description: string; available: boole
   { key: "silent", label: "Silent subliminal", description: "Voice layer is pushed very low into the background.", available: false },
   { key: "layered", label: "Layered subliminal", description: "Several offset voice layers for a denser effect.", available: false },
   { key: "ultra_layered", label: "Ultra layered", description: "A high-density stereo stack for a stronger build.", available: false }
+];
+
+const AMBIENCE_OPTIONS: { key: Ambience; label: string; description: string }[] = [
+  { key: "none", label: "No generated sound", description: "Use only voice, uploaded audio, and optional binaural tones." },
+  { key: "rain_soft", label: "Soft rain", description: "Light, gentle rain texture." },
+  { key: "rain_heavy", label: "Heavy rain", description: "Thicker rain for more masking." },
+  { key: "rain_window", label: "Window rain", description: "Soft rain with small drops and movement." },
+  { key: "brown_soft", label: "Soft brown noise", description: "Smooth low noise under the affirmations." },
+  { key: "brown_deep", label: "Deep brown noise", description: "Darker, stronger low-end masking." },
+  { key: "brown_warm", label: "Warm brown noise", description: "Rounder and less intense." }
+];
+
+const BINAURAL_OPTIONS: { key: BinauralRange; label: string; frequency: number; description: string }[] = [
+  { key: "delta", label: "Delta", frequency: 2.5, description: "Very slow range for sleep-focused tracks." },
+  { key: "theta", label: "Theta", frequency: 6, description: "Relaxed range for calm focus." },
+  { key: "alpha", label: "Alpha", frequency: 10, description: "Clear and relaxed daytime listening." },
+  { key: "beta", label: "Beta", frequency: 16, description: "Brighter range for focus and energy." }
 ];
 
 function linesToScript(text: string) {
@@ -126,12 +144,18 @@ async function decodeBlob(context: BaseAudioContext, blob: Blob) {
 function createNoiseBuffer(context: BaseAudioContext, duration: number, ambience: Ambience) {
   const buffer = context.createBuffer(2, duration * context.sampleRate, context.sampleRate);
   let lastOut = 0;
+  const isRain = ambience.startsWith("rain");
+  const rainDropChance = ambience === "rain_heavy" ? 0.972 : ambience === "rain_window" ? 0.992 : 0.986;
+  const rainBase = ambience === "rain_heavy" ? 0.24 : ambience === "rain_window" ? 0.11 : 0.15;
+  const rainDrop = ambience === "rain_heavy" ? 0.85 : ambience === "rain_window" ? 0.55 : 0.68;
+  const brownFilter = ambience === "brown_deep" ? 0.014 : ambience === "brown_warm" ? 0.026 : 0.02;
+  const brownGain = ambience === "brown_deep" ? 4.2 : ambience === "brown_warm" ? 2.9 : 3.5;
   for (let channel = 0; channel < 2; channel += 1) {
     const data = buffer.getChannelData(channel);
     for (let i = 0; i < data.length; i += 1) {
       const white = Math.random() * 2 - 1;
-      lastOut = ambience === "brown" ? (lastOut + 0.02 * white) / 1.02 : white * 0.35;
-      data[i] = ambience === "rain" ? white * (Math.random() > 0.986 ? 0.7 : 0.16) : lastOut * 3.5;
+      lastOut = isRain ? white * 0.35 : (lastOut + brownFilter * white) / (1 + brownFilter);
+      data[i] = isRain ? white * (Math.random() > rainDropChance ? rainDrop : rainBase) : lastOut * brownGain;
     }
   }
   return buffer;
@@ -190,12 +214,12 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   const [generationNotes, setGenerationNotes] = useState("");
   const [affirmations, setAffirmations] = useState("");
   const [style, setStyle] = useState<Style>("normal");
-  const [ambience, setAmbience] = useState<Ambience>("brown");
+  const [ambience, setAmbience] = useState<Ambience>("brown_soft");
   const [voiceDuration, setVoiceDuration] = useState(0);
   const [voiceVolume, setVoiceVolume] = useState(0.18);
   const [soundVolume, setSoundVolume] = useState(0.38);
   const [beatVolume, setBeatVolume] = useState(0.3);
-  const [beatFrequency] = useState(6);
+  const [binauralRange, setBinauralRange] = useState<BinauralRange>("theta");
   const [carrierFrequency] = useState(220);
   const [binaural, setBinaural] = useState(true);
   const [prompt, setPrompt] = useState(DEFAULT_SUBLIMINAL_PROMPT);
@@ -215,7 +239,15 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   const [upgradePrompt, setUpgradePrompt] = useState("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const previewRef = useRef<{ context: AudioContext; audios: HTMLAudioElement[]; urls: string[] } | null>(null);
+  const previewRef = useRef<{
+    context: AudioContext;
+    audios: HTMLAudioElement[];
+    urls: string[];
+    ambienceGain?: GainNode;
+    beatGain?: GainNode;
+    voiceAudio?: HTMLAudioElement;
+    musicAudio?: HTMLAudioElement;
+  } | null>(null);
 
   const initials = useMemo(() => userEmail.slice(0, 2).toUpperCase(), [userEmail]);
   const script = useMemo(() => linesToScript(affirmations), [affirmations]);
@@ -224,6 +256,8 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   const duration = Math.max(1, Math.ceil(voiceDuration || 0));
   const affirmationCount = useMemo(() => affirmations.split("\n").filter((line) => line.trim()).length, [affirmations]);
   const selectedStyle = STYLES.find((item) => item.key === style) ?? STYLES[0];
+  const selectedAmbience = AMBIENCE_OPTIONS.find((item) => item.key === ambience) ?? AMBIENCE_OPTIONS[0];
+  const selectedBinaural = BINAURAL_OPTIONS.find((item) => item.key === binauralRange) ?? BINAURAL_OPTIONS[1];
   const currentSteps = useMemo<Step[]>(() => {
     const sourceStep: Step[] = mode === "record" ? [] : mode === "paste" ? ["paste"] : ["generate"];
     return [...BASE_STEPS, ...sourceStep, ...FINISH_STEPS];
@@ -273,8 +307,34 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     setActiveStep(currentSteps[Math.min(currentSteps.length - 1, activeStepIndex + 1)]);
   }
 
+  function handleWizardKeyDown(event: React.KeyboardEvent<HTMLElement>) {
+    if (event.key !== "Enter" || activeStep === "export" || !canContinue()) return;
+    const target = event.target as HTMLElement;
+    if (target.tagName === "TEXTAREA" || target.isContentEditable) return;
+    event.preventDefault();
+    goNext();
+  }
+
   function goBack() {
     setActiveStep(currentSteps[Math.max(0, activeStepIndex - 1)]);
+  }
+
+  function updateVoiceVolume(nextVolume: number) {
+    setVoiceVolume(nextVolume);
+    if (previewRef.current?.voiceAudio) {
+      previewRef.current.voiceAudio.volume = style === "silent" ? 0.04 : Math.min(1, nextVolume);
+    }
+  }
+
+  function updateSoundVolume(nextVolume: number) {
+    setSoundVolume(nextVolume);
+    if (previewRef.current?.ambienceGain) previewRef.current.ambienceGain.gain.value = nextVolume;
+    if (previewRef.current?.musicAudio) previewRef.current.musicAudio.volume = Math.min(1, nextVolume);
+  }
+
+  function updateBeatVolume(nextVolume: number) {
+    setBeatVolume(nextVolume);
+    if (previewRef.current?.beatGain) previewRef.current.beatGain.gain.value = nextVolume * 0.12;
   }
 
   function openUpgradePrompt(message: string) {
@@ -311,8 +371,9 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     setAffirmations("");
     setMode(hasPro ? "generate" : "paste");
     setStyle("normal");
-    setAmbience("brown");
+    setAmbience("brown_soft");
     setBinaural(true);
+    setBinauralRange("theta");
     setVoiceVolume(0.18);
     setSoundVolume(0.38);
     setBeatVolume(0.3);
@@ -550,33 +611,42 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     setPreviewing(false);
   }
 
-  function startPreview() {
+  function startPreview(overrides: Partial<{ ambience: Ambience; binaural: boolean; binauralRange: BinauralRange }> = {}) {
     stopPreview();
+    const previewAmbience = overrides.ambience ?? ambience;
+    const previewBinaural = overrides.binaural ?? binaural;
+    const previewBinauralRange = BINAURAL_OPTIONS.find((item) => item.key === (overrides.binauralRange ?? binauralRange)) ?? selectedBinaural;
     const context = new AudioContext();
+    let ambienceGain: GainNode | undefined;
+    let beatGain: GainNode | undefined;
+    let voiceAudio: HTMLAudioElement | undefined;
+    let musicAudio: HTMLAudioElement | undefined;
 
-    if (ambience !== "none") {
+    if (previewAmbience !== "none") {
       const source = context.createBufferSource();
       const gain = context.createGain();
-      source.buffer = createNoiseBuffer(context, 12, ambience);
+      source.buffer = createNoiseBuffer(context, 12, previewAmbience);
       source.loop = true;
       gain.gain.value = soundVolume;
       source.connect(gain).connect(context.destination);
       source.start();
+      ambienceGain = gain;
     }
 
-    if (binaural) {
+    if (previewBinaural) {
       const merger = context.createChannelMerger(2);
       const left = context.createOscillator();
       const right = context.createOscillator();
       const gain = context.createGain();
       left.frequency.value = carrierFrequency;
-      right.frequency.value = carrierFrequency + beatFrequency;
+      right.frequency.value = carrierFrequency + previewBinauralRange.frequency;
       gain.gain.value = beatVolume * 0.12;
       left.connect(merger, 0, 0);
       right.connect(merger, 0, 1);
       merger.connect(gain).connect(context.destination);
       left.start();
       right.start();
+      beatGain = gain;
     }
 
     const audios: HTMLAudioElement[] = [];
@@ -587,6 +657,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
       audio.volume = style === "silent" ? 0.04 : Math.min(1, voiceVolume);
       audio.play();
       audios.push(audio);
+      voiceAudio = audio;
     }
 
     if (musicFile) {
@@ -597,9 +668,10 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
       music.play();
       audios.push(music);
       urls.push(musicUrl);
+      musicAudio = music;
     }
 
-    previewRef.current = { context, audios, urls };
+    previewRef.current = { context, audios, urls, ambienceGain, beatGain, voiceAudio, musicAudio };
     setPreviewing(true);
   }
 
@@ -631,7 +703,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
       const right = context.createOscillator();
       const gain = context.createGain();
       left.frequency.value = carrierFrequency;
-      right.frequency.value = carrierFrequency + beatFrequency;
+      right.frequency.value = carrierFrequency + selectedBinaural.frequency;
       gain.gain.value = beatVolume * 0.12;
       left.connect(merger, 0, 0);
       right.connect(merger, 0, 1);
@@ -837,7 +909,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
           </div>
           <div className="quiet-progress-bar"><span style={{ width: `${((activeStepIndex + 1) / currentSteps.length) * 100}%` }} /></div>
 
-          <div className="single-step-card">
+          <div className="single-step-card" onKeyDown={handleWizardKeyDown}>
             {activeStep === "intention" && (
               <>
                 <p className="eyebrow">Create Subliminal</p>
@@ -925,10 +997,31 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
               <>
                 <p className="eyebrow">Sound Bed</p>
                 <h1>What should play above the affirmations?</h1>
-                <p>Keep it minimal, or add ambience, binaural beats, and your own uploaded audio.</p>
-                <div className="quiz-options">
-                  {(["none", "rain", "brown"] as Ambience[]).map((item) => (
-                    <button key={item} className={ambience === item ? "quiz-option active" : "quiz-option"} onClick={() => setAmbience(item)}><Music2 size={22} /><strong>{item === "none" ? "No generated ambience" : item === "rain" ? "Rain texture" : "Brown noise"}</strong><span>{item === "none" ? "Use only voice, music, and optional binaural tones." : "Generated locally in the browser."}</span></button>
+                <p>Choose the background sound, beat range, and mix levels while previewing the result.</p>
+                <div className="preview-panel">
+                  <div>
+                    <strong>Live subliminal preview</strong>
+                    <span>Play the current mix, then adjust the sliders and options until it sits right.</span>
+                  </div>
+                  <button className="secondary-button" onClick={() => (previewing ? stopPreview() : startPreview())}>
+                    {previewing ? <Pause size={17} /> : <Play size={17} />}
+                    {previewing ? "Stop preview" : "Play preview"}
+                  </button>
+                </div>
+                <div className="quiz-options sound-options">
+                  {AMBIENCE_OPTIONS.map((item) => (
+                    <button
+                      key={item.key}
+                      className={ambience === item.key ? "quiz-option active" : "quiz-option"}
+                      onClick={() => {
+                        setAmbience(item.key);
+                        if (previewing) startPreview({ ambience: item.key });
+                      }}
+                    >
+                      <Music2 size={22} />
+                      <strong>{item.label}</strong>
+                      <span>{item.description}</span>
+                    </button>
                   ))}
                 </div>
                 <label className="drop-zone"><Upload size={22} /><span>{musicFile ? musicFile.name : "Optional: upload MP3/WAV music or sound"}</span><input type="file" accept="audio/*" onChange={(event) => setMusicFile(event.target.files?.[0] ?? null)} /></label>
@@ -938,38 +1031,68 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                     <strong>{formatDuration(duration)}</strong>
                   </div>
                   <div className="quiz-options two compact">
-                    <button className={binaural ? "quiz-option active" : "quiz-option"} onClick={() => setBinaural(true)}>
+                    <button
+                      className={binaural ? "quiz-option active" : "quiz-option"}
+                      onClick={() => {
+                        setBinaural(true);
+                        if (previewing) startPreview({ binaural: true });
+                      }}
+                    >
                       <Sparkles size={22} />
                       <strong>Add binaural beats</strong>
                       <span>Soft stereo tones under the mix.</span>
                     </button>
-                    <button className={!binaural ? "quiz-option active" : "quiz-option"} onClick={() => setBinaural(false)}>
+                    <button
+                      className={!binaural ? "quiz-option active" : "quiz-option"}
+                      onClick={() => {
+                        setBinaural(false);
+                        if (previewing) startPreview({ binaural: false });
+                      }}
+                    >
                       <Music2 size={22} />
                       <strong>No binaural beats</strong>
                       <span>Keep the audio bed cleaner and simpler.</span>
                     </button>
                   </div>
+                  {binaural && (
+                    <div className="quiz-options beat-options">
+                      {BINAURAL_OPTIONS.map((item) => (
+                        <button
+                          key={item.key}
+                          className={binauralRange === item.key ? "quiz-option active" : "quiz-option"}
+                          onClick={() => {
+                            setBinauralRange(item.key);
+                            if (previewing) startPreview({ binauralRange: item.key });
+                          }}
+                        >
+                          <SlidersHorizontal size={20} />
+                          <strong>{item.label} · {item.frequency} Hz</strong>
+                          <span>{item.description}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <div className="mix-controls">
                     <div className="mix-slider">
                       <div>
                         <span>Affirmations</span>
                         <strong>{Math.round(voiceVolume * 100)}%</strong>
                       </div>
-                      <input type="range" min="0" max="1" step="0.01" value={voiceVolume} onChange={(event) => setVoiceVolume(Number(event.target.value))} />
+                      <input type="range" min="0" max="1" step="0.01" value={voiceVolume} onChange={(event) => updateVoiceVolume(Number(event.target.value))} />
                     </div>
                     <div className="mix-slider">
                       <div>
                         <span>Binaural beats</span>
                         <strong>{Math.round(beatVolume * 100)}%</strong>
                       </div>
-                      <input type="range" min="0" max="1" step="0.01" value={beatVolume} onChange={(event) => setBeatVolume(Number(event.target.value))} disabled={!binaural} />
+                      <input type="range" min="0" max="1" step="0.01" value={beatVolume} onChange={(event) => updateBeatVolume(Number(event.target.value))} disabled={!binaural} />
                     </div>
                     <div className="mix-slider">
                       <div>
                         <span>Music / ambience</span>
                         <strong>{Math.round(soundVolume * 100)}%</strong>
                       </div>
-                      <input type="range" min="0" max="1" step="0.01" value={soundVolume} onChange={(event) => setSoundVolume(Number(event.target.value))} />
+                      <input type="range" min="0" max="1" step="0.01" value={soundVolume} onChange={(event) => updateSoundVolume(Number(event.target.value))} />
                     </div>
                   </div>
                 </div>
@@ -986,20 +1109,10 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                   <div><span>Affirmations</span><strong>{affirmationCount}</strong></div>
                   <div><span>Voice</span><strong>{recordedBlob ? "Your voice" : ttsBlob ? "Text to speech" : "Missing"}</strong></div>
                   <div><span>Style</span><strong>{selectedStyle.label}</strong></div>
-                  <div><span>Sound</span><strong>{ambience}{musicFile ? " + upload" : ""}</strong></div>
-                  <div><span>Binaural beats</span><strong>{binaural ? "On" : "Off"}</strong></div>
+                  <div><span>Sound</span><strong>{selectedAmbience.label}{musicFile ? " + upload" : ""}</strong></div>
+                  <div><span>Binaural beats</span><strong>{binaural ? `${selectedBinaural.label} (${selectedBinaural.frequency} Hz)` : "Off"}</strong></div>
                   <div><span>Duration</span><strong>{formatDuration(duration)}</strong></div>
                   <div><span>Mix</span><strong>{Math.round(voiceVolume * 100)}% voice / {binaural ? `${Math.round(beatVolume * 100)}% beats` : "no beats"} / {Math.round(soundVolume * 100)}% sound</strong></div>
-                </div>
-                <div className="preview-panel">
-                  <div>
-                    <strong>Preview your subliminal</strong>
-                    <span>Listen to the voice, ambience, uploaded audio, and binaural choice before exporting.</span>
-                  </div>
-                  <button className="secondary-button" onClick={previewing ? stopPreview : startPreview}>
-                    {previewing ? <Pause size={17} /> : <Play size={17} />}
-                    {previewing ? "Stop preview" : "Play preview"}
-                  </button>
                 </div>
                 <div className="minimal-actions">
                   <button className="primary-button" onClick={exportWav} disabled={loading === "export"}>{loading === "export" ? <Loader2 className="spin" size={17} /> : hasPro ? <Download size={17} /> : <Library size={17} />} {hasPro ? "Export WAV" : "Save to library"}</button>

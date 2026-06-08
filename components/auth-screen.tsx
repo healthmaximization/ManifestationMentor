@@ -54,7 +54,7 @@ export default function AuthScreen() {
       email: normalizedEmail,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
+        emailRedirectTo: `${window.location.origin}/auth/callback`
       }
     });
 
@@ -71,25 +71,8 @@ export default function AuthScreen() {
       return;
     }
 
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-      email: normalizedEmail,
-      password
-    });
-
     setLoading(false);
-
-    if (signInData.session) {
-      router.push(nextPath);
-      router.refresh();
-      return;
-    }
-
-    if (signInError?.message === "Invalid login credentials") {
-      setError("Supabase did not create an active password account. If this email already exists as unconfirmed, delete it in Supabase Auth Users or confirm it manually, then sign up again.");
-      return;
-    }
-
-    setNotice("Account created, but Supabase still wants email confirmation. Turn off Confirm email in Supabase Auth or confirm this user manually.");
+    setNotice("Almost there. Check your email to confirm your account, then log in to open the studio.");
   }
 
   return (
