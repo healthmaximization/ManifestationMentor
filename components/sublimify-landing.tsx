@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, CheckCircle2, Headphones, Layers3, Mic, Music2, Sparkles, Wand2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Headphones, Layers3, Sparkles, Wand2 } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 
 const steps = [
-  { icon: Sparkles, title: "Choose the intention", text: "Start with the exact shift you want your mind to rehearse." },
-  { icon: Wand2, title: "Create affirmations", text: "Generate, paste, or speak the affirmations in your own flow." },
-  { icon: Layers3, title: "Shape the mix", text: "Pick silent, layered, binaural, ambience, rain, brown noise, or music." },
+  { icon: Sparkles, title: "Choose the topic", text: "Start with the subject you want your subliminal to focus on." },
+  { icon: Wand2, title: "Create affirmations", text: "Generate, paste, or record clear affirmations for that topic." },
+  { icon: Layers3, title: "Shape the audio", text: "Choose voice, binaural beats, background sound, or your own music." },
   { icon: Headphones, title: "Export your audio", text: "Download the finished subliminal and keep projects in your account." }
 ];
 
@@ -16,7 +16,7 @@ const previewTopics = [
   "I want a slim waist",
   "I want clear glowing skin",
   "I want a loving relationship",
-  "I want money to flow easily",
+  "I want better money habits",
   "I want deep restorative sleep",
   "I want social confidence",
   "I want a fit healthy body",
@@ -70,7 +70,7 @@ export default function SublimifyLanding() {
         <div className="landing-copy">
           <h1>Make a complete subliminal in a few simple steps.</h1>
           <p>
-            Turn an intention into affirmations, voice, ambience, binaural beats, and a finished audio file without a messy timeline or complicated editor.
+            Turn a topic into affirmations, voice, background audio, binaural beats, and a finished audio file without a messy timeline or complicated editor.
           </p>
           <div className="landing-actions">
             <Link className="primary-button landing-primary" href="/login?next=%2Fsublimify&authMode=signup">
@@ -92,11 +92,6 @@ export default function SublimifyLanding() {
             {Array.from({ length: 34 }).map((_, index) => (
               <i key={index} style={{ height: `${22 + ((index * 17) % 58)}px` }} />
             ))}
-          </div>
-          <div className="preview-pills">
-            <span><Mic size={14} /> Custom voice</span>
-            <span><Layers3 size={14} /> Audio style</span>
-            <span><Music2 size={14} /> Music & sounds</span>
           </div>
         </div>
       </section>
