@@ -5,6 +5,13 @@ import { getStripe } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
 
+function getSiteUrl(requestUrl: string) {
+  const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.VERCEL_URL;
+  const rawUrl = configuredUrl?.trim() || new URL(requestUrl).origin;
+  const withScheme = /^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
+  return withScheme.replace(/\/+$/, "");
+}
+
 export async function POST(request: Request) {
   try {
     const supabase = createRouteSupabase();
@@ -29,7 +36,7 @@ export async function POST(request: Request) {
 
     const stripe = getStripe();
     const priceId = getStripePriceId(productKey, planKey);
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
+    const siteUrl = getSiteUrl(request.url);
 
     const { data: existingSubscription } = await admin
       .from("subscriptions")
