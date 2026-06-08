@@ -322,6 +322,24 @@ label {
   color: #fda4af;
 }
 
+.auth-contact {
+  margin: 4px auto 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: rgba(231, 213, 255, 0.9);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 850;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.auth-contact:hover {
+  color: var(--ink);
+  transform: translateY(-1px);
+}
+
 .setup-list {
   display: grid;
   gap: 10px;
@@ -1610,7 +1628,7 @@ input[type="range"] {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  padding-bottom: 72px;
+  padding-bottom: 22px;
 }
 
 .landing-proof div {
@@ -1622,6 +1640,34 @@ input[type="range"] {
   color: rgba(245, 243, 255, 0.9);
   font-weight: 750;
   transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.landing-contact {
+  width: min(1120px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 0 0 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.landing-contact a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: rgba(231, 213, 255, 0.92);
+  text-decoration: none;
+  font-weight: 850;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.landing-contact a:hover {
+  color: var(--ink);
+  transform: translateY(-1px);
 }
 
 .subliminal-library,
@@ -2540,6 +2586,13 @@ input[type="range"] {
   .landing-actions .primary-button,
   .landing-actions .secondary-button {
     width: 100%;
+  }
+
+  .landing-contact {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding-bottom: 44px;
   }
 
   .wave-stack {

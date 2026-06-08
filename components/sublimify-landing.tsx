@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, CheckCircle2, Headphones, Layers3, Sparkles, Wand2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Headphones, Layers3, Mail, Sparkles, Wand2 } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 
 const steps = [
@@ -116,6 +116,14 @@ export default function SublimifyLanding() {
           <span>Guided step-by-step creation without a complicated audio editor</span>
         </div>
       </section>
+
+      <footer className="landing-contact">
+        <span>Need help or have a question?</span>
+        <a href="mailto:jhdesigns1234@gmail.com">
+          <Mail size={16} />
+          jhdesigns1234@gmail.com
+        </a>
+      </footer>
     </main>
   );
 }

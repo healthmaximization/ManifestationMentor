@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Mail } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import BrandLogo from "@/components/brand-logo";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
@@ -123,6 +123,10 @@ export default function AuthScreen() {
         </form>
         {notice && <p className="notice">{notice}</p>}
         {error && <p className="error">{error}</p>}
+        <a className="auth-contact" href="mailto:jhdesigns1234@gmail.com">
+          <Mail size={15} />
+          Contact support
+        </a>
       </section>
     </main>
   );
