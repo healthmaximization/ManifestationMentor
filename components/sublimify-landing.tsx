@@ -121,7 +121,7 @@ export default function SublimifyLanding() {
         <span>Need help or have a question?</span>
         <a href="mailto:jhdesigns1234@gmail.com">
           <Mail size={16} />
-          jhdesigns1234@gmail.com
+          Contact support
         </a>
       </footer>
     </main>
