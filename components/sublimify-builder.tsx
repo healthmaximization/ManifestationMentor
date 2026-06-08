@@ -179,23 +179,76 @@ function speechOutputToBytes(output: unknown) {
   if (ArrayBuffer.isView(output)) {
     return new Uint8Array(output.buffer.slice(output.byteOffset, output.byteOffset + output.byteLength));
   }
+  if (typeof output === "string") {
+    const base64 = output.includes(",") ? output.split(",").pop() : output;
+    if (!base64) return null;
+    const binary = window.atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) {
+      bytes[index] = binary.charCodeAt(index);
+    }
+    return bytes;
+  }
   return null;
+}
+
+function isWav(bytes: Uint8Array | null) {
+  return Boolean(bytes && bytes.length > 44 && bytes[0] === 82 && bytes[1] === 73 && bytes[2] === 70 && bytes[3] === 70);
+}
+
+function speakTextChunk(text: string) {
+  const options = {
+    amplitude: 85,
+    pitch: 42,
+    speed: 140,
+    wordgap: 4
+  };
+  const rawFormats: Array<true | "array" | "buffer" | "data-url" | "base64"> = [true, "array", "buffer", "data-url", "base64"];
+
+  for (const rawdata of rawFormats) {
+    const bytes = speechOutputToBytes(meSpeak.speak(text, { ...options, rawdata } as Parameters<typeof meSpeak.speak>[1]));
+    if (isWav(bytes)) return bytes;
+  }
+
+  return null;
+}
+
+function joinWavBytes(chunks: Uint8Array[]) {
+  if (chunks.length === 1) return chunks[0];
+  const headerLength = 44;
+  const dataLength = chunks.reduce((total, chunk) => total + Math.max(0, chunk.length - headerLength), 0);
+  const output = new Uint8Array(headerLength + dataLength);
+  output.set(chunks[0].slice(0, headerLength), 0);
+
+  let offset = headerLength;
+  for (const chunk of chunks) {
+    output.set(chunk.slice(headerLength), offset);
+    offset += chunk.length - headerLength;
+  }
+
+  const view = new DataView(output.buffer);
+  view.setUint32(4, output.length - 8, true);
+  view.setUint32(40, dataLength, true);
+  return output;
 }
 
 function createTextToSpeechBlob(text: string) {
   if (!meSpeak.isConfigLoaded()) meSpeak.loadConfig(meSpeakConfig);
   if (!meSpeak.isVoiceLoaded()) meSpeak.loadVoice(meSpeakVoice);
-  const wav = meSpeak.speak(normalizeNarratorText(text), {
-    rawdata: "array",
-    amplitude: 85,
-    pitch: 42,
-    speed: 140,
-    wordgap: 4
-  });
-  const audioBytes = speechOutputToBytes(wav);
-  if (!audioBytes?.length) throw new Error("Could not create text to speech audio.");
-  const wavBytes = new Uint8Array(audioBytes);
-  return new Blob([wavBytes.buffer], { type: "audio/wav" });
+  const chunks = text
+    .split(/\n+|(?<=[.!?])\s+/)
+    .map((chunk) => normalizeNarratorText(chunk))
+    .filter(Boolean)
+    .slice(0, 80);
+
+  const wavChunks = chunks
+    .map((chunk) => speakTextChunk(chunk))
+    .filter((chunk): chunk is Uint8Array => Boolean(chunk));
+
+  if (!wavChunks.length) throw new Error("Could not create text to speech audio.");
+  const wavBytes = joinWavBytes(wavChunks);
+  const audioBuffer = wavBytes.buffer.slice(wavBytes.byteOffset, wavBytes.byteOffset + wavBytes.byteLength) as ArrayBuffer;
+  return new Blob([audioBuffer], { type: "audio/wav" });
 }
 
 function formatDuration(seconds: number) {
