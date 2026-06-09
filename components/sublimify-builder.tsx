@@ -142,6 +142,54 @@ function audioBufferToWav(buffer: AudioBuffer) {
   return new Blob([arrayBuffer], { type: "audio/wav" });
 }
 
+async function audioBufferToCompressedAudio(buffer: AudioBuffer) {
+  if (typeof MediaRecorder === "undefined") return audioBufferToWav(buffer);
+
+  const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm";
+  const context = new AudioContext({ sampleRate: buffer.sampleRate });
+  const destination = context.createMediaStreamDestination();
+  const source = context.createBufferSource();
+  const chunks: BlobPart[] = [];
+
+  source.buffer = buffer;
+  source.connect(destination);
+
+  return new Promise<Blob>((resolve, reject) => {
+    const recorder = new MediaRecorder(destination.stream, {
+      mimeType,
+      audioBitsPerSecond: 96000
+    });
+
+    recorder.ondataavailable = (event) => {
+      if (event.data.size > 0) chunks.push(event.data);
+    };
+    recorder.onerror = () => {
+      void context.close();
+      reject(new Error("Could not compress subliminal audio."));
+    };
+    recorder.onstop = () => {
+      void context.close();
+      resolve(new Blob(chunks, { type: mimeType }));
+    };
+    source.onended = () => recorder.stop();
+
+    recorder.start();
+    source.start();
+    void context.resume();
+  });
+}
+
+async function readJsonResponse(response: Response, fallback: string) {
+  const text = await response.text();
+  if (!text) return { error: fallback };
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { error: text.slice(0, 220) || fallback };
+  }
+}
+
 async function decodeBlob(context: BaseAudioContext, blob: Blob) {
   return context.decodeAudioData(await blob.arrayBuffer());
 }
@@ -498,7 +546,8 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
 
     if (audioBlob) {
       const form = new FormData();
-      form.set("audio", audioBlob, `sublimify-${style}.wav`);
+      const extension = audioBlob.type.includes("webm") ? "webm" : "wav";
+      form.set("audio", audioBlob, `sublimify-${style}.${extension}`);
       form.set("title", topic || "Untitled subliminal");
       form.set("intention", topic);
       form.set("style", style);
@@ -538,7 +587,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
       });
     }
 
-    const data = await response.json();
+    const data = await readJsonResponse(response, "Could not save subliminal.");
     if (!response.ok) throw new Error(data.error ?? "Could not save subliminal.");
     setProjects((current) => [data.project as SubliminalProject, ...current].slice(0, 50));
   }
@@ -861,7 +910,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     }
 
     const rendered = await context.startRendering();
-    return { blob: audioBufferToWav(rendered), duration: renderDuration };
+    return { blob: await audioBufferToCompressedAudio(rendered), duration: renderDuration };
   }
 
   async function saveToStudio() {
@@ -894,7 +943,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
 
     const anchor = document.createElement("a");
     anchor.href = project.audioUrl;
-    anchor.download = `${project.title || "subliminal"}.wav`;
+    anchor.download = project.fileName ?? `${project.title || "subliminal"}.webm`;
     anchor.click();
   }
 
