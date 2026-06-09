@@ -144,6 +144,15 @@ create table if not exists public.subliminal_exports (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.subliminal_playlists (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  title text not null default 'New playlist',
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.subliminal_generation_config (
   id text primary key default 'main',
   prompt text not null default '',
@@ -166,6 +175,7 @@ alter table public.subliminal_projects enable row level security;
 alter table public.subliminal_scripts enable row level security;
 alter table public.subliminal_audio_jobs enable row level security;
 alter table public.subliminal_exports enable row level security;
+alter table public.subliminal_playlists enable row level security;
 alter table public.subliminal_generation_config enable row level security;
 
 drop policy if exists "Users read own profile" on public.profiles;
@@ -258,12 +268,28 @@ create policy "Users read own subliminal exports"
 on public.subliminal_exports for select
 using (auth.uid() = user_id);
 
+drop policy if exists "Users read own subliminal playlists" on public.subliminal_playlists;
+create policy "Users read own subliminal playlists"
+on public.subliminal_playlists for select
+using (auth.uid() = user_id);
+
+drop policy if exists "Users create own subliminal playlists" on public.subliminal_playlists;
+create policy "Users create own subliminal playlists"
+on public.subliminal_playlists for insert
+with check (auth.uid() = user_id);
+
+drop policy if exists "Users update own subliminal playlists" on public.subliminal_playlists;
+create policy "Users update own subliminal playlists"
+on public.subliminal_playlists for update
+using (auth.uid() = user_id);
+
 create index if not exists subscriptions_user_product_idx on public.subscriptions(user_id, product_key, status);
 create index if not exists entitlements_user_product_idx on public.entitlements(user_id, product_key, active);
 create index if not exists manifestation_conversations_user_updated_idx on public.manifestation_conversations(user_id, updated_at desc);
 create index if not exists manifestation_messages_conversation_created_idx on public.manifestation_messages(conversation_id, created_at);
 create index if not exists subliminal_projects_user_updated_idx on public.subliminal_projects(user_id, updated_at desc);
 create index if not exists subliminal_audio_jobs_project_idx on public.subliminal_audio_jobs(project_id, status);
+create index if not exists subliminal_playlists_user_updated_idx on public.subliminal_playlists(user_id, updated_at desc);
 
 insert into public.products (key, name, description)
 values

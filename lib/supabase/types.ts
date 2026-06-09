@@ -223,6 +223,21 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["subliminal_exports"]["Row"]>;
         Relationships: [];
       };
+      subliminal_playlists: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          metadata: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["subliminal_playlists"]["Row"]> & {
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["subliminal_playlists"]["Row"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

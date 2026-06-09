@@ -53,6 +53,12 @@ type SubliminalProject = {
   audioUrl?: string | null;
 };
 
+type SubliminalPlaylist = {
+  id: string;
+  title: string;
+  createdAt: string;
+};
+
 const BASE_STEPS: Step[] = ["intention", "source"];
 const FINISH_STEPS: Step[] = ["voice", "style", "sound", "export"];
 
@@ -173,6 +179,74 @@ function formatDuration(seconds: number) {
   return minutes ? `${minutes}:${remaining.toString().padStart(2, "0")}` : `${remaining}s`;
 }
 
+function formatPlaybackTime(seconds: number) {
+  const total = Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;
+  const minutes = Math.floor(total / 60);
+  const remaining = total % 60;
+  return `${minutes}:${remaining.toString().padStart(2, "0")}`;
+}
+
+function LibraryAudioPlayer({ src }: { src: string }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
+
+  useEffect(() => {
+    setPlaying(false);
+    setCurrentTime(0);
+  }, [src]);
+
+  async function togglePlayback() {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (playing) {
+      audio.pause();
+      setPlaying(false);
+      return;
+    }
+
+    await audio.play();
+    setPlaying(true);
+  }
+
+  function scrub(nextTime: number) {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = nextTime;
+    setCurrentTime(nextTime);
+  }
+
+  return (
+    <div className="custom-audio-player">
+      <audio
+        ref={audioRef}
+        src={src}
+        loop
+        preload="metadata"
+        onLoadedMetadata={(event) => setAudioDuration(event.currentTarget.duration || 0)}
+        onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
+        onPause={() => setPlaying(false)}
+        onPlay={() => setPlaying(true)}
+      />
+      <button type="button" onClick={togglePlayback} aria-label={playing ? "Pause subliminal" : "Play subliminal"}>
+        {playing ? <Pause size={16} /> : <Play size={16} />}
+      </button>
+      <input
+        aria-label="Subliminal playback progress"
+        type="range"
+        min="0"
+        max={audioDuration || 1}
+        step="0.1"
+        value={Math.min(currentTime, audioDuration || 1)}
+        onChange={(event) => scrub(Number(event.target.value))}
+      />
+      <span>{formatPlaybackTime(currentTime)} / {formatPlaybackTime(audioDuration)}</span>
+    </div>
+  );
+}
+
 export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEmail: string; owner: boolean; hasPro: boolean }) {
   const [screen, setScreen] = useState<"library" | "builder">("library");
   const [activeStep, setActiveStep] = useState<Step>("intention");
@@ -205,6 +279,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   const [beatSectionOpen, setBeatSectionOpen] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [projects, setProjects] = useState<SubliminalProject[]>([]);
+  const [playlists, setPlaylists] = useState<SubliminalPlaylist[]>([]);
   const [upgradePrompt, setUpgradePrompt] = useState("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -250,6 +325,17 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     }
     loadProjects();
   }, []);
+
+  useEffect(() => {
+    async function loadPlaylists() {
+      if (!hasPro) return;
+      const response = await fetch("/api/sublimify/playlists");
+      if (!response.ok) return;
+      const data = await response.json();
+      setPlaylists((data.playlists ?? []) as SubliminalPlaylist[]);
+    }
+    loadPlaylists();
+  }, [hasPro]);
 
   useEffect(() => {
     async function loadPrompt() {
@@ -479,6 +565,31 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     }
     setProjects((current) => [data.project as SubliminalProject, ...current].slice(0, 50));
     setStatus("Subliminal imported and saved to your account.");
+  }
+
+  async function createPlaylist() {
+    if (!hasPro) {
+      openUpgradePrompt("Playlists are included in Pro. Upgrade to organize multiple subliminals into repeatable listening flows.");
+      return;
+    }
+
+    setLoading("playlist");
+    setStatus("");
+    const response = await fetch("/api/sublimify/playlists", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: `Playlist ${playlists.length + 1}` })
+    });
+    const data = await response.json();
+    setLoading("");
+
+    if (!response.ok) {
+      setStatus(data.error ?? "Could not create playlist.");
+      return;
+    }
+
+    setPlaylists((current) => [data.playlist as SubliminalPlaylist, ...current].slice(0, 50));
+    setStatus("Playlist created.");
   }
 
   async function generateAffirmations() {
@@ -875,10 +986,17 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                 Import subliminal
                 <input type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.flac" disabled={libraryLimitReached} onChange={(event) => importSubliminal(event.target.files?.[0] ?? null)} />
               </label>
-              <button className="secondary-button library-playlist" onClick={() => openUpgradePrompt("Playlists are included in Pro. Upgrade to organize multiple subliminals into repeatable listening flows.")}>
-                <Lock size={18} /> Create new playlist
+              <button className="secondary-button library-playlist" onClick={createPlaylist} disabled={loading === "playlist"}>
+                {loading === "playlist" ? <Loader2 className="spin" size={18} /> : hasPro ? <Plus size={18} /> : <Lock size={18} />} Create new playlist
               </button>
             </div>
+            {playlists.length > 0 && (
+              <div className="playlist-strip">
+                {playlists.map((playlist) => (
+                  <span key={playlist.id}>{playlist.title}</span>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="library-list">
@@ -900,7 +1018,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                     <span>{project.imported ? "Imported audio" : `${project.affirmationCount} affirmations | ${project.style.replace("_", " ")} | ${formatDuration(project.duration)}`}</span>
                     {project.audioUrl ? (
                       <div className="library-audio">
-                        <audio controls loop src={project.audioUrl} controlsList={hasPro ? undefined : "nodownload"} />
+                        <LibraryAudioPlayer src={project.audioUrl} />
                         <span><Repeat2 size={14} /> Loop enabled</span>
                       </div>
                     ) : (
@@ -1210,8 +1328,8 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                   {loading === "checkout-monthly" ? <Loader2 className="spin" size={17} /> : <Crown size={17} />} Upgrade monthly
                 </button>
               </article>
-              <article className="price-card">
-                <div className="price-badge muted">Discount</div>
+              <article className="price-card yearly-value">
+                <div className="price-badge value">Best value</div>
                 <span>Pro yearly</span>
                 <strong>$99/year</strong>
                 <ul className="plan-feature-list">
@@ -1219,9 +1337,9 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                   <li><CheckCircle2 size={16} /> AI affirmation generation</li>
                   <li><CheckCircle2 size={16} /> Unlimited library</li>
                   <li><CheckCircle2 size={16} /> Downloads and playlists</li>
-                  <li><CheckCircle2 size={16} /> Yearly discount included</li>
+                  <li><CheckCircle2 size={16} /> Save compared to monthly</li>
                 </ul>
-                <button className="secondary-button" onClick={() => startCheckout("yearly")} disabled={loading === "checkout-yearly"}>
+                <button className="primary-button yearly-button" onClick={() => startCheckout("yearly")} disabled={loading === "checkout-yearly"}>
                   {loading === "checkout-yearly" ? <Loader2 className="spin" size={17} /> : <Crown size={17} />} Upgrade yearly
                 </button>
               </article>
