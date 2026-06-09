@@ -27,6 +27,7 @@ export default function SublimifyLanding() {
   const [topicIndex, setTopicIndex] = useState(0);
   const [typedTopic, setTypedTopic] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
     const currentTopic = previewTopics[topicIndex];
@@ -56,12 +57,13 @@ export default function SublimifyLanding() {
 
   return (
     <main className="sublimify-landing">
+      <div className={leaving ? "page-transition active" : "page-transition"} aria-hidden="true" />
       <header className="landing-nav">
         <div className="minimal-brand" aria-label="Subliminal Academy">
           <BrandLogo size="small" />
           <strong>Subliminal Academy</strong>
         </div>
-        <Link className="secondary-button landing-login-button" href="/login?next=%2Fsublimify">
+        <Link className="secondary-button landing-login-button" href="/login?next=%2Fsublimify" onClick={() => setLeaving(true)}>
           Log in
         </Link>
       </header>
@@ -73,10 +75,10 @@ export default function SublimifyLanding() {
             Turn a topic into affirmations, voice, background audio, binaural beats, and a finished audio file without a messy timeline or complicated editor.
           </p>
           <div className="landing-actions">
-            <Link className="primary-button landing-primary" href="/login?next=%2Fsublimify&authMode=signup">
+            <Link className="primary-button landing-primary" href="/login?next=%2Fsublimify&authMode=signup" onClick={() => setLeaving(true)}>
               Get started for free <ArrowRight size={18} />
             </Link>
-            <Link className="secondary-button landing-secondary" href="/login?next=%2Fsublimify">
+            <Link className="secondary-button landing-secondary" href="/login?next=%2Fsublimify" onClick={() => setLeaving(true)}>
               Already have an account?
             </Link>
           </div>
