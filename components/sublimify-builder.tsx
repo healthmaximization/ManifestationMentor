@@ -875,7 +875,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                 Import subliminal
                 <input type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.flac" disabled={libraryLimitReached} onChange={(event) => importSubliminal(event.target.files?.[0] ?? null)} />
               </label>
-              <button className="secondary-button" onClick={() => openUpgradePrompt("Playlists are included in Pro. Upgrade to organize multiple subliminals into repeatable listening flows.")}>
+              <button className="secondary-button library-playlist" onClick={() => openUpgradePrompt("Playlists are included in Pro. Upgrade to organize multiple subliminals into repeatable listening flows.")}>
                 <Lock size={18} /> Create new playlist
               </button>
             </div>

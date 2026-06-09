@@ -1797,13 +1797,30 @@ input[type="range"] {
 }
 
 .library-create,
-.library-import {
+.library-import,
+.library-playlist {
   min-width: 210px;
+}
+
+.library-import,
+.library-playlist {
+  min-height: 42px;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1;
 }
 
 .library-import {
   position: relative;
   cursor: pointer;
+}
+
+.library-import svg,
+.library-playlist svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
 }
 
 .library-import.limited {
