@@ -14,25 +14,6 @@ function cleanLines(text: string, limit: number) {
     .slice(0, limit);
 }
 
-function fallbackIdeas(seed: string) {
-  const direction = seed.trim().replace(/\s+/g, " ");
-  const focus = direction ? ` ${direction}` : "";
-  return [
-    `Clear Skin Confidence${focus}`,
-    `Magnetic Self Concept${focus}`,
-    `Deep Sleep Reset${focus}`,
-    `Body Confidence Upgrade${focus}`,
-    `Calm Focus Mode${focus}`,
-    `Relationship Confidence${focus}`,
-    `Money Mindset Reset${focus}`,
-    `Social Ease and Charisma${focus}`,
-    `Workout Consistency Identity${focus}`,
-    `Glow Up Self Image${focus}`,
-    `Discipline Without Pressure${focus}`,
-    `Morning Confidence Reset${focus}`
-  ].map((idea) => idea.trim());
-}
-
 export async function POST(request: Request) {
   const supabase = createRouteSupabase();
   const {
@@ -56,21 +37,22 @@ export async function POST(request: Request) {
     const reply = await askOpenRouter([
       {
         role: "system",
-        content: `${(config?.idea_prompt || DEFAULT_SUBLIMINAL_IDEA_PROMPT).slice(0, 2500)}\n\nKeep titles short. No intro, no headings, no explanations.`
+        content: config?.idea_prompt?.trim() || DEFAULT_SUBLIMINAL_IDEA_PROMPT
       },
       {
         role: "user",
-        content: `Generate exactly 12 subliminal audio idea titles.${safeSeed.trim() ? `\nDirection or audience: ${safeSeed.trim()}` : ""}\nReturn only one concise title per line.`
+        content: `Requested number of ideas:\n12${safeSeed.trim() ? `\n\nDirection, audience, or extra context:\n${safeSeed.trim()}` : ""}`
       }
     ], {
       temperature: 0.72,
       maxTokens: 220,
-      timeoutMs: 7500
+      timeoutMs: 12000,
+      retries: 1
     });
 
     const ideas = cleanLines(reply, 12);
-    return NextResponse.json({ ideas: ideas.length ? ideas : fallbackIdeas(safeSeed) });
-  } catch {
-    return NextResponse.json({ ideas: fallbackIdeas(safeSeed) });
+    return NextResponse.json({ ideas });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Could not generate ideas." }, { status: 504 });
   }
 }
