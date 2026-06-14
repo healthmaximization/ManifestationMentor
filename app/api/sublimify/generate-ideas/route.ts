@@ -46,8 +46,8 @@ export async function POST(request: Request) {
     ], {
       temperature: 0.72,
       maxTokens: 220,
-      timeoutMs: 12000,
-      retries: 1
+      timeoutMs: 45000,
+      retries: 0
     });
 
     const ideas = cleanLines(reply, 12);

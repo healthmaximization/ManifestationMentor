@@ -22,7 +22,8 @@ export async function askOpenRouter(messages: ChatMessage[], options: AskOpenRou
 
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     const controller = new AbortController();
-    const timeout = windowlessSetTimeout(() => controller.abort(), options.timeoutMs ?? 25000);
+    const timeoutMs = options.timeoutMs ?? 45000;
+    const timeout = timeoutMs > 0 ? windowlessSetTimeout(() => controller.abort(), timeoutMs) : null;
 
     try {
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -52,8 +53,12 @@ export async function askOpenRouter(messages: ChatMessage[], options: AskOpenRou
     } catch (error) {
       lastError = error;
     } finally {
-      clearTimeout(timeout);
+      if (timeout) clearTimeout(timeout);
     }
+  }
+
+  if (lastError instanceof Error && lastError.name === "AbortError") {
+    throw new Error("The AI took too long to respond. Please try again.");
   }
 
   throw lastError instanceof Error ? lastError : new Error("OpenRouter request failed.");

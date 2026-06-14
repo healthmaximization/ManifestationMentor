@@ -58,8 +58,8 @@ export async function POST(request: Request) {
     ], {
       temperature: 0.62,
       maxTokens: Math.min(700, safeCount * 18),
-      timeoutMs: 14000,
-      retries: 1
+      timeoutMs: 45000,
+      retries: 0
     });
 
     const affirmations = cleanLines(reply, safeCount);
