@@ -1839,14 +1839,167 @@ input[type="range"] {
   gap: 8px;
 }
 
-.playlist-strip span {
-  padding: 8px 10px;
+.playlist-pill {
+  min-height: 42px;
+  padding: 8px 12px;
   border: 1px solid rgba(197, 163, 255, 0.16);
-  border-radius: 999px;
+  border-radius: 8px;
   color: rgba(245, 243, 255, 0.86);
   background: rgba(255, 255, 255, 0.045);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-size: 13px;
   font-weight: 850;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.playlist-pill:hover,
+.playlist-pill.active {
+  transform: translateY(-1px);
+  border-color: rgba(197, 163, 255, 0.42);
+  background: rgba(155, 92, 255, 0.12);
+}
+
+.playlist-pill small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.playlist-manager {
+  width: min(860px, 100%);
+  padding: 16px;
+  border: 1px solid rgba(197, 163, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  display: grid;
+  gap: 14px;
+}
+
+.playlist-manager-head,
+.playlist-track {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.playlist-manager-head > div:first-child,
+.playlist-track > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.playlist-manager-head strong,
+.playlist-track strong {
+  color: var(--ink);
+}
+
+.playlist-manager-head span,
+.playlist-manager-head small,
+.playlist-track span,
+.playlist-empty,
+.playlist-add-list small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.playlist-manager-head > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-button,
+.mini-button {
+  border: 1px solid rgba(197, 163, 255, 0.18);
+  border-radius: 8px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.05);
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.icon-button {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+}
+
+.icon-button:hover,
+.mini-button:hover,
+.playlist-add-list button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(197, 163, 255, 0.4);
+  background: rgba(155, 92, 255, 0.12);
+}
+
+.icon-button.danger,
+.mini-button.danger {
+  color: #ffc7d1;
+}
+
+.playlist-track-list {
+  display: grid;
+  gap: 8px;
+}
+
+.playlist-track {
+  min-height: 50px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.playlist-track svg {
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+
+.mini-button {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.mini-button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.playlist-add-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.playlist-add-list > span {
+  width: 100%;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.playlist-add-list button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(197, 163, 255, 0.16);
+  border-radius: 8px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.045);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 820;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
 .price-card {

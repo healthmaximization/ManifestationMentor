@@ -4,11 +4,18 @@ import { createAdminSupabase, createRouteSupabase } from "@/lib/supabase/server"
 
 export const dynamic = "force-dynamic";
 
-function toClientPlaylist(playlist: { id: string; title: string; created_at: string }) {
+function readProjectIds(metadata: unknown) {
+  if (!metadata || typeof metadata !== "object") return [];
+  const projectIds = (metadata as Record<string, unknown>).projectIds;
+  return Array.isArray(projectIds) ? projectIds.filter((id): id is string => typeof id === "string") : [];
+}
+
+function toClientPlaylist(playlist: { id: string; title: string; created_at: string; metadata: unknown }) {
   return {
     id: playlist.id,
     title: playlist.title,
-    createdAt: playlist.created_at
+    createdAt: playlist.created_at,
+    projectIds: readProjectIds(playlist.metadata)
   };
 }
 
@@ -24,7 +31,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("subliminal_playlists")
-    .select("id,title,created_at")
+    .select("id,title,created_at,metadata")
     .eq("user_id", user.id)
     .order("updated_at", { ascending: false })
     .limit(50);
@@ -61,9 +68,10 @@ export async function POST(request: Request) {
     .insert({
       user_id: user.id,
       title,
+      metadata: { projectIds: [] },
       updated_at: new Date().toISOString()
     })
-    .select("id,title,created_at")
+    .select("id,title,created_at,metadata")
     .single();
 
   if (error) {

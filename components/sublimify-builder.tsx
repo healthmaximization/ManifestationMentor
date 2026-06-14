@@ -10,6 +10,7 @@ import {
   Clock,
   Crown,
   Download,
+  GripVertical,
   Library,
   Loader2,
   Lock,
@@ -24,6 +25,7 @@ import {
   Settings2,
   SlidersHorizontal,
   Sparkles,
+  Trash2,
   Upload,
   Wand2,
   X,
@@ -57,6 +59,7 @@ type SubliminalPlaylist = {
   id: string;
   title: string;
   createdAt: string;
+  projectIds: string[];
 };
 
 const BASE_STEPS: Step[] = ["intention", "source"];
@@ -234,6 +237,17 @@ function formatPlaybackTime(seconds: number) {
   return `${minutes}:${remaining.toString().padStart(2, "0")}`;
 }
 
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function LibraryAudioPlayer({ src }: { src: string }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -328,9 +342,13 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   const [previewing, setPreviewing] = useState(false);
   const [projects, setProjects] = useState<SubliminalProject[]>([]);
   const [playlists, setPlaylists] = useState<SubliminalPlaylist[]>([]);
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState("");
+  const [playlistPlayingId, setPlaylistPlayingId] = useState("");
+  const [playlistTrackIndex, setPlaylistTrackIndex] = useState(0);
   const [upgradePrompt, setUpgradePrompt] = useState("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const playlistAudioRef = useRef<HTMLAudioElement | null>(null);
   const previewRef = useRef<{
     context: AudioContext;
     audios: HTMLAudioElement[];
@@ -350,6 +368,19 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   const selectedStyle = STYLES.find((item) => item.key === style) ?? STYLES[0];
   const selectedAmbience = AMBIENCE_OPTIONS.find((item) => item.key === ambience) ?? AMBIENCE_OPTIONS[0];
   const selectedBinaural = BINAURAL_OPTIONS.find((item) => item.key === binauralRange) ?? BINAURAL_OPTIONS[1];
+  const selectedPlaylist = playlists.find((playlist) => playlist.id === selectedPlaylistId) ?? null;
+  const selectedPlaylistProjects = selectedPlaylist
+    ? selectedPlaylist.projectIds
+      .map((projectId) => projects.find((project) => project.id === projectId))
+      .filter((project): project is SubliminalProject => Boolean(project))
+    : [];
+  const activePlaylist = playlists.find((playlist) => playlist.id === playlistPlayingId) ?? null;
+  const activePlaylistProjects = activePlaylist
+    ? activePlaylist.projectIds
+      .map((projectId) => projects.find((project) => project.id === projectId && project.audioUrl))
+      .filter((project): project is SubliminalProject => Boolean(project))
+    : [];
+  const activePlaylistTrack = activePlaylistProjects[playlistTrackIndex] ?? null;
   const soundOptions = AMBIENCE_OPTIONS.filter((item) => item.key !== "none");
   const soundChoiceSummary = [
     ambience !== "none" ? selectedAmbience.label : "",
@@ -417,6 +448,14 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     };
     audio.onerror = () => URL.revokeObjectURL(url);
   }, [activeVoiceBlob]);
+
+  useEffect(() => {
+    if (!activePlaylistTrack?.audioUrl) return;
+    const audio = playlistAudioRef.current;
+    if (!audio) return;
+    audio.load();
+    void audio.play().catch(() => setPlaylistPlayingId(""));
+  }, [activePlaylistTrack?.audioUrl]);
 
   function goNext() {
     const nextStep = currentSteps[Math.min(currentSteps.length - 1, activeStepIndex + 1)];
@@ -638,7 +677,127 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     }
 
     setPlaylists((current) => [data.playlist as SubliminalPlaylist, ...current].slice(0, 50));
+    setSelectedPlaylistId((data.playlist as SubliminalPlaylist).id);
     setStatus("Playlist created.");
+  }
+
+  async function updatePlaylist(playlistId: string, updates: Partial<Pick<SubliminalPlaylist, "title" | "projectIds">>) {
+    if (!hasPro) {
+      openUpgradePrompt("Playlists are included in Pro. Upgrade to organize multiple subliminals into repeatable listening flows.");
+      return null;
+    }
+
+    setLoading(`playlist-${playlistId}`);
+    setStatus("");
+    try {
+      const response = await fetch(`/api/sublimify/playlists/${playlistId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates)
+      });
+      const data = await response.json().catch(() => ({ error: "Could not update playlist." }));
+      if (!response.ok) {
+        setStatus(data.error ?? "Could not update playlist.");
+        return null;
+      }
+      const nextPlaylist = data.playlist as SubliminalPlaylist;
+      setPlaylists((current) => current.map((playlist) => (playlist.id === playlistId ? nextPlaylist : playlist)));
+      return nextPlaylist;
+    } finally {
+      setLoading("");
+    }
+  }
+
+  async function renamePlaylist(playlist: SubliminalPlaylist) {
+    const nextTitle = window.prompt("Playlist name", playlist.title)?.trim();
+    if (!nextTitle || nextTitle === playlist.title) return;
+    const updated = await updatePlaylist(playlist.id, { title: nextTitle });
+    if (updated) setStatus("Playlist renamed.");
+  }
+
+  async function deletePlaylist(playlistId: string) {
+    if (!hasPro) {
+      openUpgradePrompt("Playlists are included in Pro. Upgrade to organize multiple subliminals into repeatable listening flows.");
+      return;
+    }
+    if (!window.confirm("Delete this playlist? Your subliminals stay in your library.")) return;
+
+    setLoading(`playlist-${playlistId}`);
+    setStatus("");
+    try {
+      const response = await fetch(`/api/sublimify/playlists/${playlistId}`, { method: "DELETE" });
+      const data = await response.json().catch(() => ({ error: "Could not delete playlist." }));
+      if (!response.ok) {
+        setStatus(data.error ?? "Could not delete playlist.");
+        return;
+      }
+      setPlaylists((current) => current.filter((playlist) => playlist.id !== playlistId));
+      if (selectedPlaylistId === playlistId) setSelectedPlaylistId("");
+      if (playlistPlayingId === playlistId) {
+        playlistAudioRef.current?.pause();
+        setPlaylistPlayingId("");
+        setPlaylistTrackIndex(0);
+      }
+      setStatus("Playlist deleted.");
+    } finally {
+      setLoading("");
+    }
+  }
+
+  async function addProjectToPlaylist(projectId: string) {
+    if (!selectedPlaylist) return;
+    if (selectedPlaylist.projectIds.includes(projectId)) return;
+    const updated = await updatePlaylist(selectedPlaylist.id, { projectIds: [...selectedPlaylist.projectIds, projectId] });
+    if (updated) setStatus("Subliminal added to playlist.");
+  }
+
+  async function removeProjectFromPlaylist(projectId: string) {
+    if (!selectedPlaylist) return;
+    const updated = await updatePlaylist(selectedPlaylist.id, {
+      projectIds: selectedPlaylist.projectIds.filter((id) => id !== projectId)
+    });
+    if (updated) setStatus("Subliminal removed from playlist.");
+  }
+
+  async function movePlaylistProject(projectId: string, direction: -1 | 1) {
+    if (!selectedPlaylist) return;
+    const index = selectedPlaylist.projectIds.indexOf(projectId);
+    const nextIndex = index + direction;
+    if (index < 0 || nextIndex < 0 || nextIndex >= selectedPlaylist.projectIds.length) return;
+    const nextProjectIds = [...selectedPlaylist.projectIds];
+    [nextProjectIds[index], nextProjectIds[nextIndex]] = [nextProjectIds[nextIndex], nextProjectIds[index]];
+    const updated = await updatePlaylist(selectedPlaylist.id, { projectIds: nextProjectIds });
+    if (updated) setStatus("Playlist reordered.");
+  }
+
+  function playPlaylist(playlist: SubliminalPlaylist) {
+    const playableProjects = playlist.projectIds
+      .map((projectId) => projects.find((project) => project.id === projectId && project.audioUrl))
+      .filter((project): project is SubliminalProject => Boolean(project));
+
+    if (playableProjects.length === 0) {
+      setStatus("Add at least one ready subliminal before playing this playlist.");
+      return;
+    }
+
+    if (playlistPlayingId === playlist.id) {
+      playlistAudioRef.current?.pause();
+      setPlaylistPlayingId("");
+      setPlaylistTrackIndex(0);
+      return;
+    }
+
+    setPlaylistPlayingId(playlist.id);
+    setPlaylistTrackIndex(0);
+  }
+
+  function playNextPlaylistTrack() {
+    if (!activePlaylist || activePlaylistProjects.length === 0) {
+      setPlaylistPlayingId("");
+      setPlaylistTrackIndex(0);
+      return;
+    }
+    setPlaylistTrackIndex((current) => (current + 1) % activePlaylistProjects.length);
   }
 
   async function generateAffirmations() {
@@ -930,7 +1089,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     }
   }
 
-  function downloadProject(project: SubliminalProject) {
+  async function downloadProject(project: SubliminalProject) {
     if (!hasPro) {
       openUpgradePrompt("Downloads are included in Pro. Upgrade to download finished subliminals as audio files.");
       return;
@@ -941,14 +1100,32 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
       return;
     }
 
-    const anchor = document.createElement("a");
-    anchor.href = project.audioUrl;
-    anchor.download = project.fileName ?? `${project.title || "subliminal"}.webm`;
-    anchor.click();
+    setLoading(`download-${project.id}`);
+    setStatus("");
+    try {
+      const response = await fetch(project.audioUrl);
+      if (!response.ok) throw new Error("Could not download audio.");
+      const sourceBlob = await response.blob();
+      const sourceName = project.title || "subliminal";
+
+      try {
+        const context = new AudioContext();
+        const buffer = await decodeBlob(context, sourceBlob);
+        await context.close();
+        downloadBlob(audioBufferToWav(buffer), `${sourceName.replace(/[^a-zA-Z0-9._-]/g, "_")}.wav`);
+      } catch {
+        downloadBlob(sourceBlob, project.fileName ?? `${sourceName.replace(/[^a-zA-Z0-9._-]/g, "_")}.webm`);
+      }
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Could not download audio.");
+    } finally {
+      setLoading("");
+    }
   }
 
   return (
     <main className="sublimify-minimal">
+      <audio ref={playlistAudioRef} src={activePlaylistTrack?.audioUrl ?? undefined} onEnded={playNextPlaylistTrack} />
       <header className="minimal-topbar">
         {owner ? (
           <Link href="/" className="minimal-brand">
@@ -1042,8 +1219,66 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
             {playlists.length > 0 && (
               <div className="playlist-strip">
                 {playlists.map((playlist) => (
-                  <span key={playlist.id}>{playlist.title}</span>
+                  <button
+                    key={playlist.id}
+                    className={selectedPlaylistId === playlist.id ? "playlist-pill active" : "playlist-pill"}
+                    onClick={() => setSelectedPlaylistId(selectedPlaylistId === playlist.id ? "" : playlist.id)}
+                  >
+                    <span>{playlist.title}</span>
+                    <small>{playlist.projectIds.length} tracks</small>
+                  </button>
                 ))}
+              </div>
+            )}
+            {selectedPlaylist && (
+              <div className="playlist-manager">
+                <div className="playlist-manager-head">
+                  <div>
+                    <strong>{selectedPlaylist.title}</strong>
+                    <span>{selectedPlaylistProjects.length ? `${selectedPlaylistProjects.length} subliminals in this playlist` : "Add subliminals from your library below"}</span>
+                    {playlistPlayingId === selectedPlaylist.id && activePlaylistTrack && <small>Now playing: {activePlaylistTrack.title}</small>}
+                  </div>
+                  <div>
+                    <button className="icon-button" onClick={() => playPlaylist(selectedPlaylist)} aria-label={playlistPlayingId === selectedPlaylist.id ? "Pause playlist" : "Play playlist"}>
+                      {playlistPlayingId === selectedPlaylist.id ? <Pause size={17} /> : <Play size={17} />}
+                    </button>
+                    <button className="icon-button" onClick={() => renamePlaylist(selectedPlaylist)} aria-label="Rename playlist">
+                      <Settings2 size={17} />
+                    </button>
+                    <button className="icon-button danger" onClick={() => deletePlaylist(selectedPlaylist.id)} aria-label="Delete playlist">
+                      <Trash2 size={17} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="playlist-track-list">
+                  {selectedPlaylistProjects.length === 0 ? (
+                    <span className="playlist-empty">No tracks yet.</span>
+                  ) : (
+                    selectedPlaylistProjects.map((project, index) => (
+                      <div key={project.id} className="playlist-track">
+                        <GripVertical size={16} />
+                        <div>
+                          <strong>{project.title}</strong>
+                          <span>{formatDuration(project.duration)}</span>
+                        </div>
+                        <button className="mini-button" onClick={() => movePlaylistProject(project.id, -1)} disabled={index === 0}>Up</button>
+                        <button className="mini-button" onClick={() => movePlaylistProject(project.id, 1)} disabled={index === selectedPlaylistProjects.length - 1}>Down</button>
+                        <button className="mini-button danger" onClick={() => removeProjectFromPlaylist(project.id)}>Remove</button>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="playlist-add-list">
+                  <span>Add from library</span>
+                  {projects.filter((project) => !selectedPlaylist.projectIds.includes(project.id)).slice(0, 8).map((project) => (
+                    <button key={project.id} onClick={() => addProjectToPlaylist(project.id)} disabled={!project.audioUrl || loading === `playlist-${selectedPlaylist.id}`}>
+                      <Plus size={15} /> {project.title}
+                    </button>
+                  ))}
+                  {projects.every((project) => selectedPlaylist.projectIds.includes(project.id)) && <small>All saved subliminals are already in this playlist.</small>}
+                </div>
               </div>
             )}
           </div>
@@ -1075,8 +1310,8 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                     )}
                   </div>
                   <div className="subliminal-row-actions">
-                    <button className="secondary-button" onClick={() => downloadProject(project)}>
-                      {hasPro ? <Download size={16} /> : <Lock size={16} />}
+                    <button className="secondary-button" onClick={() => downloadProject(project)} disabled={loading === `download-${project.id}`}>
+                      {loading === `download-${project.id}` ? <Loader2 className="spin" size={16} /> : hasPro ? <Download size={16} /> : <Lock size={16} />}
                       Download
                     </button>
                     <small><Clock size={14} /> {new Date(project.createdAt).toLocaleDateString()}</small>

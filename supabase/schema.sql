@@ -283,6 +283,11 @@ create policy "Users update own subliminal playlists"
 on public.subliminal_playlists for update
 using (auth.uid() = user_id);
 
+drop policy if exists "Users delete own subliminal playlists" on public.subliminal_playlists;
+create policy "Users delete own subliminal playlists"
+on public.subliminal_playlists for delete
+using (auth.uid() = user_id);
+
 create index if not exists subscriptions_user_product_idx on public.subscriptions(user_id, product_key, status);
 create index if not exists entitlements_user_product_idx on public.entitlements(user_id, product_key, active);
 create index if not exists manifestation_conversations_user_updated_idx on public.manifestation_conversations(user_id, updated_at desc);
