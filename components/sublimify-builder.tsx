@@ -27,6 +27,7 @@ import {
   Sparkles,
   Trash2,
   Upload,
+  Volume2,
   Wand2,
   X,
   XCircle
@@ -253,11 +254,16 @@ function LibraryAudioPlayer({ src }: { src: string }) {
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
+  const [volume, setVolume] = useState(0.8);
 
   useEffect(() => {
     setPlaying(false);
     setCurrentTime(0);
   }, [src]);
+
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = volume;
+  }, [volume]);
 
   async function togglePlayback() {
     const audio = audioRef.current;
@@ -278,6 +284,11 @@ function LibraryAudioPlayer({ src }: { src: string }) {
     if (!audio) return;
     audio.currentTime = nextTime;
     setCurrentTime(nextTime);
+  }
+
+  function changeVolume(nextVolume: number) {
+    setVolume(nextVolume);
+    if (audioRef.current) audioRef.current.volume = nextVolume;
   }
 
   return (
@@ -305,6 +316,18 @@ function LibraryAudioPlayer({ src }: { src: string }) {
         onChange={(event) => scrub(Number(event.target.value))}
       />
       <span>{formatPlaybackTime(currentTime)} / {formatPlaybackTime(audioDuration)}</span>
+      <label className="audio-volume-control">
+        <Volume2 size={14} />
+        <input
+          aria-label="Subliminal volume"
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value={volume}
+          onChange={(event) => changeVolume(Number(event.target.value))}
+        />
+      </label>
     </div>
   );
 }

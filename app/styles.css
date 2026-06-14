@@ -2274,11 +2274,11 @@ input[type="range"] {
 }
 
 .custom-audio-player {
-  width: min(520px, 100%);
+  width: min(640px, 100%);
   min-height: 48px;
   padding: 8px 10px;
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) auto;
+  grid-template-columns: 34px minmax(120px, 1fr) auto minmax(96px, 140px);
   align-items: center;
   gap: 10px;
   border: 1px solid rgba(197, 163, 255, 0.16);
@@ -2306,6 +2306,28 @@ input[type="range"] {
   font-size: 12px;
   font-weight: 850;
   white-space: nowrap;
+}
+
+.audio-volume-control {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+}
+
+.audio-volume-control input {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .custom-audio-player {
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+  }
+
+  .audio-volume-control {
+    grid-column: 2 / -1;
+  }
 }
 
 .subliminal-row span,
