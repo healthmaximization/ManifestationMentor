@@ -13,6 +13,7 @@ type SubliminalProjectMetadata = {
   musicFileName?: string | null;
   voiceSource?: string;
   voiceVolume?: number;
+  voiceSpeed?: number;
   soundVolume?: number;
   beatVolume?: number;
   importSource?: string;
@@ -34,6 +35,7 @@ function normalizeMetadata(value: unknown): SubliminalProjectMetadata {
     musicFileName: typeof metadata.musicFileName === "string" ? metadata.musicFileName : null,
     voiceSource: typeof metadata.voiceSource === "string" ? metadata.voiceSource : undefined,
     voiceVolume: typeof metadata.voiceVolume === "number" ? metadata.voiceVolume : undefined,
+    voiceSpeed: typeof metadata.voiceSpeed === "number" ? metadata.voiceSpeed : undefined,
     soundVolume: typeof metadata.soundVolume === "number" ? metadata.soundVolume : undefined,
     beatVolume: typeof metadata.beatVolume === "number" ? metadata.beatVolume : undefined,
     importSource: typeof metadata.importSource === "string" ? metadata.importSource : undefined,
@@ -176,6 +178,7 @@ export async function POST(request: Request) {
     musicFileName: readString("musicFileName") || null,
     voiceSource: readString("voiceSource") || "unknown",
     voiceVolume: readNumber("voiceVolume", 0.15),
+    voiceSpeed: readNumber("voiceSpeed", 1),
     soundVolume: readNumber("soundVolume", 0.5),
     beatVolume: readNumber("beatVolume", 0.25),
     importSource: storagePath ? "generated" : undefined,

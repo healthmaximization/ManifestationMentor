@@ -343,6 +343,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   const [ambience, setAmbience] = useState<Ambience>("none");
   const [voiceDuration, setVoiceDuration] = useState(0);
   const [voiceVolume, setVoiceVolume] = useState(0.15);
+  const [voiceSpeed, setVoiceSpeed] = useState(1);
   const [soundVolume, setSoundVolume] = useState(0.5);
   const [beatVolume, setBeatVolume] = useState(0.25);
   const [binauralRange, setBinauralRange] = useState<BinauralRange>("theta");
@@ -387,6 +388,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   const activeVoiceBlob = recordedBlob ?? ttsBlob;
   const activeVoiceUrl = useMemo(() => (activeVoiceBlob ? URL.createObjectURL(activeVoiceBlob) : ""), [activeVoiceBlob]);
   const duration = Math.max(1, Math.ceil(voiceDuration || 0));
+  const outputDuration = Math.max(1, Math.ceil(duration / voiceSpeed));
   const affirmationCount = useMemo(() => affirmations.split("\n").filter((line) => line.trim()).length, [affirmations]);
   const selectedStyle = STYLES.find((item) => item.key === style) ?? STYLES[0];
   const selectedAmbience = AMBIENCE_OPTIONS.find((item) => item.key === ambience) ?? AMBIENCE_OPTIONS[0];
@@ -510,6 +512,13 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     }
   }
 
+  function updateVoiceSpeed(nextSpeed: number) {
+    setVoiceSpeed(nextSpeed);
+    if (previewRef.current?.voiceAudio) {
+      previewRef.current.voiceAudio.playbackRate = nextSpeed;
+    }
+  }
+
   function updateSoundVolume(nextVolume: number) {
     setSoundVolume(nextVolume);
     if (previewRef.current?.ambienceGain) previewRef.current.ambienceGain.gain.value = nextVolume;
@@ -559,6 +568,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     setBinaural(false);
     setBinauralRange("theta");
     setVoiceVolume(0.15);
+    setVoiceSpeed(1);
     setSoundVolume(0.5);
     setBeatVolume(0.25);
     setRecordedBlob(null);
@@ -621,6 +631,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
       form.set("musicFileName", musicFile?.name ?? "");
       form.set("voiceSource", recordedBlob ? "recorded" : ttsBlob ? "text_to_speech" : "none");
       form.set("voiceVolume", String(voiceVolume));
+      form.set("voiceSpeed", String(voiceSpeed));
       form.set("soundVolume", String(soundVolume));
       form.set("beatVolume", String(beatVolume));
       response = await fetch("/api/sublimify/projects", {
@@ -643,6 +654,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
           musicFileName: musicFile?.name ?? null,
           voiceSource: recordedBlob ? "recorded" : ttsBlob ? "text_to_speech" : "none",
           voiceVolume,
+          voiceSpeed,
           soundVolume,
           beatVolume
         })
@@ -1002,6 +1014,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
       const audio = new Audio(activeVoiceUrl);
       audio.loop = true;
       audio.volume = style === "silent" ? 0.04 : Math.min(1, voiceVolume);
+      audio.playbackRate = voiceSpeed;
       audio.play();
       audios.push(audio);
       voiceAudio = audio;
@@ -1032,7 +1045,8 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
       await voiceContext.close();
     }
 
-    const renderDuration = Math.max(1, Math.min(3600, Math.ceil(voiceBuffer?.duration ?? duration)));
+    const effectiveVoiceDuration = voiceBuffer ? voiceBuffer.duration / voiceSpeed : duration;
+    const renderDuration = Math.max(1, Math.min(3600, Math.ceil(effectiveVoiceDuration)));
     const context = new OfflineAudioContext(2, renderDuration * sampleRate, sampleRate);
 
     if (ambience !== "none") {
@@ -1076,13 +1090,14 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     if (voiceBuffer) {
       const layerCount = style === "ultra_layered" ? 7 : style === "layered" ? 4 : 1;
       const baseVolume = style === "silent" ? 0.035 : voiceVolume;
+      const voiceLoopDuration = voiceBuffer.duration / voiceSpeed;
       for (let layer = 0; layer < layerCount; layer += 1) {
-        for (let start = layer * 0.85; start < renderDuration; start += voiceBuffer.duration + 1.8) {
+        for (let start = layer * 0.85; start < renderDuration; start += voiceLoopDuration + 1.8) {
           const source = context.createBufferSource();
           const gain = context.createGain();
           const pan = context.createStereoPanner();
           source.buffer = voiceBuffer;
-          source.playbackRate.value = style === "ultra_layered" ? 0.96 + layer * 0.012 : 1;
+          source.playbackRate.value = (style === "ultra_layered" ? 0.96 + layer * 0.012 : 1) * voiceSpeed;
           gain.gain.value = baseVolume / Math.sqrt(layerCount);
           pan.pan.value = layerCount === 1 ? 0 : -0.6 + (1.2 * layer) / Math.max(1, layerCount - 1);
           source.connect(gain).connect(pan).connect(context.destination);
@@ -1447,7 +1462,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                   <div>
                     <strong>Live subliminal preview</strong>
                     <span>Play the current mix, then adjust the sliders and options until it sits right.</span>
-                    <small>Duration: {formatDuration(duration)}</small>
+                    <small>Duration: {formatDuration(outputDuration)}</small>
                   </div>
                   <button className="secondary-button" onClick={() => (previewing ? stopPreview() : startPreview())}>
                     {previewing ? <Pause size={17} /> : <Play size={17} />}
@@ -1534,6 +1549,13 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                       </div>
                       <input type="range" min="0" max="1" step="0.01" value={voiceVolume} onChange={(event) => updateVoiceVolume(Number(event.target.value))} />
                     </div>
+                    <div className="mix-slider">
+                      <div>
+                        <span>Affirmation speed</span>
+                        <strong>{voiceSpeed.toFixed(2)}x</strong>
+                      </div>
+                      <input type="range" min="1" max="3" step="0.05" value={voiceSpeed} onChange={(event) => updateVoiceSpeed(Number(event.target.value))} />
+                    </div>
                     {binaural && (
                       <div className="mix-slider">
                         <div>
@@ -1569,7 +1591,8 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                   <div><span>Style</span><strong>{selectedStyle.label}</strong></div>
                   <div><span>Sound</span><strong>{soundChoiceSummary}</strong></div>
                   <div><span>Binaural beats</span><strong>{binaural ? `${selectedBinaural.label} (${selectedBinaural.frequency} Hz)` : "Off"}</strong></div>
-                  <div><span>Duration</span><strong>{formatDuration(duration)}</strong></div>
+                  <div><span>Duration</span><strong>{formatDuration(outputDuration)}</strong></div>
+                  <div><span>Affirmation speed</span><strong>{voiceSpeed.toFixed(2)}x</strong></div>
                   <div><span>Mix</span><strong>{Math.round(voiceVolume * 100)}% voice / {binaural ? `${Math.round(beatVolume * 100)}% beats` : "no beats"} / {hasSoundBed ? `${Math.round(soundVolume * 100)}% sound` : "no sound"}</strong></div>
                 </div>
                 <div className="minimal-actions">
