@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createBrowserSupabase } from "@/lib/supabase/browser";
 import {
   ArrowLeft,
   ChevronDown,
@@ -683,11 +684,42 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     setLoading("import");
     setStatus("");
     try {
-      const form = new FormData();
-      form.append("file", file);
+      const uploadResponse = await fetch("/api/sublimify/import-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size
+        })
+      });
+      const uploadData = await readJsonResponse(uploadResponse, "Could not prepare import.");
+      if (!uploadResponse.ok) {
+        setStatus(uploadData.error ?? "Could not prepare import.");
+        return;
+      }
+
+      const supabase = createBrowserSupabase();
+      const upload = await supabase.storage
+        .from("subliminal-imports")
+        .uploadToSignedUrl(uploadData.path as string, uploadData.token as string, file, {
+          contentType: file.type || (extension === "mp3" ? "audio/mpeg" : "audio/wav")
+        });
+
+      if (upload.error) {
+        setStatus(upload.error.message);
+        return;
+      }
+
       const response = await fetch("/api/sublimify/import", {
         method: "POST",
-        body: form
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          storagePath: uploadData.path,
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size
+        })
       });
       const data = await readJsonResponse(response, "Could not import subliminal.");
       if (!response.ok) {

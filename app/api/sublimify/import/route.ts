@@ -22,6 +22,20 @@ function contentTypeFor(file: File) {
   return file.type || "application/octet-stream";
 }
 
+function contentTypeForMetadata(fileName: string, fileType = "") {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+  const mimeType = fileType.toLowerCase();
+  if (extension === "mp3" || mimeType === "audio/mpeg" || mimeType === "audio/mp3") return "audio/mpeg";
+  if (extension === "wav" || mimeType === "audio/wav" || mimeType === "audio/x-wav") return "audio/wav";
+  return fileType || "application/octet-stream";
+}
+
+function isSupportedAudioMetadata(fileName: string, fileType = "") {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+  const mimeType = fileType.toLowerCase();
+  return extension === "mp3" || extension === "wav" || mimeType === "audio/mpeg" || mimeType === "audio/mp3" || mimeType === "audio/wav" || mimeType === "audio/x-wav";
+}
+
 export async function POST(request: Request) {
   const supabase = createRouteSupabase();
   const {
@@ -30,17 +44,6 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const form = await request.formData();
-  const file = form.get("file");
-
-  if (!(file instanceof File)) {
-    return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
-  }
-
-  if (!isSupportedAudioFile(file)) {
-    return NextResponse.json({ error: "Please upload an MP3 or WAV file." }, { status: 400 });
   }
 
   const admin = createAdminSupabase();
@@ -57,24 +60,59 @@ export async function POST(request: Request) {
     }
   }
 
-  const storagePath = `${user.id}/${Date.now()}-${safeFileName(file.name)}`;
-  const bytes = await file.arrayBuffer();
+  const contentType = request.headers.get("content-type") ?? "";
+  let storagePath = "";
+  let fileName = "";
+  let fileSize = 0;
+  let mimeType = "";
 
-  const upload = await admin.storage.from("subliminal-imports").upload(storagePath, bytes, {
-    contentType: contentTypeFor(file),
-    upsert: false
-  });
+  if (contentType.includes("multipart/form-data")) {
+    const form = await request.formData();
+    const file = form.get("file");
 
-  if (upload.error) {
-    return NextResponse.json({ error: upload.error.message }, { status: 500 });
+    if (!(file instanceof File)) {
+      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    }
+
+    if (!isSupportedAudioFile(file)) {
+      return NextResponse.json({ error: "Please upload an MP3 or WAV file." }, { status: 400 });
+    }
+
+    storagePath = `${user.id}/imports/${Date.now()}-${safeFileName(file.name)}`;
+    fileName = file.name;
+    fileSize = file.size;
+    mimeType = contentTypeFor(file);
+
+    const upload = await admin.storage.from("subliminal-imports").upload(storagePath, await file.arrayBuffer(), {
+      contentType: mimeType,
+      upsert: false
+    });
+
+    if (upload.error) {
+      return NextResponse.json({ error: upload.error.message }, { status: 500 });
+    }
+  } else {
+    const payload = await request.json().catch(() => ({}));
+    storagePath = typeof payload.storagePath === "string" ? payload.storagePath : "";
+    fileName = typeof payload.fileName === "string" ? payload.fileName : "";
+    fileSize = Number(payload.fileSize) || 0;
+    mimeType = contentTypeForMetadata(fileName, typeof payload.fileType === "string" ? payload.fileType : "");
+
+    if (!storagePath.startsWith(`${user.id}/imports/`)) {
+      return NextResponse.json({ error: "Invalid import path." }, { status: 400 });
+    }
+
+    if (!isSupportedAudioMetadata(fileName, mimeType)) {
+      return NextResponse.json({ error: "Please upload an MP3 or WAV file." }, { status: 400 });
+    }
   }
 
   const metadata = {
     importSource: "upload",
     storagePath,
-    fileName: file.name,
-    fileSize: file.size,
-    mimeType: contentTypeFor(file),
+    fileName,
+    fileSize,
+    mimeType,
     style: "normal",
     duration: 0,
     affirmationCount: 0,
@@ -86,7 +124,7 @@ export async function POST(request: Request) {
     .from("subliminal_projects")
     .insert({
       user_id: user.id,
-      title: file.name.replace(/\.[^.]+$/, "") || "Imported subliminal",
+      title: fileName.replace(/\.[^.]+$/, "") || "Imported subliminal",
       intention: "Imported audio file",
       status: "ready",
       metadata,
@@ -114,7 +152,7 @@ export async function POST(request: Request) {
       ambience: "none",
       binaural: false,
       imported: true,
-      fileName: file.name,
+      fileName,
       audioUrl: signed.data?.signedUrl ?? null
     }
   });
