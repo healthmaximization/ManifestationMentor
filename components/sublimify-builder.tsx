@@ -672,22 +672,35 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
       openUpgradePrompt("Free includes 1 custom subliminal in your library. Upgrade to Pro to import and save more subliminals.");
       return;
     }
-    setLoading("import");
-    setStatus("");
-    const form = new FormData();
-    form.append("file", file);
-    const response = await fetch("/api/sublimify/import", {
-      method: "POST",
-      body: form
-    });
-    const data = await response.json();
-    setLoading("");
-    if (!response.ok) {
-      setStatus(data.error ?? "Could not import subliminal.");
+
+    const extension = file.name.split(".").pop()?.toLowerCase();
+    const supportedType = file.type === "audio/mpeg" || file.type === "audio/mp3" || file.type === "audio/wav" || file.type === "audio/x-wav";
+    if (extension !== "mp3" && extension !== "wav" && !supportedType) {
+      setStatus("Please upload an MP3 or WAV file.");
       return;
     }
-    setProjects((current) => [data.project as SubliminalProject, ...current].slice(0, 50));
-    setStatus("Subliminal imported and saved to your account.");
+
+    setLoading("import");
+    setStatus("");
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const response = await fetch("/api/sublimify/import", {
+        method: "POST",
+        body: form
+      });
+      const data = await readJsonResponse(response, "Could not import subliminal.");
+      if (!response.ok) {
+        setStatus(data.error ?? "Could not import subliminal.");
+        return;
+      }
+      setProjects((current) => [data.project as SubliminalProject, ...current].slice(0, 50));
+      setStatus("Subliminal imported and saved to your account.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Could not import subliminal.");
+    } finally {
+      setLoading("");
+    }
   }
 
   async function createPlaylist() {
@@ -1248,7 +1261,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
               >
                 {loading === "import" ? <Loader2 className="spin" size={18} /> : <Upload size={18} />}
                 Import subliminal
-                <input type="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.flac" disabled={libraryLimitReached} onChange={(event) => importSubliminal(event.target.files?.[0] ?? null)} />
+                <input type="file" accept=".mp3,.wav,audio/mpeg,audio/wav,audio/x-wav" disabled={libraryLimitReached} onChange={(event) => importSubliminal(event.target.files?.[0] ?? null)} />
               </label>
               <button className="secondary-button library-playlist" onClick={createPlaylist} disabled={loading === "playlist"}>
                 {loading === "playlist" ? <Loader2 className="spin" size={18} /> : hasPro ? <Plus size={18} /> : <Lock size={18} />} Create new playlist

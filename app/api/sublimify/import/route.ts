@@ -8,6 +8,20 @@ function safeFileName(fileName: string) {
   return fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
 }
 
+function isSupportedAudioFile(file: File) {
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  const mimeType = file.type.toLowerCase();
+  return extension === "mp3" || extension === "wav" || mimeType === "audio/mpeg" || mimeType === "audio/mp3" || mimeType === "audio/wav" || mimeType === "audio/x-wav";
+}
+
+function contentTypeFor(file: File) {
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  const mimeType = file.type.toLowerCase();
+  if (extension === "mp3" || mimeType === "audio/mpeg" || mimeType === "audio/mp3") return "audio/mpeg";
+  if (extension === "wav" || mimeType === "audio/wav" || mimeType === "audio/x-wav") return "audio/wav";
+  return file.type || "application/octet-stream";
+}
+
 export async function POST(request: Request) {
   const supabase = createRouteSupabase();
   const {
@@ -23,6 +37,10 @@ export async function POST(request: Request) {
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+  }
+
+  if (!isSupportedAudioFile(file)) {
+    return NextResponse.json({ error: "Please upload an MP3 or WAV file." }, { status: 400 });
   }
 
   const admin = createAdminSupabase();
@@ -43,7 +61,7 @@ export async function POST(request: Request) {
   const bytes = await file.arrayBuffer();
 
   const upload = await admin.storage.from("subliminal-imports").upload(storagePath, bytes, {
-    contentType: file.type || "application/octet-stream",
+    contentType: contentTypeFor(file),
     upsert: false
   });
 
@@ -56,7 +74,7 @@ export async function POST(request: Request) {
     storagePath,
     fileName: file.name,
     fileSize: file.size,
-    mimeType: file.type || "application/octet-stream",
+    mimeType: contentTypeFor(file),
     style: "normal",
     duration: 0,
     affirmationCount: 0,
