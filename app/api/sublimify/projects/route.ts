@@ -14,6 +14,9 @@ type SubliminalProjectMetadata = {
   voiceSource?: string;
   voiceVolume?: number;
   voiceSpeed?: number;
+  layerCount?: number;
+  layerOffset?: number;
+  layerSpread?: number;
   soundVolume?: number;
   beatVolume?: number;
   importSource?: string;
@@ -36,6 +39,9 @@ function normalizeMetadata(value: unknown): SubliminalProjectMetadata {
     voiceSource: typeof metadata.voiceSource === "string" ? metadata.voiceSource : undefined,
     voiceVolume: typeof metadata.voiceVolume === "number" ? metadata.voiceVolume : undefined,
     voiceSpeed: typeof metadata.voiceSpeed === "number" ? metadata.voiceSpeed : undefined,
+    layerCount: typeof metadata.layerCount === "number" ? metadata.layerCount : undefined,
+    layerOffset: typeof metadata.layerOffset === "number" ? metadata.layerOffset : undefined,
+    layerSpread: typeof metadata.layerSpread === "number" ? metadata.layerSpread : undefined,
     soundVolume: typeof metadata.soundVolume === "number" ? metadata.soundVolume : undefined,
     beatVolume: typeof metadata.beatVolume === "number" ? metadata.beatVolume : undefined,
     importSource: typeof metadata.importSource === "string" ? metadata.importSource : undefined,
@@ -179,6 +185,9 @@ export async function POST(request: Request) {
     voiceSource: readString("voiceSource") || "unknown",
     voiceVolume: readNumber("voiceVolume", 0.15),
     voiceSpeed: readNumber("voiceSpeed", 1),
+    layerCount: readNumber("layerCount", 4),
+    layerOffset: readNumber("layerOffset", 0.45),
+    layerSpread: readNumber("layerSpread", 0.75),
     soundVolume: readNumber("soundVolume", 0.5),
     beatVolume: readNumber("beatVolume", 0.25),
     importSource: storagePath ? "generated" : undefined,

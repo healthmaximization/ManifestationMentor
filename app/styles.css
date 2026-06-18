@@ -2616,6 +2616,28 @@ input[type="range"] {
   gap: 12px;
 }
 
+.layered-settings {
+  padding: 16px;
+  border: 1px solid rgba(197, 163, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(155, 92, 255, 0.055);
+}
+
+.layered-settings > div:first-child {
+  display: grid;
+  gap: 5px;
+}
+
+.layered-settings > div:first-child strong {
+  color: var(--ink);
+}
+
+.layered-settings > div:first-child span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .mix-controls h2 {
   margin: 6px 0 0;
   color: var(--ink);
