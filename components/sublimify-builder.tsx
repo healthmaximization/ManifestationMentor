@@ -31,6 +31,7 @@ import {
   Trash2,
   Upload,
   Volume2,
+  VolumeX,
   Wand2,
   X,
   XCircle
@@ -258,6 +259,8 @@ function LibraryAudioPlayer({ src }: { src: string }) {
   const [currentTime, setCurrentTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const [volume, setVolume] = useState(0.8);
+  const [looping, setLooping] = useState(true);
+  const previousVolumeRef = useRef(0.8);
 
   useEffect(() => {
     setPlaying(false);
@@ -278,8 +281,12 @@ function LibraryAudioPlayer({ src }: { src: string }) {
       return;
     }
 
-    await audio.play();
-    setPlaying(true);
+    try {
+      await audio.play();
+      setPlaying(true);
+    } catch {
+      setPlaying(false);
+    }
   }
 
   function scrub(nextTime: number) {
@@ -290,8 +297,13 @@ function LibraryAudioPlayer({ src }: { src: string }) {
   }
 
   function changeVolume(nextVolume: number) {
+    if (nextVolume > 0) previousVolumeRef.current = nextVolume;
     setVolume(nextVolume);
     if (audioRef.current) audioRef.current.volume = nextVolume;
+  }
+
+  function toggleMute() {
+    changeVolume(volume > 0 ? 0 : previousVolumeRef.current || 0.8);
   }
 
   return (
@@ -299,12 +311,13 @@ function LibraryAudioPlayer({ src }: { src: string }) {
       <audio
         ref={audioRef}
         src={src}
-        loop
+        loop={looping}
         preload="metadata"
         onLoadedMetadata={(event) => setAudioDuration(event.currentTarget.duration || 0)}
         onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
         onPause={() => setPlaying(false)}
         onPlay={() => setPlaying(true)}
+        onEnded={() => setPlaying(false)}
       />
       <button type="button" onClick={togglePlayback} aria-label={playing ? "Pause subliminal" : "Play subliminal"}>
         {playing ? <Pause size={16} /> : <Play size={16} />}
@@ -319,8 +332,13 @@ function LibraryAudioPlayer({ src }: { src: string }) {
         onChange={(event) => scrub(Number(event.target.value))}
       />
       <span>{formatPlaybackTime(currentTime)} / {formatPlaybackTime(audioDuration)}</span>
-      <label className="audio-volume-control">
-        <Volume2 size={14} />
+      <button type="button" className={looping ? "audio-loop-button active" : "audio-loop-button"} onClick={() => setLooping((current) => !current)} aria-label={looping ? "Disable loop" : "Enable loop"} aria-pressed={looping} title={looping ? "Loop enabled" : "Loop disabled"}>
+        <Repeat2 size={14} />
+      </button>
+      <div className="audio-volume-control">
+        <button type="button" onClick={toggleMute} aria-label={volume > 0 ? "Mute subliminal" : "Unmute subliminal"} title={volume > 0 ? "Mute" : "Unmute"}>
+          {volume > 0 ? <Volume2 size={14} /> : <VolumeX size={14} />}
+        </button>
         <input
           aria-label="Subliminal volume"
           type="range"
@@ -330,7 +348,7 @@ function LibraryAudioPlayer({ src }: { src: string }) {
           value={volume}
           onChange={(event) => changeVolume(Number(event.target.value))}
         />
-      </label>
+      </div>
     </div>
   );
 }
@@ -427,6 +445,12 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   const activeStepIndex = Math.max(0, currentSteps.indexOf(activeStep));
   const isFree = !hasPro;
   const libraryLimitReached = isFree && projects.length >= 1;
+
+  useEffect(() => {
+    return () => {
+      if (activeVoiceUrl) URL.revokeObjectURL(activeVoiceUrl);
+    };
+  }, [activeVoiceUrl]);
 
   useEffect(() => {
     async function loadProjects() {
@@ -1423,7 +1447,6 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                     {project.audioUrl ? (
                       <div className="library-audio">
                         <LibraryAudioPlayer src={project.audioUrl} />
-                        <span><Repeat2 size={14} /> Loop enabled</span>
                       </div>
                     ) : (
                       <span>{project.imported ? "Audio is processing." : "Audio will appear here after saving/exporting."}</span>
@@ -1518,7 +1541,12 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                     <button className={voiceChoice === "tts" ? "quiz-option active" : "quiz-option"} onClick={generateTextToSpeech} disabled={!script || loading === "tts"}>{loading === "tts" ? <Loader2 className="spin" size={22} /> : <Sparkles size={22} />}<strong>Text to speech</strong><span>Create a simple spoken voice from your affirmations.</span></button>
                   )}
                 </div>
-                {activeVoiceBlob && <audio controls src={URL.createObjectURL(activeVoiceBlob)} />}
+                {activeVoiceUrl && (
+                  <div className="voice-audio-preview">
+                    <span>Voice preview</span>
+                    <LibraryAudioPlayer src={activeVoiceUrl} />
+                  </div>
+                )}
               </>
             )}
 
