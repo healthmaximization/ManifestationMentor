@@ -68,9 +68,10 @@ export default function SublimifyLanding() {
         </Link>
       </header>
 
-      <section className="sublimify-public-hero">
+      <section className="sublimify-public-hero" aria-labelledby="landing-title">
         <div className="landing-copy">
-          <h1>Make a complete subliminal in a few simple steps.</h1>
+          <span className="landing-eyebrow">Subliminal creation, simplified</span>
+          <h1 id="landing-title">Make a complete subliminal in a few simple steps.</h1>
           <p>
             Turn a topic into affirmations, voice, background audio, binaural beats, and a finished audio file without a messy timeline or complicated editor.
           </p>
@@ -98,10 +99,10 @@ export default function SublimifyLanding() {
         </div>
       </section>
 
-      <section className="landing-steps">
-        {steps.map((step) => (
+      <section className="landing-steps" aria-label="How it works">
+        {steps.map((step, index) => (
           <article key={step.title}>
-            <step.icon size={22} />
+            <div className="step-icon"><step.icon size={20} /><span>0{index + 1}</span></div>
             <h2>{step.title}</h2>
             <p>{step.text}</p>
           </article>

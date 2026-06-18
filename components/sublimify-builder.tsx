@@ -5,6 +5,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 import {
   ArrowLeft,
+  ArrowDown,
+  ArrowUp,
   ChevronDown,
   ChevronRight,
   CheckCircle2,
@@ -1380,8 +1382,8 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                           <strong>{project.title}</strong>
                           <span>{formatDuration(project.duration)}</span>
                         </div>
-                        <button className="mini-button" onClick={() => movePlaylistProject(project.id, -1)} disabled={index === 0}>Up</button>
-                        <button className="mini-button" onClick={() => movePlaylistProject(project.id, 1)} disabled={index === selectedPlaylistProjects.length - 1}>Down</button>
+                        <button className="mini-button icon-only" onClick={() => movePlaylistProject(project.id, -1)} disabled={index === 0} aria-label={`Move ${project.title} up`} title="Move up"><ArrowUp size={14} /></button>
+                        <button className="mini-button icon-only" onClick={() => movePlaylistProject(project.id, 1)} disabled={index === selectedPlaylistProjects.length - 1} aria-label={`Move ${project.title} down`} title="Move down"><ArrowDown size={14} /></button>
                         <button className="mini-button danger" onClick={() => removeProjectFromPlaylist(project.id)}>Remove</button>
                       </div>
                     ))
@@ -1779,7 +1781,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
         </div>
       )}
 
-      {status && <p className="floating-status">{status}</p>}
+      {status && <p className="floating-status" role="status" aria-live="polite">{status}</p>}
     </main>
   );
 }

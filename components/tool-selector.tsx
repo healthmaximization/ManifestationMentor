@@ -34,8 +34,8 @@ export default function ToolSelector({ userEmail }: { userEmail: string }) {
         </Link>
         <Link href="/sublimify" className="tool-card featured">
           <BrandLogo size="small" />
-          <span>Sublimify Builder</span>
-          <p>Create recorded, AI voice, silent, layered, binaural, and ambient subliminals.</p>
+          <span>Subliminal Studio</span>
+          <p>Create recorded or narrated subliminals with layered voices, binaural beats, music, and ambient sound.</p>
         </Link>
       </section>
     </main>

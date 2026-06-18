@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, EyeOff, Mail } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import BrandLogo from "@/components/brand-logo";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
@@ -26,69 +26,62 @@ export default function AuthScreen() {
     setError("");
     setNotice("");
 
-    const supabase = createBrowserSupabase();
-    const normalizedEmail = email.trim().toLowerCase();
+    try {
+      const supabase = createBrowserSupabase();
+      const normalizedEmail = email.trim().toLowerCase();
 
-    if (mode === "signin") {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email: normalizedEmail,
-        password
-      });
-
-      setLoading(false);
-
-      if (authError) {
-        setError(authError.message === "Invalid login credentials" ? "No account found with this email/password. Create an account first, or check the password." : authError.message);
+      if (mode === "signin") {
+        const { data, error: authError } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
+        if (authError) {
+          setError(authError.message === "Invalid login credentials" ? "No account found with this email/password. Create an account first, or check the password." : authError.message);
+          return;
+        }
+        if (data.session) {
+          router.push(nextPath);
+          router.refresh();
+        }
         return;
       }
 
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
+      });
+
+      if (signUpError) {
+        setError(signUpError.message);
+        return;
+      }
       if (data.session) {
         router.push(nextPath);
         router.refresh();
+        return;
       }
 
-      return;
+      setNotice("Check your email to confirm your account. After confirming, you can log in and open the studio.");
+      setMode("signin");
+    } catch (authError) {
+      setError(authError instanceof Error ? authError.message : "Could not connect. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email: normalizedEmail,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`
-      }
-    });
-
-    setLoading(false);
-
-    if (signUpError) {
-      setError(signUpError.message);
-      return;
-    }
-
-    if (data.session) {
-      router.push(nextPath);
-      router.refresh();
-      return;
-    }
-
-    setNotice("Check your email to confirm your account. After confirming, you can log in and open the studio.");
-    setMode("signin");
   }
 
   return (
     <main className="auth-page">
       <section className="auth-panel">
         <div className="auth-card-top">
-          <BrandLogo />
+          <div className="auth-card-brand"><BrandLogo /><strong>Subliminal Academy</strong></div>
           <span>Member access</span>
         </div>
         <h1>{mode === "signin" ? "Welcome back." : "Start creating."}</h1>
         <p>{mode === "signin" ? "Log in to start creating subliminals." : "Create your account and start building your first subliminal."}</p>
         <div className="auth-tabs" role="tablist" aria-label="Authentication mode">
-          <button className={mode === "signin" ? "active" : ""} onClick={() => setMode("signin")} type="button">
+          <button className={mode === "signin" ? "active" : ""} onClick={() => setMode("signin")} type="button" role="tab" aria-selected={mode === "signin"}>
             Existing account
           </button>
-          <button className={mode === "signup" ? "active" : ""} onClick={() => setMode("signup")} type="button">
+          <button className={mode === "signup" ? "active" : ""} onClick={() => setMode("signup")} type="button" role="tab" aria-selected={mode === "signup"}>
             New account
           </button>
         </div>
@@ -113,16 +106,17 @@ export default function AuthScreen() {
               minLength={6}
               required
             />
-            <button type="button" onClick={() => setShowPassword((current) => !current)} title="Toggle password visibility">
+            <button type="button" onClick={() => setShowPassword((current) => !current)} title="Toggle password visibility" aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword}>
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
           <button type="submit" disabled={loading}>
+            {loading && <Loader2 className="spin" size={17} />}
             {loading ? "Working..." : mode === "signin" ? "Enter studio" : "Create free account"}
           </button>
         </form>
-        {notice && <p className="notice">{notice}</p>}
-        {error && <p className="error">{error}</p>}
+        {notice && <p className="notice" role="status" aria-live="polite">{notice}</p>}
+        {error && <p className="error" role="alert">{error}</p>}
         <a className="auth-contact" href="mailto:jhdesigns1234@gmail.com">
           <Mail size={15} />
           Contact support
