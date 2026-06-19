@@ -2266,6 +2266,23 @@ input[type="range"] {
   padding: 0 12px;
 }
 
+.subliminal-row-actions .row-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.destructive-button {
+  color: #ffc7d1;
+  border-color: rgba(251, 113, 133, 0.2);
+  background: rgba(251, 113, 133, 0.055);
+}
+
+.destructive-button:hover {
+  border-color: rgba(251, 113, 133, 0.36);
+  background: rgba(251, 113, 133, 0.1);
+}
+
 .library-audio {
   width: min(520px, 100%);
   margin-top: 8px;
@@ -3462,8 +3479,14 @@ select:hover {
   }
 
   .subliminal-row-actions,
+  .subliminal-row-actions .row-action-buttons,
   .subliminal-row-actions .secondary-button {
     width: 100%;
+  }
+
+  .subliminal-row-actions .row-action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 
   .custom-audio-player {

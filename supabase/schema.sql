@@ -243,6 +243,11 @@ create policy "Users update own subliminal projects"
 on public.subliminal_projects for update
 using (auth.uid() = user_id);
 
+drop policy if exists "Users delete own subliminal projects" on public.subliminal_projects;
+create policy "Users delete own subliminal projects"
+on public.subliminal_projects for delete
+using (auth.uid() = user_id);
+
 drop policy if exists "Users read own subliminal scripts" on public.subliminal_scripts;
 create policy "Users read own subliminal scripts"
 on public.subliminal_scripts for select

@@ -620,7 +620,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
 
   function startNewProject() {
     if (libraryLimitReached) {
-      openUpgradePrompt("Free includes 1 custom subliminal in your library. Upgrade to Pro to create and save unlimited subliminals.");
+      openUpgradePrompt("Free keeps 1 subliminal in your library at a time. Delete your current subliminal to create another, or upgrade to Pro for an unlimited library.");
       return;
     }
     openBuilderWithTopic("");
@@ -710,7 +710,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   async function importSubliminal(file: File | null) {
     if (!file) return;
     if (libraryLimitReached) {
-      openUpgradePrompt("Free includes 1 custom subliminal in your library. Upgrade to Pro to import and save more subliminals.");
+      openUpgradePrompt("Free keeps 1 subliminal in your library at a time. Delete your current subliminal to import another, or upgrade to Pro for an unlimited library.");
       return;
     }
 
@@ -770,6 +770,37 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
       setStatus("Subliminal imported and saved to your account.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Could not import subliminal.");
+    } finally {
+      setLoading("");
+    }
+  }
+
+  async function deleteProject(project: SubliminalProject) {
+    if (!window.confirm(`Delete "${project.title}"? This removes the subliminal audio permanently.`)) return;
+
+    setLoading(`delete-${project.id}`);
+    setStatus("");
+    try {
+      const response = await fetch(`/api/sublimify/projects/${project.id}`, { method: "DELETE" });
+      const data = await readJsonResponse(response, "Could not delete subliminal.");
+      if (!response.ok) {
+        setStatus(data.error ?? "Could not delete subliminal.");
+        return;
+      }
+
+      if (activePlaylistTrack?.id === project.id) {
+        playlistAudioRef.current?.pause();
+        setPlaylistPlayingId("");
+        setPlaylistTrackIndex(0);
+      }
+      setProjects((current) => current.filter((item) => item.id !== project.id));
+      setPlaylists((current) => current.map((playlist) => ({
+        ...playlist,
+        projectIds: playlist.projectIds.filter((projectId) => projectId !== project.id)
+      })));
+      setStatus(isFree ? "Subliminal deleted. You can create a new one now." : "Subliminal deleted from your library.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Could not delete subliminal.");
     } finally {
       setLoading("");
     }
@@ -1453,10 +1484,16 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                     )}
                   </div>
                   <div className="subliminal-row-actions">
-                    <button className="secondary-button" onClick={() => downloadProject(project)} disabled={loading === `download-${project.id}`}>
-                      {loading === `download-${project.id}` ? <Loader2 className="spin" size={16} /> : hasPro ? <Download size={16} /> : <Lock size={16} />}
-                      Download
-                    </button>
+                    <div className="row-action-buttons">
+                      <button className="secondary-button" onClick={() => downloadProject(project)} disabled={loading === `download-${project.id}` || loading === `delete-${project.id}`}>
+                        {loading === `download-${project.id}` ? <Loader2 className="spin" size={16} /> : hasPro ? <Download size={16} /> : <Lock size={16} />}
+                        Download
+                      </button>
+                      <button className="secondary-button destructive-button" onClick={() => deleteProject(project)} disabled={loading === `delete-${project.id}`}>
+                        {loading === `delete-${project.id}` ? <Loader2 className="spin" size={16} /> : <Trash2 size={16} />}
+                        Delete
+                      </button>
+                    </div>
                     <small><Clock size={14} /> {new Date(project.createdAt).toLocaleDateString()}</small>
                   </div>
                 </article>
