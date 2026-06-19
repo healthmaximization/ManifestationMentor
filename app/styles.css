@@ -3560,6 +3560,7 @@ select:hover {
     linear-gradient(90deg, rgba(255, 255, 255, 0.024) 1px, transparent 1px),
     #08090f;
   background-size: 48px 48px;
+  animation: academy-grid-drift 28s linear infinite;
 }
 
 .academy-nav {
@@ -3608,6 +3609,22 @@ select:hover {
   background: linear-gradient(135deg, #9254ee, #5e6ee8);
   box-shadow: 0 14px 38px rgba(109, 93, 252, 0.24);
   transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.academy-nav-cta::after,
+.academy-cta::after {
+  content: "";
+  position: absolute;
+  top: -80%;
+  bottom: -80%;
+  left: -45%;
+  width: 28%;
+  background: rgba(255, 255, 255, 0.24);
+  transform: rotate(18deg) translateX(-220%);
+  transition: transform 520ms ease;
+  pointer-events: none;
 }
 
 .academy-nav-cta {
@@ -3628,6 +3645,19 @@ select:hover {
   box-shadow: 0 18px 46px rgba(109, 93, 252, 0.34), 0 0 26px rgba(155, 92, 255, 0.16);
 }
 
+.academy-nav-cta:hover::after,
+.academy-cta:hover::after {
+  transform: rotate(18deg) translateX(650%);
+}
+
+.academy-cta svg {
+  transition: transform 180ms ease;
+}
+
+.academy-cta:hover svg {
+  transform: translateX(4px);
+}
+
 .academy-hero {
   width: min(1040px, 100%);
   min-height: min(700px, calc(100vh - 130px));
@@ -3640,9 +3670,21 @@ select:hover {
   text-align: center;
 }
 
+.academy-hero > * {
+  animation: academy-hero-in 620ms both;
+}
+
+.academy-hero > :nth-child(2) { animation-delay: 80ms; }
+.academy-hero > :nth-child(3) { animation-delay: 150ms; }
+.academy-hero > :nth-child(4) { animation-delay: 220ms; }
+.academy-hero > :nth-child(5) { animation-delay: 290ms; }
+.academy-hero > :nth-child(6) { animation-delay: 340ms; }
+
 .academy-hero-mark .brand-mark {
   width: 64px;
   height: 64px;
+  animation: academy-logo-float 4.6s ease-in-out infinite;
+  box-shadow: 0 0 54px rgba(155, 92, 255, 0.2);
 }
 
 .academy-kicker {
@@ -3655,6 +3697,10 @@ select:hover {
   font-weight: 850;
   text-transform: uppercase;
   letter-spacing: 0;
+}
+
+.academy-kicker svg {
+  animation: academy-icon-breathe 2.8s ease-in-out infinite;
 }
 
 .academy-hero h1,
@@ -3764,6 +3810,23 @@ select:hover {
   gap: 18px;
   background: rgba(255, 255, 255, 0.04);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease, background 220ms ease;
+}
+
+.academy-comment:hover {
+  transform: translateY(-7px);
+  border-color: rgba(103, 232, 249, 0.28);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: 0 28px 62px rgba(0, 0, 0, 0.28);
+}
+
+.academy-comment > div:first-child > span {
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.academy-comment:hover > div:first-child > span {
+  transform: scale(1.08);
+  box-shadow: 0 0 24px rgba(155, 92, 255, 0.24);
 }
 
 .academy-comment > div:first-child {
@@ -3819,6 +3882,13 @@ select:hover {
   grid-template-columns: minmax(0, 1fr) minmax(340px, 0.78fr);
   gap: 64px;
   background: rgba(251, 113, 133, 0.035);
+  transition: border-color 240ms ease, background 240ms ease, box-shadow 240ms ease;
+}
+
+.academy-problem:hover {
+  border-color: rgba(251, 113, 133, 0.24);
+  background: rgba(251, 113, 133, 0.05);
+  box-shadow: 0 28px 80px rgba(45, 8, 18, 0.18);
 }
 
 .academy-problem-copy {
@@ -3858,6 +3928,13 @@ select:hover {
   align-items: center;
   gap: 10px;
   color: rgba(245, 238, 246, 0.86);
+  transition: transform 180ms ease, color 180ms ease, background 180ms ease;
+}
+
+.academy-mistakes div:hover {
+  transform: translateX(6px);
+  color: var(--ink);
+  background: rgba(251, 113, 133, 0.045);
 }
 
 .academy-mistakes svg {
@@ -3881,10 +3958,24 @@ select:hover {
   align-content: start;
   gap: 18px;
   background: rgba(255, 255, 255, 0.035);
+  transition: transform 220ms ease, border-color 220ms ease, background 220ms ease, box-shadow 220ms ease;
+}
+
+.academy-offer-grid article:hover {
+  transform: translateY(-8px);
+  border-color: rgba(103, 232, 249, 0.3);
+  background: rgba(255, 255, 255, 0.052);
+  box-shadow: 0 24px 58px rgba(0, 0, 0, 0.25);
 }
 
 .academy-offer-grid article > svg {
   color: var(--cyan);
+  transition: transform 220ms ease, color 220ms ease;
+}
+
+.academy-offer-grid article:hover > svg {
+  transform: translateY(-3px) scale(1.1);
+  color: #a5f3fc;
 }
 
 .academy-offer-grid article > div {
@@ -3926,6 +4017,13 @@ select:hover {
     linear-gradient(180deg, rgba(248, 215, 124, 0.055), transparent 42%),
     rgba(255, 255, 255, 0.035);
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.3);
+  transition: transform 240ms ease, border-color 240ms ease, box-shadow 240ms ease;
+}
+
+.academy-offer:hover {
+  transform: translateY(-5px);
+  border-color: rgba(248, 215, 124, 0.42);
+  box-shadow: 0 34px 86px rgba(0, 0, 0, 0.38), 0 0 38px rgba(248, 215, 124, 0.06);
 }
 
 .academy-offer > div {
@@ -3998,10 +4096,22 @@ select:hover {
   align-content: start;
   gap: 18px;
   background: rgba(255, 255, 255, 0.025);
+  transition: transform 220ms ease, border-color 220ms ease, background 220ms ease;
+}
+
+.academy-testimonial-grid figure:hover {
+  transform: translateX(6px);
+  border-color: var(--purple-soft);
+  background: rgba(197, 163, 255, 0.045);
 }
 
 .academy-testimonial-grid svg {
   color: var(--purple-soft);
+  transition: transform 220ms ease;
+}
+
+.academy-testimonial-grid figure:hover svg {
+  transform: rotate(-7deg) scale(1.1);
 }
 
 .academy-testimonial-grid blockquote {
@@ -4030,6 +4140,10 @@ select:hover {
   text-align: center;
 }
 
+.academy-final-cta > .brand-mark {
+  animation: academy-logo-float 4.6s ease-in-out infinite;
+}
+
 .academy-final-cta p {
   max-width: 660px;
   margin: 0;
@@ -4051,6 +4165,14 @@ select:hover {
 
 .academy-faq details {
   border-bottom: 1px solid rgba(220, 210, 255, 0.13);
+  transition: border-color 180ms ease, background 180ms ease, padding 180ms ease;
+}
+
+.academy-faq details:hover,
+.academy-faq details[open] {
+  border-color: rgba(197, 163, 255, 0.3);
+  background: rgba(197, 163, 255, 0.025);
+  padding-inline: 12px;
 }
 
 .academy-faq summary {
@@ -4092,6 +4214,7 @@ select:hover {
   padding: 0 44px 20px 0;
   color: var(--muted);
   line-height: 1.7;
+  animation: academy-answer-in 220ms ease both;
 }
 
 .academy-bottom-offer {
@@ -4110,6 +4233,108 @@ select:hover {
   background: rgba(15, 14, 24, 0.94);
   box-shadow: 0 22px 64px rgba(0, 0, 0, 0.42);
   backdrop-filter: blur(18px);
+  animation: academy-offer-glow 3.6s ease-in-out infinite;
+}
+
+.academy-page-manifestation .academy-hero h1 span,
+.academy-page-manifestation .academy-section-heading h2 span,
+.academy-page-manifestation .academy-problem h2 span,
+.academy-page-manifestation .academy-final-cta h2 span {
+  color: #d6a8ff;
+}
+
+@keyframes academy-grid-drift {
+  from { background-position: 0 0; }
+  to { background-position: 48px 48px; }
+}
+
+@keyframes academy-hero-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes academy-logo-float {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-7px) rotate(2deg); }
+}
+
+@keyframes academy-icon-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.78; }
+  50% { transform: scale(1.14); opacity: 1; }
+}
+
+@keyframes academy-answer-in {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes academy-offer-glow {
+  0%, 100% { border-color: rgba(197, 163, 255, 0.2); box-shadow: 0 22px 64px rgba(0, 0, 0, 0.42); }
+  50% { border-color: rgba(197, 163, 255, 0.38); box-shadow: 0 22px 70px rgba(0, 0, 0, 0.46), 0 0 26px rgba(155, 92, 255, 0.09); }
+}
+
+@supports (animation-timeline: view()) {
+  .academy-comment-section .academy-section-heading,
+  .academy-comment,
+  .academy-problem,
+  .academy-system .academy-section-heading,
+  .academy-offer-grid article,
+  .academy-offer,
+  .academy-testimonials .academy-section-heading,
+  .academy-testimonial-grid figure,
+  .academy-final-cta,
+  .academy-faq > * {
+    animation: academy-scroll-in both;
+    animation-timeline: view();
+    animation-range: entry 8% cover 28%;
+  }
+
+  .academy-comment:nth-child(2),
+  .academy-offer-grid article:nth-child(2),
+  .academy-testimonial-grid figure:nth-child(2) { animation-range: entry 12% cover 32%; }
+
+  .academy-comment:nth-child(3),
+  .academy-offer-grid article:nth-child(3),
+  .academy-testimonial-grid figure:nth-child(3) { animation-range: entry 16% cover 36%; }
+}
+
+@keyframes academy-scroll-in {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .academy-page,
+  .academy-hero > *,
+  .academy-hero-mark .brand-mark,
+  .academy-kicker svg,
+  .academy-final-cta > .brand-mark,
+  .academy-bottom-offer,
+  .academy-faq details p {
+    animation: none;
+  }
+
+  .academy-comment:hover,
+  .academy-problem:hover,
+  .academy-mistakes div:hover,
+  .academy-offer-grid article:hover,
+  .academy-offer:hover,
+  .academy-testimonial-grid figure:hover {
+    transform: none;
+  }
+
+  @supports (animation-timeline: view()) {
+    .academy-comment-section .academy-section-heading,
+    .academy-comment,
+    .academy-problem,
+    .academy-system .academy-section-heading,
+    .academy-offer-grid article,
+    .academy-offer,
+    .academy-testimonials .academy-section-heading,
+    .academy-testimonial-grid figure,
+    .academy-final-cta,
+    .academy-faq > * { animation: none; }
+  }
 }
 
 .academy-bottom-offer > div {

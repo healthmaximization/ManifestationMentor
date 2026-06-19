@@ -107,7 +107,7 @@ export default function AcademyLanding({ angle = "subliminal" }: { angle?: "subl
   const KickerIcon = isManifestation ? Sparkles : Headphones;
 
   return (
-    <main className="academy-page">
+    <main className={`academy-page academy-page-${angle}`}>
       <header className="academy-nav">
         <Link href={isManifestation ? "/manifestation" : "/academy"} className="academy-brand">
           <BrandLogo size="small" />
