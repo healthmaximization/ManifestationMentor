@@ -27,7 +27,7 @@ export default function ToolSelector({ userEmail }: { userEmail: string }) {
       </section>
 
       <section className="tool-cards">
-        <Link href="/manifestation" className="tool-card">
+        <Link href="/manifestation/app" className="tool-card">
           <BrandLogo size="small" />
           <span>Manifestation Mentor</span>
           <p>Chat, coach, train knowledge, and refine the owner-controlled AI personality.</p>
