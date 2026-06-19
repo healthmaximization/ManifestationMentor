@@ -2684,6 +2684,11 @@ input[type="range"] {
   line-height: 1.45;
 }
 
+.layered-preview-panel {
+  border-color: rgba(103, 232, 249, 0.16);
+  background: rgba(7, 12, 20, 0.46);
+}
+
 .mix-controls h2 {
   margin: 6px 0 0;
   color: var(--ink);

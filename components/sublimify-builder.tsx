@@ -1086,12 +1086,25 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     setPreviewing(false);
   }
 
-  function startPreview(overrides: Partial<{ ambience: Ambience; binaural: boolean; binauralRange: BinauralRange; musicFile: File | null }> = {}) {
+  function startPreview(overrides: Partial<{
+    ambience: Ambience;
+    binaural: boolean;
+    binauralRange: BinauralRange;
+    musicFile: File | null;
+    style: Style;
+    layerCount: number;
+    layerOffset: number;
+    layerSpread: number;
+  }> = {}) {
     stopPreview();
     const previewAmbience = overrides.ambience ?? ambience;
     const previewBinaural = overrides.binaural ?? binaural;
     const previewBinauralRange = BINAURAL_OPTIONS.find((item) => item.key === (overrides.binauralRange ?? binauralRange)) ?? selectedBinaural;
     const previewMusicFile = overrides.musicFile === undefined ? musicFile : overrides.musicFile;
+    const previewStyle = overrides.style ?? style;
+    const previewLayerCountSetting = overrides.layerCount ?? layerCount;
+    const previewLayerOffset = overrides.layerOffset ?? layerOffset;
+    const previewLayerSpread = overrides.layerSpread ?? layerSpread;
     const context = new AudioContext();
     let ambienceGain: GainNode | undefined;
     let beatGain: GainNode | undefined;
@@ -1130,8 +1143,8 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     const voiceAudios: HTMLAudioElement[] = [];
     const voiceGains: GainNode[] = [];
     if (activeVoiceUrl) {
-      const previewLayerCount = style === "layered" ? layerCount : 1;
-      const baseVolume = style === "silent" ? 0.04 : voiceVolume;
+      const previewLayerCount = previewStyle === "layered" ? previewLayerCountSetting : 1;
+      const baseVolume = previewStyle === "silent" ? 0.04 : voiceVolume;
       const perLayerVolume = baseVolume / Math.sqrt(previewLayerCount);
 
       for (let layer = 0; layer < previewLayerCount; layer += 1) {
@@ -1142,12 +1155,12 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
         audio.loop = true;
         audio.playbackRate = voiceSpeed;
         gain.gain.value = perLayerVolume;
-        pan.pan.value = previewLayerCount === 1 ? 0 : -layerSpread + (2 * layerSpread * layer) / Math.max(1, previewLayerCount - 1);
+        pan.pan.value = previewLayerCount === 1 ? 0 : -previewLayerSpread + (2 * previewLayerSpread * layer) / Math.max(1, previewLayerCount - 1);
         mediaSource.connect(gain).connect(pan).connect(context.destination);
 
         const play = () => { void audio.play().catch(() => undefined); };
         if (layer === 0) play();
-        else timers.push(window.setTimeout(play, layer * layerOffset * 1000));
+        else timers.push(window.setTimeout(play, layer * previewLayerOffset * 1000));
 
         audios.push(audio);
         voiceAudios.push(audio);
@@ -1594,7 +1607,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                 <p>This decides how present or hidden the affirmation layer feels in the final mix.</p>
                 <div className="quiz-options two">
                   {STYLES.map((item) => (
-                    <button key={item.key} className={style === item.key ? "quiz-option active" : "quiz-option"} onClick={() => setStyle(item.key)} disabled={!item.available}><SlidersHorizontal size={22} /><strong>{item.label}</strong>{!item.available && <small className="coming-soon">Coming soon</small>}<span>{item.description}</span></button>
+                    <button key={item.key} className={style === item.key ? "quiz-option active" : "quiz-option"} onClick={() => { if (previewing) stopPreview(); setStyle(item.key); }} disabled={!item.available}><SlidersHorizontal size={22} /><strong>{item.label}</strong>{!item.available && <small className="coming-soon">Coming soon</small>}<span>{item.description}</span></button>
                   ))}
                 </div>
                 {style === "layered" && (
@@ -1603,17 +1616,28 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                       <strong>Layered voice setup</strong>
                       <span>Each layer repeats the same affirmations with a small timing offset and its own stereo position.</span>
                     </div>
+                    <div className="preview-panel layered-preview-panel">
+                      <div>
+                        <strong>Live layered preview</strong>
+                        <span>Listen to the current layer count, timing offset, and stereo spread before continuing.</span>
+                        <small>Duration: {formatDuration(outputDuration)}</small>
+                      </div>
+                      <button className="secondary-button" onClick={() => (previewing ? stopPreview() : startPreview({ style: "layered" }))}>
+                        {previewing ? <Pause size={17} /> : <Play size={17} />}
+                        {previewing ? "Stop preview" : "Play preview"}
+                      </button>
+                    </div>
                     <div className="mix-slider">
                       <div><span>Voice layers</span><strong>{layerCount}</strong></div>
-                      <input type="range" min="2" max="6" step="1" value={layerCount} onChange={(event) => setLayerCount(Number(event.target.value))} />
+                      <input type="range" min="2" max="6" step="1" value={layerCount} onChange={(event) => { if (previewing) stopPreview(); setLayerCount(Number(event.target.value)); }} />
                     </div>
                     <div className="mix-slider">
                       <div><span>Layer timing offset</span><strong>{layerOffset.toFixed(2)}s</strong></div>
-                      <input type="range" min="0.15" max="1.25" step="0.05" value={layerOffset} onChange={(event) => setLayerOffset(Number(event.target.value))} />
+                      <input type="range" min="0.15" max="1.25" step="0.05" value={layerOffset} onChange={(event) => { if (previewing) stopPreview(); setLayerOffset(Number(event.target.value)); }} />
                     </div>
                     <div className="mix-slider">
                       <div><span>Stereo spread</span><strong>{Math.round(layerSpread * 100)}%</strong></div>
-                      <input type="range" min="0" max="1" step="0.05" value={layerSpread} onChange={(event) => setLayerSpread(Number(event.target.value))} />
+                      <input type="range" min="0" max="1" step="0.05" value={layerSpread} onChange={(event) => { if (previewing) stopPreview(); setLayerSpread(Number(event.target.value)); }} />
                     </div>
                   </div>
                 )}
