@@ -63,8 +63,8 @@ export async function POST(request: Request) {
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
       allow_promotion_codes: true,
-      success_url: `${siteUrl}/sublimify?checkout=success`,
-      cancel_url: `${siteUrl}/sublimify?checkout=cancelled`,
+      success_url: `${siteUrl}/studio?checkout=success`,
+      cancel_url: `${siteUrl}/studio?checkout=cancelled`,
       client_reference_id: user.id,
       subscription_data: {
         metadata: {

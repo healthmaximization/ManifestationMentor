@@ -42,7 +42,7 @@ export default function AppShell({
               <MessageCircle size={18} />
               <span>Chat</span>
             </button>
-            <Link href="/sublimify" title="Sublimify">
+            <Link href="/studio" title="Subliminal Studio">
               <BrandLogo size="small" />
               <span>Sublimify</span>
             </Link>

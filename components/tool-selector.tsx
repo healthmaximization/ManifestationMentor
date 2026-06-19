@@ -32,7 +32,7 @@ export default function ToolSelector({ userEmail }: { userEmail: string }) {
           <span>Manifestation Mentor</span>
           <p>Chat, coach, train knowledge, and refine the owner-controlled AI personality.</p>
         </Link>
-        <Link href="/sublimify" className="tool-card featured">
+        <Link href="/studio" className="tool-card featured">
           <BrandLogo size="small" />
           <span>Subliminal Studio</span>
           <p>Create recorded or narrated subliminals with layered voices, binaural beats, music, and ambient sound.</p>

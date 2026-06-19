@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const type = url.searchParams.get("type") as EmailOtpType | null;
   const error = url.searchParams.get("error_description") ?? url.searchParams.get("error");
   const next = url.searchParams.get("next");
-  const safeNext = next?.startsWith("/") && !next.startsWith("//") ? next : "/sublimify";
+  const safeNext = next?.startsWith("/") && !next.startsWith("//") ? next : "/studio";
   const redirectUrl = new URL(safeNext, request.url);
   const supabase = createRouteSupabase();
 
