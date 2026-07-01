@@ -11,10 +11,10 @@ function cleanLines(text: string, limit: number) {
 
   return extractListItems(text)
     .split("\n")
-    .flatMap((line) => line.split(/(?<=\.)\s+(?=I(?:\s|'|’|`))/))
+    .flatMap((line) => line.split(/(?<=\.)\s+(?=(?:I|My|Every|Each|More|It)\b)/i))
     .map(normalizeAffirmation)
     .filter((line) => line.length >= 6 && line.length <= 180)
-    .filter((line) => /^i(?:\s|'|’|`)/i.test(line))
+    .filter(isAffirmationLine)
     .filter((line) => {
       const key = line.toLowerCase();
       if (seen.has(key)) return false;
@@ -22,6 +22,10 @@ function cleanLines(text: string, limit: number) {
       return true;
     })
     .slice(0, limit);
+}
+
+function isAffirmationLine(line: string) {
+  return /^(i|i'm|i choose|i allow|i feel|i trust|my|every day|each day|more and more|it feels natural|it is safe)/i.test(line);
 }
 
 function extractListItems(text: string) {
@@ -101,10 +105,11 @@ One affirmation per line.
 
 Output rules:
 - No intro, no analysis, no categories, no markdown.
-- Every line must start with "I", "I'm", or "I am".`
+- Use varied sentence openings. Do not make every line start with "I am".
+- Mix patterns like "I choose...", "I allow...", "I feel...", "My...", "Every day...", "More and more...", and "It feels natural...".`
       }
     ], {
-      temperature: 0.56,
+      temperature: 0.68,
       maxTokens: Math.min(1200, safeCount * 34),
       timeoutMs: 22000,
       retries: 0,
