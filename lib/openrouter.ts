@@ -8,10 +8,11 @@ type AskOpenRouterOptions = {
   maxTokens?: number;
   timeoutMs?: number;
   retries?: number;
+  models?: string[];
 };
 
-const DEFAULT_OPENROUTER_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free";
-const OPENROUTER_MODEL_FALLBACKS = [DEFAULT_OPENROUTER_MODEL, "cohere/north-mini-code:free"];
+const DEFAULT_OPENROUTER_MODEL = "qwen/qwen3-coder:free";
+const OPENROUTER_MODEL_FALLBACKS = [DEFAULT_OPENROUTER_MODEL, "nvidia/nemotron-3-ultra-550b-a55b:free"];
 
 export async function askOpenRouter(messages: ChatMessage[], options: AskOpenRouterOptions = {}): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY;
@@ -21,7 +22,7 @@ export async function askOpenRouter(messages: ChatMessage[], options: AskOpenRou
   }
 
   const attempts = Math.max(1, (options.retries ?? 0) + 1);
-  const modelCandidates = getOpenRouterModelCandidates();
+  const modelCandidates = getOpenRouterModelCandidates(options.models);
   let lastError: unknown;
 
   for (let attempt = 0; attempt < attempts; attempt += 1) {
@@ -76,13 +77,13 @@ export async function askOpenRouter(messages: ChatMessage[], options: AskOpenRou
   throw lastError instanceof Error ? lastError : new Error("OpenRouter request failed.");
 }
 
-function getOpenRouterModelCandidates() {
+function getOpenRouterModelCandidates(preferredModels: string[] = []) {
   const configuredModels =
     process.env.OPENROUTER_MODEL?.split(",")
       .map((model) => model.trim())
       .filter(Boolean) ?? [];
 
-  return [...new Set([...configuredModels, ...OPENROUTER_MODEL_FALLBACKS])];
+  return [...new Set([...preferredModels, ...configuredModels, ...OPENROUTER_MODEL_FALLBACKS])];
 }
 
 function isMissingOpenRouterModel(status: number, responseText: string) {

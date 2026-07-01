@@ -7,11 +7,30 @@ import { createAdminSupabase, createRouteSupabase } from "@/lib/supabase/server"
 export const dynamic = "force-dynamic";
 
 function cleanLines(text: string, limit: number) {
-  return text
+  return extractListItems(text)
     .split("\n")
     .map((line) => line.replace(/^[-*\d.\s]+/, "").trim())
-    .filter(Boolean)
+    .map((line) => line.replace(/^["'`]+|["'`,]+$/g, "").trim())
+    .filter((line) => line.length >= 6 && line.length <= 180)
+    .filter((line) => /^i\s/i.test(line))
     .slice(0, limit);
+}
+
+function extractListItems(text: string) {
+  const jsonMatch = text.match(/\[[\s\S]*\]/);
+
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((item) => typeof item === "string").join("\n");
+      }
+    } catch {
+      // Fall back to line parsing when a model returns malformed JSON.
+    }
+  }
+
+  return text;
 }
 
 export async function POST(request: Request) {
@@ -53,16 +72,36 @@ export async function POST(request: Request) {
       },
       {
         role: "user",
-        content: `Topic or user details:\n${safeTopic}\n\nRequested number of affirmations:\n${safeCount}\n\nTone:\n${safeTone}`
+        content: `Topic or user details:\n${safeTopic}
+
+Requested number of affirmations:
+${safeCount}
+
+Tone:
+${safeTone}
+
+Output rules:
+- Return only a JSON array of first-person affirmation strings.
+- Do not explain, analyze, summarize, or use markdown.
+- Every affirmation must start with "I".`
       }
     ], {
       temperature: 0.62,
-      maxTokens: Math.min(700, safeCount * 18),
+      maxTokens: Math.min(900, safeCount * 24),
       timeoutMs: 45000,
-      retries: 0
+      retries: 1,
+      models: [
+        process.env.OPENROUTER_AFFIRMATION_MODEL ?? "",
+        "qwen/qwen3-coder:free",
+        "nvidia/nemotron-3-ultra-550b-a55b:free"
+      ].filter(Boolean)
     });
 
     const affirmations = cleanLines(reply, safeCount);
+    if (affirmations.length < Math.min(6, safeCount)) {
+      return NextResponse.json({ error: "The AI did not return clean affirmations. Try again or adjust the affirmation prompt." }, { status: 502 });
+    }
+
     return NextResponse.json({ affirmations });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Could not generate affirmations." }, { status: 504 });

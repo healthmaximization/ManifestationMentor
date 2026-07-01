@@ -7,11 +7,42 @@ import { createAdminSupabase, createRouteSupabase } from "@/lib/supabase/server"
 export const dynamic = "force-dynamic";
 
 function cleanLines(text: string, limit: number) {
-  return text
+  const analysisPatterns = [
+    /^the user wants/i,
+    /^style analysis/i,
+    /^format:/i,
+    /^heavy use/i,
+    /^target audience:/i,
+    /^niches:/i,
+    /^tone:/i,
+    /^here are/i,
+    /^sure[,!]/i
+  ];
+
+  return extractListItems(text)
     .split("\n")
     .map((line) => line.replace(/^[-*\d.\s]+/, "").trim())
-    .filter(Boolean)
+    .map((line) => line.replace(/^["'`]+|["'`,]+$/g, "").trim())
+    .filter((line) => line.length >= 8 && line.length <= 120)
+    .filter((line) => !analysisPatterns.some((pattern) => pattern.test(line)))
     .slice(0, limit);
+}
+
+function extractListItems(text: string) {
+  const jsonMatch = text.match(/\[[\s\S]*\]/);
+
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((item) => typeof item === "string").join("\n");
+      }
+    } catch {
+      // Fall back to line parsing when a model returns malformed JSON.
+    }
+  }
+
+  return text;
 }
 
 export async function POST(request: Request) {
@@ -41,16 +72,31 @@ export async function POST(request: Request) {
       },
       {
         role: "user",
-        content: `Requested number of ideas:\n12${safeSeed.trim() ? `\n\nDirection, audience, or extra context:\n${safeSeed.trim()}` : ""}`
+        content: `Generate exactly 12 usable subliminal idea titles.
+
+${safeSeed.trim() ? `Direction, audience, or extra context:\n${safeSeed.trim()}\n\n` : ""}Output rules:
+- Return only a JSON array of strings.
+- Do not explain, analyze, categorize, or describe the style.
+- Do not include markdown.
+- Each item must be a finished idea/title a user could click.`
       }
     ], {
-      temperature: 0.72,
-      maxTokens: 220,
+      temperature: 0.82,
+      maxTokens: 360,
       timeoutMs: 45000,
-      retries: 0
+      retries: 1,
+      models: [
+        process.env.OPENROUTER_IDEA_MODEL ?? "",
+        "qwen/qwen3-coder:free",
+        "nvidia/nemotron-3-ultra-550b-a55b:free"
+      ].filter(Boolean)
     });
 
     const ideas = cleanLines(reply, 12);
+    if (ideas.length < 6) {
+      return NextResponse.json({ error: "The AI did not return clean idea titles. Try again or adjust the idea prompt." }, { status: 502 });
+    }
+
     return NextResponse.json({ ideas });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Could not generate ideas." }, { status: 504 });

@@ -27,8 +27,14 @@ The owner account is hard-coded as `jelmer.huysmans123@gmail.com` in `lib/config
 
 ## OpenRouter
 
-The default model is `nvidia/nemotron-3-ultra-550b-a55b:free`. You can override it with `OPENROUTER_MODEL`.
+The default model is `qwen/qwen3-coder:free`. You can override it with `OPENROUTER_MODEL`.
 If OpenRouter removes a configured model, the app automatically falls back to the current free defaults.
+For higher-quality Subliminal Studio generations, you can also set task-specific model overrides:
+
+```text
+OPENROUTER_IDEA_MODEL=qwen/qwen3-coder:free
+OPENROUTER_AFFIRMATION_MODEL=qwen/qwen3-coder:free
+```
 
 ## Stripe
 
