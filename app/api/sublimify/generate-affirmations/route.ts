@@ -7,12 +7,20 @@ import { createAdminSupabase, createRouteSupabase } from "@/lib/supabase/server"
 export const dynamic = "force-dynamic";
 
 function cleanLines(text: string, limit: number) {
+  const seen = new Set<string>();
+
   return extractListItems(text)
     .split("\n")
-    .map((line) => line.replace(/^[-*\d.\s]+/, "").trim())
-    .map((line) => line.replace(/^["'`]+|["'`,]+$/g, "").trim())
+    .flatMap((line) => line.split(/(?<=\.)\s+(?=I(?:\s|'|’|`))/))
+    .map(normalizeAffirmation)
     .filter((line) => line.length >= 6 && line.length <= 180)
-    .filter((line) => /^i\s/i.test(line))
+    .filter((line) => /^i(?:\s|'|’|`)/i.test(line))
+    .filter((line) => {
+      const key = line.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
     .slice(0, limit);
 }
 
@@ -31,6 +39,14 @@ function extractListItems(text: string) {
   }
 
   return text;
+}
+
+function normalizeAffirmation(line: string) {
+  return line
+    .replace(/^[-*\d.)\s]+/, "")
+    .replace(/^(affirmation|line|text)\s*\d*\s*[:.)-]\s*/i, "")
+    .replace(/^["'`]+|["'`,]+$/g, "")
+    .trim();
 }
 
 export async function POST(request: Request) {
@@ -72,27 +88,31 @@ export async function POST(request: Request) {
       },
       {
         role: "user",
-        content: `Topic or user details:\n${safeTopic}
+        content: `Create ${safeCount} first-person subliminal affirmations.
 
-Requested number of affirmations:
-${safeCount}
+Topic or user details:
+${safeTopic}
 
 Tone:
 ${safeTone}
 
+Return format:
+One affirmation per line.
+
 Output rules:
-- Return only a JSON array of first-person affirmation strings.
-- Do not explain, analyze, summarize, or use markdown.
-- Every affirmation must start with "I".`
+- No intro, no analysis, no categories, no markdown.
+- Every line must start with "I", "I'm", or "I am".`
       }
     ], {
-      temperature: 0.62,
-      maxTokens: Math.min(900, safeCount * 24),
-      timeoutMs: 45000,
-      retries: 1,
+      temperature: 0.56,
+      maxTokens: Math.min(1200, safeCount * 34),
+      timeoutMs: 22000,
+      retries: 0,
       models: [
         process.env.OPENROUTER_AFFIRMATION_MODEL ?? "",
+        "google/gemini-2.5-flash-lite",
         "qwen/qwen3-coder:free",
+        "nvidia/nemotron-3-nano-30b-a3b:free",
         "nvidia/nemotron-3-ultra-550b-a55b:free"
       ].filter(Boolean)
     });

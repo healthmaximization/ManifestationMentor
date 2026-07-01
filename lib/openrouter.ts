@@ -53,7 +53,7 @@ export async function askOpenRouter(messages: ChatMessage[], options: AskOpenRou
           const text = await response.text();
           lastError = new Error(`OpenRouter error ${response.status} for ${model}: ${text.slice(0, 500)}`);
 
-          if (isMissingOpenRouterModel(response.status, text) && model !== modelCandidates[modelCandidates.length - 1]) {
+          if (shouldTryNextModel(response.status, text) && model !== modelCandidates[modelCandidates.length - 1]) {
             continue;
           }
 
@@ -86,8 +86,16 @@ function getOpenRouterModelCandidates(preferredModels: string[] = []) {
   return [...new Set([...preferredModels, ...configuredModels, ...OPENROUTER_MODEL_FALLBACKS])];
 }
 
-function isMissingOpenRouterModel(status: number, responseText: string) {
-  return status === 404 && responseText.toLowerCase().includes("no endpoints found");
+function shouldTryNextModel(status: number, responseText: string) {
+  const normalizedText = responseText.toLowerCase();
+
+  return (
+    (status === 404 && normalizedText.includes("no endpoints found")) ||
+    status === 402 ||
+    status === 408 ||
+    status === 429 ||
+    status >= 500
+  );
 }
 
 function windowlessSetTimeout(callback: () => void, ms: number) {
