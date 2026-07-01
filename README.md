@@ -27,7 +27,8 @@ The owner account is hard-coded as `jelmer.huysmans123@gmail.com` in `lib/config
 
 ## OpenRouter
 
-The default model is `openrouter/owl-alpha`. You can override it with `OPENROUTER_MODEL`.
+The default model is `nvidia/nemotron-3-ultra-550b-a55b:free`. You can override it with `OPENROUTER_MODEL`.
+If OpenRouter removes a configured model, the app automatically falls back to the current free defaults.
 
 ## Stripe
 
