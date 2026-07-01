@@ -6,6 +6,18 @@ import { createAdminSupabase, createRouteSupabase } from "@/lib/supabase/server"
 
 export const dynamic = "force-dynamic";
 
+const BAD_AFFIRMATION_MODEL_PATTERNS = [
+  /^qwen\/qwen3-coder(?::free)?$/i,
+  /^nvidia\/nemotron/i
+];
+
+const AFFIRMATION_MODELS = [
+  getSafeAffirmationModelOverride(),
+  "google/gemini-2.5-flash-lite",
+  "qwen/qwen3-30b-a3b-instruct-2507",
+  "z-ai/glm-4.5-air"
+].filter(Boolean);
+
 function cleanLines(text: string, limit: number) {
   const seen = new Set<string>();
 
@@ -14,6 +26,8 @@ function cleanLines(text: string, limit: number) {
     .flatMap((line) => line.split(/(?<=\.)\s+(?=(?:I|My|Every|Each|More|It)\b)/i))
     .map(normalizeAffirmation)
     .filter((line) => line.length >= 6 && line.length <= 180)
+    .filter((line) => !isMetaLine(line))
+    .filter((line) => !hasUnfitClaim(line))
     .filter(isAffirmationLine)
     .filter((line) => {
       const key = line.toLowerCase();
@@ -26,6 +40,17 @@ function cleanLines(text: string, limit: number) {
 
 function isAffirmationLine(line: string) {
   return /^(i|i'm|i choose|i allow|i feel|i trust|my|every day|each day|more and more|it feels natural|it is safe)/i.test(line);
+}
+
+function isMetaLine(line: string) {
+  return (
+    /[(){}]|=>|<=|^\w+\d+\s|(?:^|\s)\d+(?:\s|\.|$)/.test(line) ||
+    /\b(user|prompt|rule|must|cannot|okay|line|starts?|varied|category|analysis|markdown|format|response)\b/i.test(line)
+  );
+}
+
+function hasUnfitClaim(line: string) {
+  return /\b(regrow|grows?|appears?|heal(?:s|ing|ed)?|renew(?:s|ing|ed)?|new tooth|new teeth)\b/i.test(line);
 }
 
 function extractListItems(text: string) {
@@ -51,6 +76,13 @@ function normalizeAffirmation(line: string) {
     .replace(/^(affirmation|line|text)\s*\d*\s*[:.)-]\s*/i, "")
     .replace(/^["'`]+|["'`,]+$/g, "")
     .trim();
+}
+
+function getSafeAffirmationModelOverride() {
+  const model = process.env.OPENROUTER_AFFIRMATION_MODEL?.trim();
+  if (!model) return "";
+
+  return BAD_AFFIRMATION_MODEL_PATTERNS.some((pattern) => pattern.test(model)) ? "" : model;
 }
 
 export async function POST(request: Request) {
@@ -106,20 +138,17 @@ One affirmation per line.
 Output rules:
 - No intro, no analysis, no categories, no markdown.
 - Use varied sentence openings. Do not make every line start with "I am".
-- Mix patterns like "I choose...", "I allow...", "I feel...", "My...", "Every day...", "More and more...", and "It feels natural...".`
+- Mix patterns like "I choose...", "I allow...", "I feel...", "My...", "Every day...", "More and more...", and "It feels natural...".
+- Keep claims believable and safe. Do not say body parts regrow, enamel appears, teeth heal, or medical conditions are cured.`
       }
     ], {
       temperature: 0.68,
       maxTokens: Math.min(1200, safeCount * 34),
       timeoutMs: 22000,
       retries: 0,
-      models: [
-        process.env.OPENROUTER_AFFIRMATION_MODEL ?? "",
-        "google/gemini-2.5-flash-lite",
-        "qwen/qwen3-coder:free",
-        "nvidia/nemotron-3-nano-30b-a3b:free",
-        "nvidia/nemotron-3-ultra-550b-a55b:free"
-      ].filter(Boolean)
+      models: AFFIRMATION_MODELS,
+      includeConfiguredModel: false,
+      includeDefaultFallbacks: false
     });
 
     const affirmations = cleanLines(reply, safeCount);

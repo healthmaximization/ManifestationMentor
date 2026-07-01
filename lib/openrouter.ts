@@ -9,6 +9,8 @@ type AskOpenRouterOptions = {
   timeoutMs?: number;
   retries?: number;
   models?: string[];
+  includeConfiguredModel?: boolean;
+  includeDefaultFallbacks?: boolean;
 };
 
 const DEFAULT_OPENROUTER_MODEL = "qwen/qwen3-coder:free";
@@ -22,7 +24,11 @@ export async function askOpenRouter(messages: ChatMessage[], options: AskOpenRou
   }
 
   const attempts = Math.max(1, (options.retries ?? 0) + 1);
-  const modelCandidates = getOpenRouterModelCandidates(options.models);
+  const modelCandidates = getOpenRouterModelCandidates(
+    options.models,
+    options.includeConfiguredModel ?? true,
+    options.includeDefaultFallbacks ?? true
+  );
   let lastError: unknown;
 
   for (let attempt = 0; attempt < attempts; attempt += 1) {
@@ -77,13 +83,20 @@ export async function askOpenRouter(messages: ChatMessage[], options: AskOpenRou
   throw lastError instanceof Error ? lastError : new Error("OpenRouter request failed.");
 }
 
-function getOpenRouterModelCandidates(preferredModels: string[] = []) {
+function getOpenRouterModelCandidates(
+  preferredModels: string[] = [],
+  includeConfiguredModel: boolean,
+  includeDefaultFallbacks: boolean
+) {
   const configuredModels =
-    process.env.OPENROUTER_MODEL?.split(",")
-      .map((model) => model.trim())
-      .filter(Boolean) ?? [];
+    includeConfiguredModel
+      ? process.env.OPENROUTER_MODEL?.split(",")
+          .map((model) => model.trim())
+          .filter(Boolean) ?? []
+      : [];
+  const fallbackModels = includeDefaultFallbacks ? OPENROUTER_MODEL_FALLBACKS : [];
 
-  return [...new Set([...preferredModels, ...configuredModels, ...OPENROUTER_MODEL_FALLBACKS])];
+  return [...new Set([...preferredModels, ...configuredModels, ...fallbackModels])];
 }
 
 function shouldTryNextModel(status: number, responseText: string) {

@@ -29,11 +29,11 @@ The owner account is hard-coded as `jelmer.huysmans123@gmail.com` in `lib/config
 
 The default model is `qwen/qwen3-coder:free`. You can override it with `OPENROUTER_MODEL`.
 If OpenRouter removes a configured model, the app automatically falls back to the current free defaults.
-For higher-quality Subliminal Studio generations, you can also set task-specific model overrides:
+For higher-quality Subliminal Studio generations, you can also set task-specific model overrides. Affirmations intentionally ignore the global free fallback because the free coder/Nemotron models can return analysis instead of clean affirmations.
 
 ```text
 OPENROUTER_IDEA_MODEL=qwen/qwen3-coder:free
-OPENROUTER_AFFIRMATION_MODEL=qwen/qwen3-coder:free
+OPENROUTER_AFFIRMATION_MODEL=google/gemini-2.5-flash-lite
 ```
 
 ## Stripe
