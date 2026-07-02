@@ -12,10 +12,10 @@ const BAD_AFFIRMATION_MODEL_PATTERNS = [
 ];
 
 const AFFIRMATION_MODELS = [
-  getSafeAffirmationModelOverride(),
-  "meta-llama/llama-3.3-70b-instruct:free",
   "google/gemma-4-31b-it:free",
   "google/gemma-4-26b-a4b-it:free",
+  "meta-llama/llama-3.3-70b-instruct:free",
+  getSafeAffirmationModelOverride(),
   "qwen/qwen3-next-80b-a3b-instruct:free",
   "openai/gpt-oss-20b:free",
   "meta-llama/llama-3.2-3b-instruct:free",
@@ -101,15 +101,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "AI-generated affirmations are included in Pro." }, { status: 403 });
   }
 
-  const { topic, count = 24, tone = "calm, confident, emotionally believable" } = await request.json();
+  const { topic, count, tone } = await request.json();
 
   if (!topic?.trim()) {
     return NextResponse.json({ error: "Topic is required" }, { status: 400 });
   }
 
-  const safeCount = Math.max(8, Math.min(32, Number(count) || 24));
+  const hasRequestedCount = count !== undefined && count !== null && count !== "";
+  const safeCount = hasRequestedCount ? Math.max(8, Math.min(32, Number(count) || 20)) : 24;
   const safeTopic = topic.trim().slice(0, 700);
-  const safeTone = String(tone).slice(0, 180);
+  const safeTone = tone ? String(tone).slice(0, 180) : "";
 
   const { data: config } = await admin
     .from("subliminal_generation_config")
@@ -123,15 +124,12 @@ export async function POST(request: Request) {
     },
     {
       role: "user" as const,
-      content: `Follow the system prompt exactly and create ${safeCount} affirmations.
+      content: `Use the creator prompt as the only writing instructions.
 
 Topic or user details:
 ${safeTopic}
 
-Tone:
-${safeTone}
-
-Return only the affirmations, one per line. Do not add intro text, explanations, categories, analysis, markdown, or notes.`
+${hasRequestedCount ? `Requested amount, unless the creator prompt says otherwise:\n${safeCount}\n\n` : ""}${safeTone ? `Tone, unless the creator prompt says otherwise:\n${safeTone}\n\n` : ""}Return only the affirmations, one per line. Do not add intro text, explanations, categories, analysis, markdown, or notes.`
     }
   ];
   const minimumCleanAffirmations = Math.min(6, safeCount);

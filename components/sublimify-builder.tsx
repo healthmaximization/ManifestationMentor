@@ -963,7 +963,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     const response = await fetch("/api/sublimify/generate-affirmations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topic: guidedTopic, count: 28 })
+      body: JSON.stringify({ topic: guidedTopic })
     });
     const data = await response.json();
     setLoading("");

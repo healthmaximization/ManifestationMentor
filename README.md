@@ -33,7 +33,7 @@ For higher-quality Subliminal Studio generations, you can also set task-specific
 
 ```text
 OPENROUTER_IDEA_MODEL=nvidia/nemotron-3-ultra-550b-a55b:free
-OPENROUTER_AFFIRMATION_MODEL=meta-llama/llama-3.3-70b-instruct:free
+OPENROUTER_AFFIRMATION_MODEL=google/gemma-4-31b-it:free
 ```
 
 ## Stripe
