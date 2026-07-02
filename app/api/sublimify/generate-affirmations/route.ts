@@ -22,7 +22,7 @@ const AFFIRMATION_MODELS = [
   "liquid/lfm-2.5-1.2b-instruct:free"
 ].filter(Boolean);
 
-function cleanLines(text: string, limit: number, topicKeywords: string[] = []) {
+function cleanLines(text: string, limit: number) {
   const seen = new Set<string>();
 
   return extractListItems(text)
@@ -31,9 +31,7 @@ function cleanLines(text: string, limit: number, topicKeywords: string[] = []) {
     .map(normalizeAffirmation)
     .filter((line) => line.length >= 6 && line.length <= 180)
     .filter((line) => !isMetaLine(line))
-    .filter((line) => !isVagueAffirmation(line))
     .filter(isAffirmationLine)
-    .filter((line) => hasTopicKeyword(line, topicKeywords))
     .filter((line) => {
       const key = line.toLowerCase();
       if (seen.has(key)) return false;
@@ -41,13 +39,6 @@ function cleanLines(text: string, limit: number, topicKeywords: string[] = []) {
       return true;
     })
     .slice(0, limit);
-}
-
-function hasTopicKeyword(line: string, topicKeywords: string[]) {
-  if (topicKeywords.length === 0) return true;
-
-  const normalizedLine = line.toLowerCase();
-  return topicKeywords.some((keyword) => normalizedLine.includes(keyword));
 }
 
 function isAffirmationLine(line: string) {
@@ -59,10 +50,6 @@ function isMetaLine(line: string) {
     /[{}]|=>|<=|^\w+\d+\s/.test(line) ||
     /\b(user|prompt|rule|cannot|okay|starts?|varied|category|analysis|markdown|format|response)\b/i.test(line)
   );
-}
-
-function isVagueAffirmation(line: string) {
-  return /\b(journey|process|change|growth|unfolds|nature's ability|nature's power|embrace nature|brings more strength)\b/i.test(line);
 }
 
 function extractListItems(text: string) {
@@ -89,33 +76,6 @@ function normalizeAffirmation(line: string) {
     .replace(/\s*\([^)]*\)\s*$/g, "")
     .replace(/^["'`]+|["'`,]+$/g, "")
     .trim();
-}
-
-function getTopicKeywords(topic: string) {
-  const stopWords = new Set([
-    "and",
-    "the",
-    "with",
-    "for",
-    "your",
-    "you",
-    "powerful",
-    "subliminal",
-    "naturally",
-    "natural",
-    "topic",
-    "about",
-    "into",
-    "from"
-  ]);
-
-  return [...new Set(topic
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .split(/\s+/)
-    .map((word) => word.trim())
-    .filter((word) => word.length >= 4 && !stopWords.has(word))
-    .slice(0, 8))];
 }
 
 function getSafeAffirmationModelOverride() {
@@ -150,7 +110,6 @@ export async function POST(request: Request) {
   const safeCount = Math.max(8, Math.min(32, Number(count) || 24));
   const safeTopic = topic.trim().slice(0, 700);
   const safeTone = String(tone).slice(0, 180);
-  const topicKeywords = getTopicKeywords(safeTopic);
 
   const { data: config } = await admin
     .from("subliminal_generation_config")
@@ -164,29 +123,15 @@ export async function POST(request: Request) {
     },
     {
       role: "user" as const,
-      content: `Create ${safeCount} first-person subliminal affirmations.
+      content: `Follow the system prompt exactly and create ${safeCount} affirmations.
 
 Topic or user details:
 ${safeTopic}
 
-Concrete topic words to use often:
-${topicKeywords.length > 0 ? topicKeywords.join(", ") : "Use the user's exact topic words."}
-
 Tone:
 ${safeTone}
 
-Return format:
-One affirmation per line.
-
-Output rules:
-- No intro, no analysis, no categories, no markdown.
-- Every affirmation must clearly mention the concrete topic/result.
-- A user should understand the topic from each single line.
-- Write as if the desired result is already happening or already true.
-- Use varied sentence openings. Do not make every line start with "I am".
-- Prefer direct patterns like "I already have...", "My ... is...", "My ... are...", "I have...", "Every day my ... becomes...", and "More and more...".
-- Avoid vague lines about journeys, processes, change, nature, or trust.
-- Do not give medical advice, diagnoses, or treatment instructions.`
+Return only the affirmations, one per line. Do not add intro text, explanations, categories, analysis, markdown, or notes.`
     }
   ];
   const minimumCleanAffirmations = Math.min(6, safeCount);
@@ -205,7 +150,7 @@ Output rules:
           includeConfiguredModel: false,
           includeDefaultFallbacks: false
         });
-        const affirmations = cleanLines(reply, safeCount, topicKeywords);
+        const affirmations = cleanLines(reply, safeCount);
 
         if (affirmations.length >= minimumCleanAffirmations) {
           return NextResponse.json({ affirmations });
