@@ -13,7 +13,7 @@ type AskOpenRouterOptions = {
   includeDefaultFallbacks?: boolean;
 };
 
-const DEFAULT_OPENROUTER_MODEL = "qwen/qwen3-coder:free";
+const DEFAULT_OPENROUTER_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free";
 const OPENROUTER_MODEL_FALLBACKS = [DEFAULT_OPENROUTER_MODEL, "nvidia/nemotron-3-ultra-550b-a55b:free"];
 
 export async function askOpenRouter(messages: ChatMessage[], options: AskOpenRouterOptions = {}): Promise<string> {

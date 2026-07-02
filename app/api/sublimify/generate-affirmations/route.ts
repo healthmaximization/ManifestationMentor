@@ -13,9 +13,10 @@ const BAD_AFFIRMATION_MODEL_PATTERNS = [
 
 const AFFIRMATION_MODELS = [
   getSafeAffirmationModelOverride(),
-  "google/gemini-2.5-flash-lite",
-  "qwen/qwen3-30b-a3b-instruct-2507",
-  "z-ai/glm-4.5-air"
+  "meta-llama/llama-3.3-70b-instruct:free",
+  "google/gemma-4-31b-it:free",
+  "qwen/qwen3-next-80b-a3b-instruct:free",
+  "nousresearch/hermes-3-llama-3.1-405b:free"
 ].filter(Boolean);
 
 function cleanLines(text: string, limit: number) {
@@ -81,6 +82,7 @@ function normalizeAffirmation(line: string) {
 function getSafeAffirmationModelOverride() {
   const model = process.env.OPENROUTER_AFFIRMATION_MODEL?.trim();
   if (!model) return "";
+  if (!model.endsWith(":free")) return "";
 
   return BAD_AFFIRMATION_MODEL_PATTERNS.some((pattern) => pattern.test(model)) ? "" : model;
 }
