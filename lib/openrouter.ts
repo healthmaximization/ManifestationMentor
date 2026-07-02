@@ -14,7 +14,7 @@ type AskOpenRouterOptions = {
 };
 
 const DEFAULT_OPENROUTER_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free";
-const OPENROUTER_MODEL_FALLBACKS = [DEFAULT_OPENROUTER_MODEL, "nvidia/nemotron-3-ultra-550b-a55b:free"];
+const OPENROUTER_MODEL_FALLBACKS = [DEFAULT_OPENROUTER_MODEL];
 
 export async function askOpenRouter(messages: ChatMessage[], options: AskOpenRouterOptions = {}): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY;

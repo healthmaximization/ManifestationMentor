@@ -15,8 +15,11 @@ const AFFIRMATION_MODELS = [
   getSafeAffirmationModelOverride(),
   "meta-llama/llama-3.3-70b-instruct:free",
   "google/gemma-4-31b-it:free",
+  "google/gemma-4-26b-a4b-it:free",
   "qwen/qwen3-next-80b-a3b-instruct:free",
-  "nousresearch/hermes-3-llama-3.1-405b:free"
+  "openai/gpt-oss-20b:free",
+  "meta-llama/llama-3.2-3b-instruct:free",
+  "liquid/lfm-2.5-1.2b-instruct:free"
 ].filter(Boolean);
 
 function cleanLines(text: string, limit: number) {
@@ -160,6 +163,21 @@ Output rules:
 
     return NextResponse.json({ affirmations });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Could not generate affirmations." }, { status: 504 });
+    return NextResponse.json({ error: getPublicGenerationError(error) }, { status: 504 });
   }
+}
+
+function getPublicGenerationError(error: unknown) {
+  if (!(error instanceof Error)) return "Could not generate affirmations. Please try again.";
+
+  const message = error.message.toLowerCase();
+  if (message.includes("429") || message.includes("rate-limit") || message.includes("rate limit")) {
+    return "The free AI models are busy right now. Please try again in a few seconds.";
+  }
+
+  if (message.includes("took too long") || message.includes("abort")) {
+    return "The AI took too long to respond. Please try again.";
+  }
+
+  return "Could not generate affirmations. Please try again.";
 }
