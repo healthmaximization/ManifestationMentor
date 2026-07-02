@@ -43,13 +43,13 @@ function cleanLines(text: string, limit: number) {
 }
 
 function isAffirmationLine(line: string) {
-  return /^(i|i'm|i choose|i allow|i feel|i trust|my|every day|each day|more and more|it feels natural|it is safe)/i.test(line);
+  return /^(i|i'm|i've|i choose|i allow|i feel|i trust|i welcome|i create|i become|my|every day|each day|more and more|it feels natural|it is safe|it is easy)/i.test(line);
 }
 
 function isMetaLine(line: string) {
   return (
-    /[(){}]|=>|<=|^\w+\d+\s|(?:^|\s)\d+(?:\s|\.|$)/.test(line) ||
-    /\b(user|prompt|rule|must|cannot|okay|line|starts?|varied|category|analysis|markdown|format|response)\b/i.test(line)
+    /[{}]|=>|<=|^\w+\d+\s/.test(line) ||
+    /\b(user|prompt|rule|cannot|okay|starts?|varied|category|analysis|markdown|format|response)\b/i.test(line)
   );
 }
 
@@ -78,6 +78,7 @@ function normalizeAffirmation(line: string) {
   return line
     .replace(/^[-*\d.)\s]+/, "")
     .replace(/^(affirmation|line|text)\s*\d*\s*[:.)-]\s*/i, "")
+    .replace(/\s*\([^)]*\)\s*$/g, "")
     .replace(/^["'`]+|["'`,]+$/g, "")
     .trim();
 }
@@ -120,16 +121,14 @@ export async function POST(request: Request) {
     .select("*")
     .eq("id", "main")
     .maybeSingle();
-
-  try {
-    const reply = await askOpenRouter([
-      {
-        role: "system",
-        content: config?.prompt?.trim() || DEFAULT_SUBLIMINAL_PROMPT
-      },
-      {
-        role: "user",
-        content: `Create ${safeCount} first-person subliminal affirmations.
+  const messages = [
+    {
+      role: "system" as const,
+      content: config?.prompt?.trim() || DEFAULT_SUBLIMINAL_PROMPT
+    },
+    {
+      role: "user" as const,
+      content: `Create ${safeCount} first-person subliminal affirmations.
 
 Topic or user details:
 ${safeTopic}
@@ -143,25 +142,40 @@ One affirmation per line.
 Output rules:
 - No intro, no analysis, no categories, no markdown.
 - Use varied sentence openings. Do not make every line start with "I am".
-- Mix patterns like "I choose...", "I allow...", "I feel...", "My...", "Every day...", "More and more...", and "It feels natural...".
+- Mix patterns like "I choose...", "I allow...", "I feel...", "I welcome...", "My...", "Every day...", "More and more...", and "It feels natural...".
 - Keep claims believable and safe. Do not say body parts regrow, enamel appears, teeth heal, or medical conditions are cured.`
-      }
-    ], {
-      temperature: 0.68,
-      maxTokens: Math.min(1200, safeCount * 34),
-      timeoutMs: 22000,
-      retries: 0,
-      models: AFFIRMATION_MODELS,
-      includeConfiguredModel: false,
-      includeDefaultFallbacks: false
-    });
+    }
+  ];
+  const minimumCleanAffirmations = Math.min(6, safeCount);
 
-    const affirmations = cleanLines(reply, safeCount);
-    if (affirmations.length < Math.min(6, safeCount)) {
-      return NextResponse.json({ error: "The AI did not return clean affirmations. Try again or adjust the affirmation prompt." }, { status: 502 });
+  try {
+    let lastError: unknown;
+
+    for (const model of AFFIRMATION_MODELS) {
+      try {
+        const reply = await askOpenRouter(messages, {
+          temperature: 0.68,
+          maxTokens: Math.min(1200, safeCount * 34),
+          timeoutMs: 22000,
+          retries: 0,
+          models: [model],
+          includeConfiguredModel: false,
+          includeDefaultFallbacks: false
+        });
+        const affirmations = cleanLines(reply, safeCount);
+
+        if (affirmations.length >= minimumCleanAffirmations) {
+          return NextResponse.json({ affirmations });
+        }
+      } catch (error) {
+        lastError = error;
+      }
     }
 
-    return NextResponse.json({ affirmations });
+    return NextResponse.json(
+      { error: lastError ? getPublicGenerationError(lastError) : "The free AI models did not return enough clean affirmations. Please try again." },
+      { status: 502 }
+    );
   } catch (error) {
     return NextResponse.json({ error: getPublicGenerationError(error) }, { status: 504 });
   }
