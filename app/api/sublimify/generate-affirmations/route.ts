@@ -22,7 +22,7 @@ const AFFIRMATION_MODELS = [
   "liquid/lfm-2.5-1.2b-instruct:free"
 ].filter(Boolean);
 
-function cleanLines(text: string, limit: number) {
+function cleanLines(text: string, limit: number, topicKeywords: string[] = []) {
   const seen = new Set<string>();
 
   return extractListItems(text)
@@ -31,8 +31,9 @@ function cleanLines(text: string, limit: number) {
     .map(normalizeAffirmation)
     .filter((line) => line.length >= 6 && line.length <= 180)
     .filter((line) => !isMetaLine(line))
-    .filter((line) => !hasUnfitClaim(line))
+    .filter((line) => !isVagueAffirmation(line))
     .filter(isAffirmationLine)
+    .filter((line) => hasTopicKeyword(line, topicKeywords))
     .filter((line) => {
       const key = line.toLowerCase();
       if (seen.has(key)) return false;
@@ -42,8 +43,15 @@ function cleanLines(text: string, limit: number) {
     .slice(0, limit);
 }
 
+function hasTopicKeyword(line: string, topicKeywords: string[]) {
+  if (topicKeywords.length === 0) return true;
+
+  const normalizedLine = line.toLowerCase();
+  return topicKeywords.some((keyword) => normalizedLine.includes(keyword));
+}
+
 function isAffirmationLine(line: string) {
-  return /^(i|i'm|i've|i choose|i allow|i feel|i trust|i welcome|i create|i become|my|every day|each day|more and more|it feels natural|it is safe|it is easy)/i.test(line);
+  return /^(i|i'm|i've|i already|i have|i choose|i allow|i feel|i trust|i welcome|i create|i become|my|every day|each day|more and more|it feels natural|it is safe|it is easy)/i.test(line);
 }
 
 function isMetaLine(line: string) {
@@ -53,8 +61,8 @@ function isMetaLine(line: string) {
   );
 }
 
-function hasUnfitClaim(line: string) {
-  return /\b(regrow|grows?|appears?|heal(?:s|ing|ed)?|renew(?:s|ing|ed)?|new tooth|new teeth)\b/i.test(line);
+function isVagueAffirmation(line: string) {
+  return /\b(journey|process|change|growth|unfolds|nature's ability|nature's power|embrace nature|brings more strength)\b/i.test(line);
 }
 
 function extractListItems(text: string) {
@@ -81,6 +89,33 @@ function normalizeAffirmation(line: string) {
     .replace(/\s*\([^)]*\)\s*$/g, "")
     .replace(/^["'`]+|["'`,]+$/g, "")
     .trim();
+}
+
+function getTopicKeywords(topic: string) {
+  const stopWords = new Set([
+    "and",
+    "the",
+    "with",
+    "for",
+    "your",
+    "you",
+    "powerful",
+    "subliminal",
+    "naturally",
+    "natural",
+    "topic",
+    "about",
+    "into",
+    "from"
+  ]);
+
+  return [...new Set(topic
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter((word) => word.length >= 4 && !stopWords.has(word))
+    .slice(0, 8))];
 }
 
 function getSafeAffirmationModelOverride() {
@@ -115,6 +150,7 @@ export async function POST(request: Request) {
   const safeCount = Math.max(8, Math.min(32, Number(count) || 24));
   const safeTopic = topic.trim().slice(0, 700);
   const safeTone = String(tone).slice(0, 180);
+  const topicKeywords = getTopicKeywords(safeTopic);
 
   const { data: config } = await admin
     .from("subliminal_generation_config")
@@ -133,6 +169,9 @@ export async function POST(request: Request) {
 Topic or user details:
 ${safeTopic}
 
+Concrete topic words to use often:
+${topicKeywords.length > 0 ? topicKeywords.join(", ") : "Use the user's exact topic words."}
+
 Tone:
 ${safeTone}
 
@@ -141,9 +180,13 @@ One affirmation per line.
 
 Output rules:
 - No intro, no analysis, no categories, no markdown.
+- Every affirmation must clearly mention the concrete topic/result.
+- A user should understand the topic from each single line.
+- Write as if the desired result is already happening or already true.
 - Use varied sentence openings. Do not make every line start with "I am".
-- Mix patterns like "I choose...", "I allow...", "I feel...", "I welcome...", "My...", "Every day...", "More and more...", and "It feels natural...".
-- Keep claims believable and safe. Do not say body parts regrow, enamel appears, teeth heal, or medical conditions are cured.`
+- Prefer direct patterns like "I already have...", "My ... is...", "My ... are...", "I have...", "Every day my ... becomes...", and "More and more...".
+- Avoid vague lines about journeys, processes, change, nature, or trust.
+- Do not give medical advice, diagnoses, or treatment instructions.`
     }
   ];
   const minimumCleanAffirmations = Math.min(6, safeCount);
@@ -162,7 +205,7 @@ Output rules:
           includeConfiguredModel: false,
           includeDefaultFallbacks: false
         });
-        const affirmations = cleanLines(reply, safeCount);
+        const affirmations = cleanLines(reply, safeCount, topicKeywords);
 
         if (affirmations.length >= minimumCleanAffirmations) {
           return NextResponse.json({ affirmations });
