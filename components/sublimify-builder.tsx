@@ -13,7 +13,6 @@ import {
   Clock,
   Crown,
   Download,
-  ExternalLink,
   GripVertical,
   HelpCircle,
   Library,
@@ -1360,11 +1359,11 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                     <Crown size={16} /> Upgrade
                   </a>
                   <a className="secondary-button" href={SKOOL_COMMUNITY_URL} target="_blank" rel="noreferrer">
-                    <HelpCircle size={16} /> I joined Pro
+                    <HelpCircle size={16} /> Support
                   </a>
                 </div>
               )}
-              <small>{hasPro ? "Need help with your account? Contact support in Skool." : "Already joined Skool Premium? Use the same email here and contact support so Pro can be activated."}</small>
+              <small>{hasPro ? "Need help with your account? Contact support." : "Need help with your account or upgrade? Contact support."}</small>
             </div>
           )}
         </div>
@@ -1380,17 +1379,6 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
               <span><Library size={15} /> {projects.length} saved</span>
               <span><Music2 size={15} /> {playlists.length} playlists</span>
             </div>
-            {!hasPro && (
-              <div className="manual-pro-card">
-                <div>
-                  <strong>Joined Skool Premium?</strong>
-                  <span>Create/login with the same email. Pro is activated manually within 24 hours.</span>
-                </div>
-                <a href={SKOOL_COMMUNITY_URL} target="_blank" rel="noreferrer">
-                  Contact support <ExternalLink size={14} />
-                </a>
-              </div>
-            )}
             {owner && (
               <div className="idea-generator-panel">
                 <div>
@@ -1901,7 +1889,6 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                 <a className="primary-button" href={SKOOL_UPGRADE_URL} target="_blank" rel="noreferrer">
                   <Crown size={17} /> Upgrade with Skool
                 </a>
-                <small className="upgrade-note">Use the same email for Skool and the Studio. Pro is activated manually within 24 hours.</small>
               </article>
             </div>
           </section>
