@@ -2016,7 +2016,7 @@ input[type="range"] {
 
 .pricing-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -2036,18 +2036,6 @@ input[type="range"] {
     rgba(255, 255, 255, 0.035);
   box-shadow: 0 18px 60px rgba(155, 92, 255, 0.22);
   transform: translateY(-6px);
-}
-
-.price-card.yearly-value {
-  border-color: rgba(248, 215, 124, 0.36);
-  background:
-    linear-gradient(180deg, rgba(248, 215, 124, 0.12), rgba(155, 92, 255, 0.08)),
-    rgba(255, 255, 255, 0.04);
-  box-shadow: 0 16px 50px rgba(248, 215, 124, 0.09), 0 0 0 1px rgba(248, 215, 124, 0.06);
-}
-
-.price-card.yearly-value strong {
-  color: #fff7d6;
 }
 
 .price-card strong {
@@ -2108,17 +2096,6 @@ input[type="range"] {
   border-color: rgba(248, 215, 124, 0.34);
   color: #ffe8a3;
   background: rgba(248, 215, 124, 0.12);
-}
-
-.yearly-button {
-  background:
-    linear-gradient(135deg, rgba(248, 215, 124, 0.96), rgba(155, 92, 255, 0.96)),
-    #151522;
-  box-shadow: 0 12px 34px rgba(248, 215, 124, 0.14), 0 0 0 1px rgba(248, 215, 124, 0.18);
-}
-
-.yearly-button:hover {
-  box-shadow: 0 16px 42px rgba(248, 215, 124, 0.2), 0 0 0 1px rgba(248, 215, 124, 0.26);
 }
 
 .upgrade-modal-backdrop {
@@ -3142,6 +3119,401 @@ select:hover {
   50% {
     opacity: 0;
   }
+}
+
+/* Subliminal Studio Pro polish */
+.sublimify-minimal {
+  position: relative;
+  isolation: isolate;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 16% 0%, rgba(155, 92, 255, 0.13), transparent 30%),
+    radial-gradient(circle at 82% 14%, rgba(103, 232, 249, 0.08), transparent 28%),
+    linear-gradient(135deg, rgba(7, 8, 14, 0.99), rgba(12, 11, 24, 0.98));
+}
+
+.sublimify-minimal::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.78), transparent 88%);
+}
+
+.sublimify-minimal .minimal-topbar {
+  border-bottom-color: rgba(197, 163, 255, 0.13);
+  background:
+    linear-gradient(180deg, rgba(14, 13, 23, 0.86), rgba(8, 9, 15, 0.74)),
+    rgba(8, 9, 15, 0.78);
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.22);
+}
+
+.sublimify-minimal .minimal-brand {
+  min-width: 0;
+}
+
+.sublimify-minimal .minimal-brand .brand-mark {
+  box-shadow:
+    0 0 0 1px rgba(197, 163, 255, 0.16),
+    0 0 28px rgba(155, 92, 255, 0.18);
+}
+
+.sublimify-minimal .minimal-brand strong {
+  letter-spacing: 0;
+}
+
+.sublimify-minimal .minimal-account-row {
+  border-color: rgba(197, 163, 255, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.035)),
+    rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.sublimify-minimal .minimal-account-row button:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sublimify-minimal .plan-badge.pro {
+  color: #fff1bf;
+  border-color: rgba(248, 215, 124, 0.28);
+  background:
+    linear-gradient(135deg, rgba(248, 215, 124, 0.16), rgba(155, 92, 255, 0.16)),
+    rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 22px rgba(248, 215, 124, 0.09);
+}
+
+.sublimify-minimal .primary-button,
+.sublimify-minimal .secondary-button,
+.sublimify-minimal .library-import,
+.sublimify-minimal .library-playlist {
+  transition:
+    transform 170ms ease,
+    border-color 170ms ease,
+    background 170ms ease,
+    box-shadow 170ms ease,
+    filter 170ms ease;
+}
+
+.sublimify-minimal .primary-button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+  box-shadow:
+    0 18px 44px rgba(109, 93, 252, 0.34),
+    0 0 0 1px rgba(197, 163, 255, 0.24),
+    0 0 30px rgba(155, 92, 255, 0.18);
+}
+
+.sublimify-minimal .secondary-button:hover,
+.sublimify-minimal .library-import:hover,
+.sublimify-minimal .library-playlist:hover {
+  transform: translateY(-1px);
+  border-color: rgba(197, 163, 255, 0.34);
+  background: rgba(255, 255, 255, 0.078);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+}
+
+.sublimify-minimal .primary-button:active,
+.sublimify-minimal .secondary-button:active,
+.sublimify-minimal .library-import:active,
+.sublimify-minimal .library-playlist:active {
+  transform: translateY(0) scale(0.985);
+}
+
+.subliminal-library,
+.minimal-builder {
+  animation: pageEnter 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.library-hero {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 4px;
+  padding: clamp(22px, 4vw, 34px);
+  border: 1px solid rgba(197, 163, 255, 0.1);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.018)),
+    rgba(255, 255, 255, 0.02);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.035);
+}
+
+.library-hero::after {
+  content: "";
+  position: absolute;
+  right: -90px;
+  top: -110px;
+  width: 280px;
+  height: 280px;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(155, 92, 255, 0.14), transparent 68%);
+}
+
+.library-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.library-actions .primary-button,
+.library-actions .secondary-button,
+.library-actions .library-import {
+  justify-content: center;
+}
+
+.idea-generator-panel,
+.playlist-manager,
+.library-list-header,
+.subliminal-row,
+.empty-library,
+.single-step-card,
+.creator-prompt-drawer {
+  border-color: rgba(197, 163, 255, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02)),
+    rgba(255, 255, 255, 0.025);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.035);
+}
+
+.idea-generator-panel,
+.playlist-manager,
+.single-step-card {
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.035),
+    0 24px 70px rgba(0, 0, 0, 0.18);
+}
+
+.idea-list button,
+.playlist-pill,
+.playlist-track,
+.playlist-add-list button,
+.quiz-option,
+.toggle-header,
+.preview-panel,
+.mix-slider,
+.clean-summary div,
+.custom-audio-player,
+.price-card {
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.026);
+}
+
+.idea-list button,
+.playlist-add-list button {
+  transition: transform 170ms ease, border-color 170ms ease, background 170ms ease, box-shadow 170ms ease;
+}
+
+.idea-list button:hover,
+.playlist-add-list button:hover {
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
+}
+
+.playlist-pill.active {
+  color: #ffffff;
+  border-color: rgba(197, 163, 255, 0.46);
+  background:
+    linear-gradient(135deg, rgba(155, 92, 255, 0.18), rgba(103, 232, 249, 0.07)),
+    rgba(255, 255, 255, 0.045);
+}
+
+.playlist-track {
+  transition: border-color 170ms ease, background 170ms ease, transform 170ms ease;
+}
+
+.playlist-track:hover {
+  transform: translateX(2px);
+  border-color: rgba(197, 163, 255, 0.18);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.library-list-header {
+  font-weight: 850;
+}
+
+.subliminal-row {
+  align-items: flex-start;
+}
+
+.subliminal-row > div:first-child {
+  min-width: 0;
+  width: min(690px, 100%);
+}
+
+.subliminal-row strong {
+  color: #ffffff;
+}
+
+.custom-audio-player {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02)),
+    rgba(7, 8, 14, 0.86);
+}
+
+.custom-audio-player input[type="range"],
+.mix-slider input[type="range"] {
+  height: 6px;
+  accent-color: var(--purple-soft);
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(155, 92, 255, 0.85), rgba(103, 232, 249, 0.64));
+  cursor: pointer;
+}
+
+.custom-audio-player input[type="range"]::-webkit-slider-thumb,
+.mix-slider input[type="range"]::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  background: var(--purple-soft);
+  box-shadow: 0 0 18px rgba(155, 92, 255, 0.34);
+}
+
+.custom-audio-player input[type="range"]::-moz-range-thumb,
+.mix-slider input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  background: var(--purple-soft);
+  box-shadow: 0 0 18px rgba(155, 92, 255, 0.34);
+}
+
+.minimal-progress {
+  padding: 10px 0 2px;
+}
+
+.minimal-progress > span {
+  padding: 7px 10px;
+  border: 1px solid rgba(197, 163, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.quiet-progress-bar {
+  height: 7px;
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.quiet-progress-bar span {
+  box-shadow: 0 0 20px rgba(103, 232, 249, 0.2);
+}
+
+.single-step-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.single-step-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(197, 163, 255, 0.48), rgba(103, 232, 249, 0.38), transparent);
+}
+
+.single-step-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.quiz-option {
+  position: relative;
+  overflow: hidden;
+}
+
+.quiz-option::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(135deg, rgba(155, 92, 255, 0.12), transparent 52%);
+  transition: opacity 170ms ease;
+}
+
+.quiz-option:hover::after,
+.quiz-option.active::after {
+  opacity: 1;
+}
+
+.quiz-option strong,
+.quiz-option span,
+.quiz-option svg,
+.quiz-option small {
+  position: relative;
+  z-index: 1;
+}
+
+.toggle-header.open {
+  border-color: rgba(197, 163, 255, 0.34);
+  background:
+    linear-gradient(135deg, rgba(155, 92, 255, 0.12), rgba(103, 232, 249, 0.045)),
+    rgba(255, 255, 255, 0.048);
+}
+
+.preview-panel {
+  border-color: rgba(103, 232, 249, 0.16);
+  background:
+    linear-gradient(135deg, rgba(103, 232, 249, 0.07), rgba(155, 92, 255, 0.055)),
+    rgba(255, 255, 255, 0.028);
+}
+
+.mix-controls h2 {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(197, 163, 255, 0.18);
+}
+
+.mix-slider {
+  transition: border-color 170ms ease, background 170ms ease, transform 170ms ease;
+}
+
+.mix-slider:hover {
+  transform: translateY(-1px);
+  border-color: rgba(197, 163, 255, 0.24);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.clean-summary div {
+  min-width: 0;
+}
+
+.clean-summary strong {
+  overflow-wrap: anywhere;
+}
+
+.upgrade-modal-backdrop {
+  background:
+    radial-gradient(circle at 50% 20%, rgba(155, 92, 255, 0.18), transparent 34%),
+    rgba(3, 4, 10, 0.78);
+}
+
+.upgrade-modal {
+  width: min(900px, 100%);
+  border-color: rgba(197, 163, 255, 0.2);
+}
+
+.price-card.recommended {
+  transform: translateY(-3px);
+}
+
+.price-card .primary-button {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.floating-status {
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.26),
+    0 0 0 1px rgba(197, 163, 255, 0.08);
 }
 
 @media (prefers-reduced-motion: reduce) {

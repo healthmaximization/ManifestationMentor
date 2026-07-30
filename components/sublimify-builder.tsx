@@ -1799,7 +1799,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
             </button>
             <div className="upgrade-modal-copy">
               <span className="price-badge">Unlock Pro</span>
-              <h2 id="upgrade-title">Upgrade your Subliminal studio.</h2>
+              <h2 id="upgrade-title">Upgrade your Subliminal Studio.</h2>
               <p>{upgradePrompt}</p>
             </div>
             <div className="pricing-grid modal-pricing">
@@ -1809,7 +1809,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                 <ul className="plan-feature-list">
                   <li><CheckCircle2 size={16} /> Listen in your library</li>
                   <li><CheckCircle2 size={16} /> Manual creation</li>
-                  <li><XCircle size={16} /> 1 saved custom subliminal</li>
+                  <li><CheckCircle2 size={16} /> 1 active custom subliminal</li>
                   <li><XCircle size={16} /> No AI affirmations</li>
                   <li><XCircle size={16} /> No downloads or playlists</li>
                 </ul>
