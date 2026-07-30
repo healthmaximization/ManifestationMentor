@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileText, Plus, RefreshCw, Save, Send, Trash2, UploadCloud } from "lucide-react";
+import { FileText, Loader2, Plus, RefreshCw, Save, Send, Trash2, UploadCloud } from "lucide-react";
 import { DEFAULT_SYSTEM_PROMPT, MANIFESTATION_METHODS } from "@/lib/config";
 import type { Database } from "@/lib/supabase/types";
 
@@ -36,7 +36,12 @@ export default function TrainingPanel() {
   }, []);
 
   if (!config) {
-    return <div className="loading-panel">Loading training controls...</div>;
+    return (
+      <div className="loading-panel">
+        <Loader2 className="spin" size={20} />
+        Loading training controls
+      </div>
+    );
   }
 
   function updateConfig(patch: Partial<Config>) {
@@ -250,7 +255,7 @@ export default function TrainingPanel() {
                 {message.content}
               </p>
             ))}
-            {previewLoading && <p className="preview-message assistant">Thinking...</p>}
+            {previewLoading && <p className="preview-message assistant">Generating preview...</p>}
           </div>
           <form onSubmit={sendPreview} className="preview-composer">
             <input value={previewInput} onChange={(event) => setPreviewInput(event.target.value)} placeholder="Test a user question..." />

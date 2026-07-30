@@ -7,6 +7,12 @@ import type { Database } from "@/lib/supabase/types";
 type Message = Database["public"]["Tables"]["manifestation_messages"]["Row"];
 type Conversation = Database["public"]["Tables"]["manifestation_conversations"]["Row"];
 
+const STARTER_PROMPTS = [
+  "Help me clarify my next goal",
+  "Find the belief blocking me",
+  "Create a 7-day action plan"
+];
+
 export default function ChatPanel({
   activeConversationId,
   onConversationCreated
@@ -69,7 +75,7 @@ export default function ChatPanel({
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Something went wrong.");
+      setError(data.error ?? "Could not send your message. Please try again.");
       return;
     }
 
@@ -113,6 +119,13 @@ export default function ChatPanel({
           <div className="empty-chat">
             <h2>What are you calling in?</h2>
             <p>Name the desire, the doubt, or the decision you want support with.</p>
+            <div className="starter-prompts">
+              {STARTER_PROMPTS.map((prompt) => (
+                <button key={prompt} type="button" onClick={() => setInput(prompt)}>
+                  {prompt}
+                </button>
+              ))}
+            </div>
           </div>
         )}
         {messages.map((message) => (

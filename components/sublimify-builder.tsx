@@ -79,7 +79,7 @@ const STYLES: { key: Style; label: string; description: string; available: boole
 ];
 
 const AMBIENCE_OPTIONS: { key: Ambience; label: string; description: string }[] = [
-  { key: "none", label: "No generated sound", description: "Use only voice, uploaded audio, and optional binaural tones." },
+  { key: "none", label: "No background sound", description: "Use only voice, uploaded audio, and optional binaural tones." },
   { key: "rain_soft", label: "Soft rain", description: "Light, gentle rain texture." },
   { key: "rain_heavy", label: "Heavy rain", description: "Thicker rain for more masking." },
   { key: "rain_window", label: "Window rain", description: "Soft rain with small drops and movement." },
@@ -993,7 +993,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     });
     const data = await response.json();
     setLoading("");
-    setStatus(response.ok ? "Sublimify prompt saved." : data.error ?? "Could not save prompt.");
+    setStatus(response.ok ? "Studio prompts saved." : data.error ?? "Could not save prompt.");
   }
 
   async function startRecording() {

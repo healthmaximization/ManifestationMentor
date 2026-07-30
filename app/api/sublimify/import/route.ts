@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       .eq("user_id", user.id);
 
     if ((count ?? 0) >= 1) {
-      return NextResponse.json({ error: "Free includes 1 custom subliminal in your library. Upgrade to Pro for more." }, { status: 403 });
+      return NextResponse.json({ error: "Lite includes 1 active custom subliminal in your library. Upgrade to Pro for more." }, { status: 403 });
     }
   }
 

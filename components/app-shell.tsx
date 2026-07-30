@@ -44,7 +44,7 @@ export default function AppShell({
             </button>
             <Link href="/studio" title="Subliminal Studio">
               <BrandLogo size="small" />
-              <span>Sublimify</span>
+              <span>Studio</span>
             </Link>
             {canSeeTraining && (
               <button className={view === "training" ? "active" : ""} onClick={() => setView("training")} title="Training">
