@@ -1,5 +1,5 @@
-import AcademyHome from "@/components/academy-home";
+import SublimifyLanding from "@/components/sublimify-landing";
 
 export default function HomePage() {
-  return <AcademyHome />;
+  return <SublimifyLanding />;
 }
