@@ -1,4 +1,4 @@
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createAdminSupabase, createServerSupabase } from "@/lib/supabase/server";
 import { isOwner } from "@/lib/auth";
 import { hasProductAccess } from "@/lib/access";
 import SetupScreen from "@/components/setup-screen";
@@ -20,6 +20,15 @@ export default async function StudioPage() {
   }
 
   const owner = isOwner(user.email);
+  const admin = createAdminSupabase();
+  await admin.from("profiles").upsert(
+    {
+      id: user.id,
+      email: user.email ?? null,
+      updated_at: new Date().toISOString()
+    },
+    { onConflict: "id" }
+  );
   const hasPro = owner || (await hasProductAccess(supabase, { id: user.id, email: user.email }, "subliminal_maker"));
 
   return <SublimifyBuilder userEmail={user.email ?? ""} owner={owner} hasPro={hasPro} />;

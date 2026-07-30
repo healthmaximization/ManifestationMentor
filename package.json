@@ -15,8 +15,7 @@
     "next": "^14.2.35",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "sam-js": "^0.3.1",
-    "stripe": "^22.2.0"
+    "sam-js": "^0.3.1"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",

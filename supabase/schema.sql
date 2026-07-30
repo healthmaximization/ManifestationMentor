@@ -1,56 +1,24 @@
 create extension if not exists "pgcrypto";
 
--- Shared identity and monetization layer for all tools under the same company.
+-- Shared identity and membership layer for all tools under the same company.
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text,
   full_name text,
   company_role text not null default 'customer',
+  membership text not null default 'lite' check (membership in ('lite', 'pro')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-create table if not exists public.products (
-  key text primary key,
-  name text not null,
-  description text,
-  active boolean not null default true,
-  created_at timestamptz not null default now()
-);
+alter table public.profiles
+add column if not exists membership text not null default 'lite';
 
-create table if not exists public.subscriptions (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  product_key text not null references public.products(key) on delete restrict,
-  plan_key text not null,
-  source text not null default 'stripe',
-  status text not null check (status in ('trialing', 'active', 'past_due', 'canceled', 'unpaid', 'incomplete', 'manual')),
-  stripe_customer_id text,
-  stripe_subscription_id text,
-  stripe_price_id text,
-  current_period_start timestamptz,
-  current_period_end timestamptz,
-  cancel_at_period_end boolean not null default false,
-  metadata jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  unique (user_id, product_key, source)
-);
+alter table public.profiles
+drop constraint if exists profiles_membership_check;
 
-create table if not exists public.entitlements (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  product_key text not null references public.products(key) on delete cascade,
-  access_level text not null default 'standard',
-  source text not null default 'subscription',
-  active boolean not null default true,
-  starts_at timestamptz not null default now(),
-  ends_at timestamptz,
-  metadata jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  unique (user_id, product_key, source)
-);
+alter table public.profiles
+add constraint profiles_membership_check check (membership in ('lite', 'pro'));
 
 -- Manifestation Advisor app.
 create table if not exists public.manifestation_conversations (
@@ -95,7 +63,7 @@ create table if not exists public.manifestation_training_documents (
 );
 
 -- Reserved Subliminal Maker app tables. The other project can extend these
--- instead of inventing a conflicting subscription/auth structure.
+-- instead of inventing a conflicting auth or membership structure.
 insert into storage.buckets (id, name, public)
 values ('subliminal-imports', 'subliminal-imports', false)
 on conflict (id) do nothing;
@@ -164,9 +132,6 @@ alter table public.subliminal_generation_config
 add column if not exists idea_prompt text not null default '';
 
 alter table public.profiles enable row level security;
-alter table public.products enable row level security;
-alter table public.subscriptions enable row level security;
-alter table public.entitlements enable row level security;
 alter table public.manifestation_conversations enable row level security;
 alter table public.manifestation_messages enable row level security;
 alter table public.manifestation_training_config enable row level security;
@@ -187,21 +152,6 @@ drop policy if exists "Users update own profile" on public.profiles;
 create policy "Users update own profile"
 on public.profiles for update
 using (auth.uid() = id);
-
-drop policy if exists "Users read active products" on public.products;
-create policy "Users read active products"
-on public.products for select
-using (active = true);
-
-drop policy if exists "Users read own subscriptions" on public.subscriptions;
-create policy "Users read own subscriptions"
-on public.subscriptions for select
-using (auth.uid() = user_id);
-
-drop policy if exists "Users read own entitlements" on public.entitlements;
-create policy "Users read own entitlements"
-on public.entitlements for select
-using (auth.uid() = user_id);
 
 drop policy if exists "Users read own manifestation conversations" on public.manifestation_conversations;
 create policy "Users read own manifestation conversations"
@@ -293,23 +243,11 @@ create policy "Users delete own subliminal playlists"
 on public.subliminal_playlists for delete
 using (auth.uid() = user_id);
 
-create index if not exists subscriptions_user_product_idx on public.subscriptions(user_id, product_key, status);
-create index if not exists entitlements_user_product_idx on public.entitlements(user_id, product_key, active);
 create index if not exists manifestation_conversations_user_updated_idx on public.manifestation_conversations(user_id, updated_at desc);
 create index if not exists manifestation_messages_conversation_created_idx on public.manifestation_messages(conversation_id, created_at);
 create index if not exists subliminal_projects_user_updated_idx on public.subliminal_projects(user_id, updated_at desc);
 create index if not exists subliminal_audio_jobs_project_idx on public.subliminal_audio_jobs(project_id, status);
 create index if not exists subliminal_playlists_user_updated_idx on public.subliminal_playlists(user_id, updated_at desc);
-
-insert into public.products (key, name, description)
-values
-  ('manifestation_advisor', 'Manifestation Advisor', 'AI manifestation coaching and owner-trained knowledge base.'),
-  ('subliminal_maker', 'Subliminal Maker', 'Subliminal script, audio, and export creation tool.'),
-  ('pro_bundle', 'Pro Bundle', 'Access to Manifestation Advisor and Subliminal Maker.')
-on conflict (key) do update
-set name = excluded.name,
-    description = excluded.description,
-    active = true;
 
 insert into public.manifestation_training_config (id, system_prompt)
 values (

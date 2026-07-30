@@ -1,5 +1,4 @@
 import { isOwner } from "@/lib/auth";
-import type { ProductKey } from "@/lib/billing";
 
 type SupabaseLike = {
   from: (table: string) => any;
@@ -8,18 +7,15 @@ type SupabaseLike = {
 export async function hasProductAccess(
   supabase: SupabaseLike,
   user: { id: string; email?: string | null },
-  productKey: ProductKey
+  _productKey?: string
 ) {
   if (isOwner(user.email)) return true;
 
   const { data } = await supabase
-    .from("entitlements")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("active", true)
-    .in("product_key", [productKey, "pro_bundle"])
-    .limit(1)
+    .from("profiles")
+    .select("membership")
+    .eq("id", user.id)
     .maybeSingle();
 
-  return Boolean(data);
+  return data?.membership === "pro";
 }

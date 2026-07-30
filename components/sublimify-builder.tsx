@@ -69,6 +69,7 @@ type SubliminalPlaylist = {
 
 const BASE_STEPS: Step[] = ["intention", "source"];
 const FINISH_STEPS: Step[] = ["voice", "style", "sound", "export"];
+const SKOOL_UPGRADE_URL = "https://www.skool.com/subliminal-academy-6300/plans?src=upgrade";
 
 const STYLES: { key: Style; label: string; description: string; available: boolean }[] = [
   { key: "normal", label: "Normal subliminal", description: "Audible affirmations beneath ambience or music.", available: true },
@@ -567,28 +568,6 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     setUpgradePrompt(message);
   }
 
-  async function startCheckout(planKey: "monthly" | "yearly") {
-    setLoading(`checkout-${planKey}`);
-    setStatus("");
-    try {
-      const response = await fetch("/api/stripe/create-checkout-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productKey: "pro_bundle", planKey })
-      });
-      const data = await response.json().catch(() => ({ error: "Checkout did not return a valid response." }));
-      if (!response.ok || !data.url) {
-        setStatus(data.error ?? "Could not start checkout.");
-        return;
-      }
-      window.location.href = data.url;
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Could not start checkout.");
-    } finally {
-      setLoading("");
-    }
-  }
-
   function openBuilderWithTopic(initialTopic = "") {
     stopPreview();
     setTopic(initialTopic);
@@ -620,7 +599,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
 
   function startNewProject() {
     if (libraryLimitReached) {
-      openUpgradePrompt("Free keeps 1 subliminal in your library at a time. Delete your current subliminal to create another, or upgrade to Pro for an unlimited library.");
+      openUpgradePrompt("Lite keeps 1 subliminal in your library at a time. Delete your current subliminal to create another, or upgrade to Pro for an unlimited library.");
       return;
     }
     openBuilderWithTopic("");
@@ -710,7 +689,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   async function importSubliminal(file: File | null) {
     if (!file) return;
     if (libraryLimitReached) {
-      openUpgradePrompt("Free keeps 1 subliminal in your library at a time. Delete your current subliminal to import another, or upgrade to Pro for an unlimited library.");
+      openUpgradePrompt("Lite keeps 1 subliminal in your library at a time. Delete your current subliminal to import another, or upgrade to Pro for an unlimited library.");
       return;
     }
 
@@ -977,7 +956,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
 
   function selectMode(nextMode: Mode) {
     if (nextMode === "generate" && isFree) {
-      openUpgradePrompt("AI-generated affirmations are a Pro feature. You can paste affirmations or record your own voice on Free.");
+      openUpgradePrompt("AI-generated affirmations are a Pro feature. You can paste affirmations or record your own voice on Lite.");
       return;
     }
     setMode(nextMode);
@@ -1332,7 +1311,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
             <span className="account-email">{userEmail}</span>
             <span className={hasPro ? "plan-badge pro" : "plan-badge free"}>
               {hasPro ? <Crown size={13} /> : null}
-              {hasPro ? "PRO" : "FREE"}
+              {hasPro ? "PRO" : "LITE"}
             </span>
             {!hasPro && (
               <button
@@ -1392,7 +1371,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                 onClick={(event) => {
                   if (libraryLimitReached) {
                     event.preventDefault();
-                    openUpgradePrompt("Free includes 1 custom subliminal in your library. Upgrade to Pro to import and save more subliminals.");
+                    openUpgradePrompt("Lite includes 1 custom subliminal in your library. Upgrade to Pro to import and save more subliminals.");
                   }
                 }}
               >
@@ -1825,8 +1804,8 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
             </div>
             <div className="pricing-grid modal-pricing">
               <article className="price-card free">
-                <span>Free</span>
-                <strong>Start</strong>
+                <span>Lite</span>
+                <strong>Standard</strong>
                 <ul className="plan-feature-list">
                   <li><CheckCircle2 size={16} /> Listen in your library</li>
                   <li><CheckCircle2 size={16} /> Manual creation</li>
@@ -1837,33 +1816,18 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
               </article>
               <article className="price-card recommended">
                 <div className="price-badge">Recommended</div>
-                <span>Pro monthly</span>
-                <strong>$9/month</strong>
+                <span>Pro</span>
+                <strong>Premium access</strong>
                 <ul className="plan-feature-list">
                   <li><CheckCircle2 size={16} /> AI affirmation generation</li>
                   <li><CheckCircle2 size={16} /> Unlimited saved subliminals</li>
                   <li><CheckCircle2 size={16} /> Download finished audio</li>
                   <li><CheckCircle2 size={16} /> Playlists access</li>
-                  <li><CheckCircle2 size={16} /> Best for monthly flexibility</li>
+                  <li><CheckCircle2 size={16} /> Access through Skool Premium</li>
                 </ul>
-                <button className="primary-button" onClick={() => startCheckout("monthly")} disabled={loading === "checkout-monthly"}>
-                  {loading === "checkout-monthly" ? <Loader2 className="spin" size={17} /> : <Crown size={17} />} Upgrade monthly
-                </button>
-              </article>
-              <article className="price-card yearly-value">
-                <div className="price-badge value">Best value</div>
-                <span>Pro yearly</span>
-                <strong>$99/year</strong>
-                <ul className="plan-feature-list">
-                  <li><CheckCircle2 size={16} /> All Pro monthly features</li>
-                  <li><CheckCircle2 size={16} /> AI affirmation generation</li>
-                  <li><CheckCircle2 size={16} /> Unlimited library</li>
-                  <li><CheckCircle2 size={16} /> Downloads and playlists</li>
-                  <li><CheckCircle2 size={16} /> Save compared to monthly</li>
-                </ul>
-                <button className="primary-button yearly-button" onClick={() => startCheckout("yearly")} disabled={loading === "checkout-yearly"}>
-                  {loading === "checkout-yearly" ? <Loader2 className="spin" size={17} /> : <Crown size={17} />} Upgrade yearly
-                </button>
+                <a className="primary-button" href={SKOOL_UPGRADE_URL}>
+                  <Crown size={17} /> Upgrade with Skool
+                </a>
               </article>
             </div>
           </section>

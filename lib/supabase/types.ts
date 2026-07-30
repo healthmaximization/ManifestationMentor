@@ -9,71 +9,12 @@ export type Database = {
           email: string | null;
           full_name: string | null;
           company_role: string;
+          membership: "lite" | "pro";
           created_at: string;
           updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]> & { id: string };
         Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
-        Relationships: [];
-      };
-      products: {
-        Row: {
-          key: string;
-          name: string;
-          description: string | null;
-          active: boolean;
-          created_at: string;
-        };
-        Insert: Partial<Database["public"]["Tables"]["products"]["Row"]> & { key: string; name: string };
-        Update: Partial<Database["public"]["Tables"]["products"]["Row"]>;
-        Relationships: [];
-      };
-      subscriptions: {
-        Row: {
-          id: string;
-          user_id: string;
-          product_key: string;
-          plan_key: string;
-          source: string;
-          status: "trialing" | "active" | "past_due" | "canceled" | "unpaid" | "incomplete" | "manual";
-          stripe_customer_id: string | null;
-          stripe_subscription_id: string | null;
-          stripe_price_id: string | null;
-          current_period_start: string | null;
-          current_period_end: string | null;
-          cancel_at_period_end: boolean;
-          metadata: Json;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: Partial<Database["public"]["Tables"]["subscriptions"]["Row"]> & {
-          user_id: string;
-          product_key: string;
-          plan_key: string;
-          status: "trialing" | "active" | "past_due" | "canceled" | "unpaid" | "incomplete" | "manual";
-        };
-        Update: Partial<Database["public"]["Tables"]["subscriptions"]["Row"]>;
-        Relationships: [];
-      };
-      entitlements: {
-        Row: {
-          id: string;
-          user_id: string;
-          product_key: string;
-          access_level: string;
-          source: string;
-          active: boolean;
-          starts_at: string;
-          ends_at: string | null;
-          metadata: Json;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: Partial<Database["public"]["Tables"]["entitlements"]["Row"]> & {
-          user_id: string;
-          product_key: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["entitlements"]["Row"]>;
         Relationships: [];
       };
       manifestation_conversations: {

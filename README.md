@@ -36,36 +36,34 @@ OPENROUTER_IDEA_MODEL=nvidia/nemotron-3-ultra-550b-a55b:free
 OPENROUTER_AFFIRMATION_MODEL=google/gemma-4-31b-it:free
 ```
 
-## Stripe
+## Membership
 
-Add Stripe values in Vercel Project Settings and `.env.local`:
-
-```text
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_or_pk_live
-STRIPE_SECRET_KEY=sk_test_or_sk_live
-STRIPE_WEBHOOK_SECRET=whsec_from_stripe_webhook
-STRIPE_PRICE_MANIFESTATION_MONTHLY=price_...
-STRIPE_PRICE_MANIFESTATION_YEARLY=price_...
-STRIPE_PRICE_SUBLIMIFY_MONTHLY=price_...
-STRIPE_PRICE_SUBLIMIFY_YEARLY=price_...
-STRIPE_PRICE_PRO_MONTHLY=price_...
-STRIPE_PRICE_PRO_YEARLY=price_...
-```
-
-Use `/api/stripe/create-checkout-session` to create subscription Checkout Sessions. Configure the Stripe webhook endpoint as:
+Subliminal Studio Pro access is controlled by `profiles.membership` in Supabase:
 
 ```text
-https://your-domain.com/api/stripe/webhook
+lite
+pro
 ```
 
-Listen for `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, and `customer.subscription.deleted`.
+All users default to `lite`. Zapier can grant or remove Skool Premium access by updating the matching profile row:
+
+```text
+membership=pro
+membership=lite
+```
+
+The upgrade popup links to:
+
+```text
+https://www.skool.com/subliminal-academy-6300/plans?src=upgrade
+```
 
 ## Sublimify
 
-Sublimify lives at:
+Subliminal Studio lives at:
 
 ```text
-/sublimify
+/studio
 ```
 
 Run the latest `supabase/schema.sql` again after pulling this version. It adds `subliminal_generation_config`, which stores the owner-editable affirmation and idea prompts.
