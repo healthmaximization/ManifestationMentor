@@ -1360,6 +1360,28 @@ input[type="range"] {
   box-shadow: 0 0 30px rgba(155, 92, 255, 0.36);
 }
 
+.minimal-account-row .account-support-button {
+  width: auto;
+  min-height: 34px;
+  padding: 0 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: rgba(245, 243, 255, 0.84);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 900;
+  background: rgba(255, 255, 255, 0.045);
+  transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+}
+
+.minimal-account-row .account-support-button:hover {
+  transform: translateY(-1px);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .minimal-brand {
   color: var(--ink);
   text-decoration: none;
@@ -4774,6 +4796,17 @@ select:hover {
 
   .minimal-account-row .account-upgrade-button svg {
     margin: 0;
+  }
+
+  .minimal-account-row .account-support-button {
+    min-width: 34px;
+    padding: 0 8px;
+    font-size: 0;
+  }
+
+  .minimal-account-row .account-support-button::before {
+    content: "?";
+    font-size: 14px;
   }
 
   .plan-badge {

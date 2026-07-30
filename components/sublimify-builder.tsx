@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 import { DEFAULT_SUBLIMINAL_IDEA_PROMPT, DEFAULT_SUBLIMINAL_PROMPT } from "@/lib/config";
+import { SKOOL_COMMUNITY_URL, SKOOL_UPGRADE_URL } from "@/lib/links";
 
 type Mode = "record" | "paste" | "generate";
 type VoiceChoice = "record" | "tts";
@@ -69,8 +70,6 @@ type SubliminalPlaylist = {
 
 const BASE_STEPS: Step[] = ["intention", "source"];
 const FINISH_STEPS: Step[] = ["voice", "style", "sound", "export"];
-const SKOOL_UPGRADE_URL = "https://www.skool.com/subliminal-academy-6300/plans?src=upgrade";
-
 const STYLES: { key: Style; label: string; description: string; available: boolean }[] = [
   { key: "normal", label: "Normal subliminal", description: "Audible affirmations beneath ambience or music.", available: true },
   { key: "silent", label: "Silent subliminal", description: "Voice layer is pushed very low into the background.", available: false },
@@ -1322,6 +1321,9 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                 <Crown size={14} /> Upgrade
               </button>
             )}
+            <a className="account-support-button" href={SKOOL_COMMUNITY_URL} title="Contact support">
+              Support
+            </a>
             <button type="submit" title="Sign out">
               <LogOut size={17} />
             </button>

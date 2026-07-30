@@ -5,6 +5,7 @@ import { Eye, EyeOff, Loader2, Mail } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import BrandLogo from "@/components/brand-logo";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
+import { SKOOL_COMMUNITY_URL } from "@/lib/links";
 
 export default function AuthScreen() {
   const router = useRouter();
@@ -117,7 +118,7 @@ export default function AuthScreen() {
         </form>
         {notice && <p className="notice" role="status" aria-live="polite">{notice}</p>}
         {error && <p className="error" role="alert">{error}</p>}
-        <a className="auth-contact" href="mailto:jhdesigns1234@gmail.com">
+        <a className="auth-contact" href={SKOOL_COMMUNITY_URL}>
           <Mail size={15} />
           Contact support
         </a>

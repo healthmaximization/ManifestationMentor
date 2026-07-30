@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, CheckCircle2, Crown, Headphones, Layers3, Mail, Sparkles, Wand2 } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
+import { SKOOL_COMMUNITY_URL } from "@/lib/links";
 
 const steps = [
   { icon: Sparkles, title: "Choose the topic", text: "Start with the subject you want your subliminal to focus on." },
@@ -137,7 +138,7 @@ export default function SublimifyLanding({ userEmail = "", hasPro = false }: { u
 
       <footer className="landing-contact">
         <span>Need help or have a question?</span>
-        <a href="mailto:jhdesigns1234@gmail.com">
+        <a href={SKOOL_COMMUNITY_URL}>
           <Mail size={16} />
           Contact support
         </a>
