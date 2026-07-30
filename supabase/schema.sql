@@ -20,6 +20,24 @@ drop constraint if exists profiles_membership_check;
 alter table public.profiles
 add constraint profiles_membership_check check (membership in ('lite', 'pro'));
 
+update public.profiles
+set email = lower(trim(email))
+where email is not null and email <> lower(trim(email));
+
+create table if not exists public.membership_entitlements (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  membership text not null default 'pro' check (membership in ('lite', 'pro')),
+  source text not null default 'skool',
+  external_id text,
+  status text not null default 'active' check (status in ('active', 'inactive')),
+  event_type text,
+  raw_payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (source, email)
+);
+
 -- Manifestation Advisor app.
 create table if not exists public.manifestation_conversations (
   id uuid primary key default gen_random_uuid(),
@@ -132,6 +150,7 @@ alter table public.subliminal_generation_config
 add column if not exists idea_prompt text not null default '';
 
 alter table public.profiles enable row level security;
+alter table public.membership_entitlements enable row level security;
 alter table public.manifestation_conversations enable row level security;
 alter table public.manifestation_messages enable row level security;
 alter table public.manifestation_training_config enable row level security;
@@ -245,6 +264,7 @@ using (auth.uid() = user_id);
 
 create index if not exists manifestation_conversations_user_updated_idx on public.manifestation_conversations(user_id, updated_at desc);
 create index if not exists manifestation_messages_conversation_created_idx on public.manifestation_messages(conversation_id, created_at);
+create index if not exists membership_entitlements_email_source_idx on public.membership_entitlements(email, source);
 create index if not exists subliminal_projects_user_updated_idx on public.subliminal_projects(user_id, updated_at desc);
 create index if not exists subliminal_audio_jobs_project_idx on public.subliminal_audio_jobs(project_id, status);
 create index if not exists subliminal_playlists_user_updated_idx on public.subliminal_playlists(user_id, updated_at desc);

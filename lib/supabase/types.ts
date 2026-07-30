@@ -17,6 +17,26 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
         Relationships: [];
       };
+      membership_entitlements: {
+        Row: {
+          id: string;
+          email: string;
+          membership: "lite" | "pro";
+          source: string;
+          external_id: string | null;
+          status: "active" | "inactive";
+          event_type: string | null;
+          raw_payload: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["membership_entitlements"]["Row"]> & {
+          email: string;
+          membership: "lite" | "pro";
+        };
+        Update: Partial<Database["public"]["Tables"]["membership_entitlements"]["Row"]>;
+        Relationships: [];
+      };
       manifestation_conversations: {
         Row: {
           id: string;
