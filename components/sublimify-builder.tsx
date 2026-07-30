@@ -1334,6 +1334,11 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
           <div className="library-hero">
             <p className="eyebrow">My Subliminals</p>
             <h1>Your private subliminal studio.</h1>
+            <div className="library-meta-strip" aria-label="Studio status">
+              <span>{hasPro ? <Crown size={15} /> : <Sparkles size={15} />} {hasPro ? "Pro access" : "Lite access"}</span>
+              <span><Library size={15} /> {projects.length} saved</span>
+              <span><Music2 size={15} /> {playlists.length} playlists</span>
+            </div>
             {owner && (
               <div className="idea-generator-panel">
                 <div>
@@ -1460,6 +1465,9 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                 <Music2 size={26} />
                 <strong>No subliminals yet</strong>
                 <span>Your exported creations will be saved privately to your account.</span>
+                <button className="primary-button" onClick={startNewProject}>
+                  <Plus size={17} /> Create your first subliminal
+                </button>
               </div>
             ) : (
               projects.map((project) => (
@@ -1801,6 +1809,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
               <span className="price-badge">Unlock Pro</span>
               <h2 id="upgrade-title">Upgrade your Subliminal Studio.</h2>
               <p>{upgradePrompt}</p>
+              <small>Pro access is managed through Skool Premium.</small>
             </div>
             <div className="pricing-grid modal-pricing">
               <article className="price-card free">

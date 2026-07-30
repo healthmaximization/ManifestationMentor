@@ -3872,6 +3872,135 @@ select:hover {
   max-width: min(420px, calc(100vw - 44px));
 }
 
+/* Subliminal Studio interface details */
+.library-meta-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: -4px;
+}
+
+.library-meta-strip span {
+  min-height: 34px;
+  padding: 0 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(197, 163, 255, 0.14);
+  border-radius: 999px;
+  color: rgba(245, 243, 255, 0.78);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.054), rgba(255, 255, 255, 0.018)),
+    rgba(255, 255, 255, 0.028);
+  font-size: 13px;
+  font-weight: 850;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.035);
+}
+
+.library-meta-strip svg {
+  color: var(--purple-soft);
+}
+
+.empty-library {
+  min-height: 240px;
+}
+
+.empty-library svg {
+  color: var(--purple-soft);
+  filter: drop-shadow(0 0 14px rgba(155, 92, 255, 0.18));
+}
+
+.empty-library .primary-button {
+  margin-top: 8px;
+  min-width: 220px;
+}
+
+.upgrade-modal-copy small {
+  color: rgba(245, 243, 255, 0.54);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.price-card.free {
+  border-color: rgba(197, 163, 255, 0.1);
+}
+
+.price-card.recommended::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(248, 215, 124, 0.75), rgba(197, 163, 255, 0.7), rgba(103, 232, 249, 0.42));
+}
+
+.price-card.recommended .price-badge {
+  box-shadow: 0 0 20px rgba(155, 92, 255, 0.12);
+}
+
+.plan-feature-list {
+  font-size: 14px;
+}
+
+.wizard-nav {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  margin-inline: calc(clamp(28px, 6vw, 72px) * -1);
+  margin-bottom: calc(clamp(28px, 6vw, 72px) * -1);
+  padding: 16px clamp(28px, 6vw, 72px) clamp(20px, 4vw, 30px);
+  border-top: 1px solid rgba(197, 163, 255, 0.1);
+  background:
+    linear-gradient(180deg, rgba(13, 13, 22, 0.72), rgba(10, 10, 18, 0.94)),
+    rgba(10, 10, 18, 0.92);
+  backdrop-filter: blur(14px);
+}
+
+.single-step-card:has(.wizard-nav) {
+  align-content: stretch;
+}
+
+.single-step-card:has(.wizard-nav) > .wizard-nav {
+  align-self: end;
+}
+
+.voice-audio-preview {
+  padding: 14px;
+  border: 1px solid rgba(197, 163, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.028);
+}
+
+.layered-settings {
+  position: relative;
+  overflow: hidden;
+}
+
+.layered-settings::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(103, 232, 249, 0.36), transparent);
+}
+
+.recording-script li::marker {
+  color: var(--purple-soft);
+  font-weight: 900;
+}
+
+.coming-soon {
+  justify-self: start;
+}
+
+.upload-sound-tile {
+  min-height: 132px;
+}
+
+.upload-sound-tile span {
+  word-break: break-word;
+}
+
 /* Subliminal Studio landing refinement */
 .sublimify-landing {
   position: relative;
@@ -4069,6 +4198,15 @@ select:hover {
     width: 100%;
   }
 
+  .wizard-nav {
+    position: static;
+    margin: 8px 0 0;
+    padding: 0;
+    border-top: 0;
+    background: transparent;
+    backdrop-filter: none;
+  }
+
   .toggle-header {
     min-height: 58px;
   }
@@ -4116,6 +4254,16 @@ select:hover {
 
   .wizard-nav {
     grid-template-columns: 1fr;
+  }
+
+  .library-meta-strip {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .library-meta-strip span {
+    justify-content: space-between;
   }
 }
 
