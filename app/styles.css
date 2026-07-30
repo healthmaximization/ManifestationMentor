@@ -235,6 +235,34 @@ label {
   gap: 9px;
 }
 
+.member-note,
+.landing-member-note {
+  border: 1px solid rgba(103, 232, 249, 0.16);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(103, 232, 249, 0.07), rgba(155, 92, 255, 0.055)),
+    rgba(255, 255, 255, 0.026);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.035);
+}
+
+.member-note {
+  margin: 18px 0 2px;
+  padding: 12px;
+  display: grid;
+  gap: 4px;
+}
+
+.member-note strong {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.member-note span {
+  color: rgba(245, 243, 255, 0.68);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .password-field {
   position: relative;
 }
@@ -1569,6 +1597,23 @@ input[type="range"] {
   box-shadow:
     0 16px 38px rgba(0, 0, 0, 0.22),
     0 0 0 1px rgba(197, 163, 255, 0.24);
+}
+
+.landing-member-note {
+  max-width: 620px;
+  min-height: 44px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: rgba(245, 243, 255, 0.72);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.landing-member-note svg {
+  flex: 0 0 auto;
+  color: var(--cyan);
 }
 
 .landing-login-button:active,
@@ -5513,6 +5558,15 @@ select:hover {
 
   .landing-copy h1 {
     font-size: clamp(38px, 11vw, 48px);
+  }
+
+  .landing-member-note {
+    align-items: flex-start;
+    font-size: 13px;
+  }
+
+  .member-note {
+    margin-top: 14px;
   }
 
   .subliminal-preview {

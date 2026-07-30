@@ -1321,7 +1321,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                 <Crown size={14} /> Upgrade
               </button>
             )}
-            <a className="account-support-button" href={SKOOL_COMMUNITY_URL} title="Contact support">
+            <a className="account-support-button" href={SKOOL_COMMUNITY_URL} title="Contact support" target="_blank" rel="noreferrer">
               Support
             </a>
             <button type="submit" title="Sign out">
@@ -1844,7 +1844,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                   <li><CheckCircle2 size={16} /> Layered subliminals</li>
                   <li><CheckCircle2 size={16} /> Import MP3/WAV audio</li>
                 </ul>
-                <a className="primary-button" href={SKOOL_UPGRADE_URL}>
+                <a className="primary-button" href={SKOOL_UPGRADE_URL} target="_blank" rel="noreferrer">
                   <Crown size={17} /> Upgrade with Skool
                 </a>
                 <small className="upgrade-note">Pro is activated manually within 24 hours after joining Skool Premium.</small>

@@ -78,6 +78,10 @@ export default function AuthScreen() {
         </div>
         <h1>{mode === "signin" ? "Welcome back." : "Start creating."}</h1>
         <p>{mode === "signin" ? "Log in to start creating subliminals." : "Create your account and start building your first subliminal."}</p>
+        <div className="member-note">
+          <strong>Skool Premium member?</strong>
+          <span>Use the same email address here. Pro access is activated manually within 24 hours.</span>
+        </div>
         <div className="auth-tabs" role="tablist" aria-label="Authentication mode">
           <button className={mode === "signin" ? "active" : ""} onClick={() => setMode("signin")} type="button" role="tab" aria-selected={mode === "signin"}>
             Existing account
@@ -118,7 +122,7 @@ export default function AuthScreen() {
         </form>
         {notice && <p className="notice" role="status" aria-live="polite">{notice}</p>}
         {error && <p className="error" role="alert">{error}</p>}
-        <a className="auth-contact" href={SKOOL_COMMUNITY_URL}>
+        <a className="auth-contact" href={SKOOL_COMMUNITY_URL} target="_blank" rel="noreferrer">
           <Mail size={15} />
           Contact support
         </a>

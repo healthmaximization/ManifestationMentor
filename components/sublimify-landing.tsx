@@ -99,6 +99,10 @@ export default function SublimifyLanding({ userEmail = "", hasPro = false }: { u
               </Link>
             )}
           </div>
+          <div className="landing-member-note">
+            <CheckCircle2 size={17} />
+            <span>Skool Premium members: create your account with the same email. Pro is activated within 24 hours.</span>
+          </div>
         </div>
 
         <div className="subliminal-preview" aria-hidden="true">
@@ -138,7 +142,7 @@ export default function SublimifyLanding({ userEmail = "", hasPro = false }: { u
 
       <footer className="landing-contact">
         <span>Need help or have a question?</span>
-        <a href={SKOOL_COMMUNITY_URL}>
+        <a href={SKOOL_COMMUNITY_URL} target="_blank" rel="noreferrer">
           <Mail size={16} />
           Contact support
         </a>
