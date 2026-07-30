@@ -4040,6 +4040,124 @@ select:hover {
   word-break: break-word;
 }
 
+/* Upgrade modal sales polish */
+.upgrade-modal-copy {
+  max-width: 760px;
+}
+
+.upgrade-modal-copy h2 {
+  max-width: 680px;
+}
+
+.modal-pricing {
+  grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.price-card {
+  min-height: 100%;
+  padding: clamp(18px, 3vw, 24px);
+  gap: 18px;
+}
+
+.price-card.free {
+  opacity: 0.86;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
+    rgba(255, 255, 255, 0.022);
+}
+
+.price-card.recommended {
+  border-color: rgba(248, 215, 124, 0.34);
+  background:
+    radial-gradient(circle at 82% 0%, rgba(248, 215, 124, 0.13), transparent 34%),
+    linear-gradient(180deg, rgba(155, 92, 255, 0.21), rgba(255, 255, 255, 0.042)),
+    rgba(255, 255, 255, 0.04);
+}
+
+.plan-card-head {
+  display: grid;
+  gap: 8px;
+}
+
+.plan-card-head > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.plan-card-head strong {
+  color: #ffffff;
+  font-size: clamp(24px, 3.2vw, 34px);
+  line-height: 1.02;
+}
+
+.plan-card-head p {
+  margin: 0;
+  color: rgba(245, 243, 255, 0.68);
+  font-size: 14px;
+  line-height: 1.52;
+}
+
+.price-card.recommended .plan-card-head strong {
+  color: #fff6d6;
+}
+
+.price-card.recommended .plan-card-head p {
+  color: rgba(255, 246, 214, 0.74);
+}
+
+.plan-feature-list {
+  gap: 10px;
+}
+
+.plan-feature-list li {
+  min-height: 38px;
+  padding: 9px 10px;
+  align-items: center;
+  border: 1px solid rgba(197, 163, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.034);
+  color: rgba(245, 243, 255, 0.88);
+  font-weight: 780;
+}
+
+.price-card.recommended .plan-feature-list li {
+  border-color: rgba(248, 215, 124, 0.13);
+  background: rgba(255, 255, 255, 0.052);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.plan-feature-list svg {
+  width: 18px;
+  height: 18px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(103, 232, 249, 0.08);
+}
+
+.plan-feature-list svg.lucide-circle-x,
+.plan-feature-list svg.lucide-x-circle {
+  background: rgba(251, 113, 133, 0.08);
+}
+
+.price-card.recommended .primary-button {
+  min-height: 50px;
+  margin-top: auto;
+  font-size: 15px;
+  font-weight: 920;
+}
+
+.upgrade-note {
+  color: rgba(255, 246, 214, 0.62);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.45;
+  text-align: center;
+}
+
 /* Subliminal Studio landing refinement */
 .sublimify-landing {
   position: relative;

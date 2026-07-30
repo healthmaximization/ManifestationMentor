@@ -1807,36 +1807,45 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
             </button>
             <div className="upgrade-modal-copy">
               <span className="price-badge">Unlock Pro</span>
-              <h2 id="upgrade-title">Upgrade your Subliminal Studio.</h2>
+              <h2 id="upgrade-title">Create without Lite limits.</h2>
               <p>{upgradePrompt}</p>
-              <small>Pro access is managed through Skool Premium.</small>
             </div>
             <div className="pricing-grid modal-pricing">
               <article className="price-card free">
-                <span>Lite</span>
-                <strong>Standard</strong>
+                <div className="plan-card-head">
+                  <span>Lite</span>
+                  <strong>Try the studio</strong>
+                  <p>Good for testing the creator and listening inside your library.</p>
+                </div>
                 <ul className="plan-feature-list">
                   <li><CheckCircle2 size={16} /> Listen in your library</li>
-                  <li><CheckCircle2 size={16} /> Manual creation</li>
+                  <li><CheckCircle2 size={16} /> Paste or record your own affirmations</li>
                   <li><CheckCircle2 size={16} /> 1 active custom subliminal</li>
                   <li><XCircle size={16} /> No AI affirmations</li>
-                  <li><XCircle size={16} /> No downloads or playlists</li>
+                  <li><XCircle size={16} /> No audio downloads</li>
+                  <li><XCircle size={16} /> No playlists</li>
+                  <li><XCircle size={16} /> No layered subliminals</li>
                 </ul>
               </article>
               <article className="price-card recommended">
-                <div className="price-badge">Recommended</div>
-                <span>Pro</span>
-                <strong>Premium access</strong>
+                <div className="plan-card-head">
+                  <div className="price-badge">Recommended</div>
+                  <span>Pro</span>
+                  <strong>Unlock the full studio</strong>
+                  <p>For making, saving, organizing, and exporting subliminals seriously.</p>
+                </div>
                 <ul className="plan-feature-list">
                   <li><CheckCircle2 size={16} /> AI affirmation generation</li>
                   <li><CheckCircle2 size={16} /> Unlimited saved subliminals</li>
                   <li><CheckCircle2 size={16} /> Download finished audio</li>
-                  <li><CheckCircle2 size={16} /> Playlists access</li>
-                  <li><CheckCircle2 size={16} /> Access through Skool Premium</li>
+                  <li><CheckCircle2 size={16} /> Create playlists</li>
+                  <li><CheckCircle2 size={16} /> Layered subliminals</li>
+                  <li><CheckCircle2 size={16} /> Import MP3/WAV audio</li>
                 </ul>
                 <a className="primary-button" href={SKOOL_UPGRADE_URL}>
                   <Crown size={17} /> Upgrade with Skool
                 </a>
+                <small className="upgrade-note">Pro is activated manually within 24 hours after joining Skool Premium.</small>
               </article>
             </div>
           </section>
