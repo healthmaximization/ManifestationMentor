@@ -3516,6 +3516,609 @@ select:hover {
     0 0 0 1px rgba(197, 163, 255, 0.08);
 }
 
+/* Subliminal Studio refinement pass */
+.sublimify-minimal input,
+.sublimify-minimal textarea,
+.sublimify-minimal select {
+  border-color: rgba(197, 163, 255, 0.13);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
+    rgba(5, 6, 12, 0.82);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.sublimify-minimal textarea {
+  line-height: 1.58;
+}
+
+.sublimify-minimal input:focus,
+.sublimify-minimal textarea:focus,
+.sublimify-minimal select:focus {
+  border-color: rgba(197, 163, 255, 0.58);
+  box-shadow:
+    0 0 0 3px rgba(155, 92, 255, 0.14),
+    0 0 28px rgba(155, 92, 255, 0.12),
+    inset 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.sublimify-minimal .eyebrow {
+  width: max-content;
+  padding: 7px 10px;
+  border: 1px solid rgba(103, 232, 249, 0.15);
+  border-radius: 999px;
+  color: rgba(179, 240, 249, 0.94);
+  background: rgba(103, 232, 249, 0.055);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.minimal-account-row .account-email {
+  min-width: 0;
+  max-width: 210px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.minimal-account-row .avatar {
+  flex: 0 0 auto;
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.08),
+    0 0 18px rgba(155, 92, 255, 0.12);
+}
+
+.account-upgrade-button svg,
+.plan-badge.pro svg {
+  filter: drop-shadow(0 0 8px rgba(248, 215, 124, 0.22));
+}
+
+.library-hero h1,
+.single-step-card h1 {
+  text-wrap: balance;
+}
+
+.library-hero p,
+.single-step-card p,
+.upgrade-modal-copy p {
+  text-wrap: pretty;
+}
+
+.library-create,
+.library-import,
+.library-playlist {
+  height: 48px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.library-create {
+  min-width: 228px;
+}
+
+.library-import,
+.library-playlist {
+  min-width: 214px;
+}
+
+.library-import.limited {
+  border-style: dashed;
+}
+
+.idea-generator-panel textarea {
+  min-height: 104px;
+}
+
+.idea-list button span,
+.playlist-add-list button,
+.playlist-pill span,
+.playlist-track strong,
+.subliminal-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playlist-strip {
+  margin-top: 4px;
+}
+
+.playlist-manager-head {
+  padding-bottom: 2px;
+}
+
+.playlist-manager-head > div:last-child {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.playlist-track > div {
+  overflow: hidden;
+}
+
+.playlist-track span,
+.subliminal-row span {
+  overflow-wrap: anywhere;
+}
+
+.library-list-header small {
+  white-space: nowrap;
+}
+
+.subliminal-row {
+  min-height: 116px;
+}
+
+.subliminal-row-actions small {
+  white-space: nowrap;
+}
+
+.subliminal-row-actions .row-action-buttons button {
+  min-width: 118px;
+}
+
+.destructive-button:hover {
+  box-shadow:
+    0 14px 34px rgba(251, 113, 133, 0.1),
+    0 0 0 1px rgba(251, 113, 133, 0.08);
+}
+
+.custom-audio-player button {
+  flex: 0 0 auto;
+}
+
+.custom-audio-player button:active {
+  transform: scale(0.96);
+}
+
+.custom-audio-player .audio-loop-button.active {
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.04),
+    0 0 18px rgba(103, 232, 249, 0.1);
+}
+
+.audio-volume-control {
+  padding-left: 4px;
+}
+
+.audio-volume-control svg {
+  color: rgba(245, 243, 255, 0.72);
+}
+
+.minimal-progress .secondary-button {
+  min-width: 148px;
+}
+
+.single-step-card input,
+.single-step-card textarea {
+  max-width: 780px;
+}
+
+.single-step-card > .primary-button {
+  width: max-content;
+  min-width: 190px;
+}
+
+.wizard-nav {
+  margin-top: 6px;
+  padding-top: 6px;
+}
+
+.wizard-nav .primary-button,
+.wizard-nav .secondary-button {
+  min-width: 132px;
+}
+
+.quiz-option {
+  min-width: 0;
+}
+
+.quiz-option svg {
+  color: rgba(197, 163, 255, 0.92);
+}
+
+.quiz-option.active svg {
+  color: #ffffff;
+}
+
+.quiz-option.active {
+  box-shadow:
+    inset 0 0 0 1px rgba(197, 163, 255, 0.1),
+    0 16px 40px rgba(109, 93, 252, 0.12);
+}
+
+.recommended-option:not(.active) {
+  background:
+    linear-gradient(135deg, rgba(155, 92, 255, 0.08), rgba(255, 255, 255, 0.026)),
+    rgba(255, 255, 255, 0.035);
+}
+
+.recommended-badge {
+  letter-spacing: 0;
+}
+
+.recording-script {
+  scrollbar-width: thin;
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.04),
+    0 18px 44px rgba(0, 0, 0, 0.12);
+}
+
+.toggle-header {
+  transition: transform 170ms ease, border-color 170ms ease, background 170ms ease, box-shadow 170ms ease;
+}
+
+.toggle-header:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.14);
+}
+
+.toggle-header strong {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preview-panel .secondary-button {
+  flex: 0 0 auto;
+  min-width: 150px;
+}
+
+.preview-panel > div {
+  min-width: 0;
+}
+
+.mix-slider > div strong {
+  padding: 3px 8px;
+  border: 1px solid rgba(197, 163, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.clean-summary {
+  align-items: stretch;
+}
+
+.clean-summary div {
+  min-height: 74px;
+}
+
+.clean-summary span {
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.clean-summary strong {
+  line-height: 1.35;
+}
+
+.minimal-actions {
+  justify-content: flex-start;
+}
+
+.minimal-actions .primary-button {
+  min-width: 180px;
+  min-height: 48px;
+}
+
+.creator-prompt-drawer {
+  margin-top: 2px;
+}
+
+.creator-prompt-drawer[open] {
+  border-color: rgba(197, 163, 255, 0.22);
+  background:
+    linear-gradient(180deg, rgba(155, 92, 255, 0.06), rgba(255, 255, 255, 0.02)),
+    rgba(255, 255, 255, 0.025);
+}
+
+.creator-prompt-drawer summary {
+  list-style: none;
+}
+
+.creator-prompt-drawer summary::-webkit-details-marker {
+  display: none;
+}
+
+.upgrade-modal {
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.48),
+    0 0 70px rgba(155, 92, 255, 0.16),
+    inset 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.modal-close {
+  transition: transform 170ms ease, border-color 170ms ease, background 170ms ease;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.075);
+}
+
+.modal-pricing {
+  gap: 14px;
+}
+
+.price-card {
+  overflow: hidden;
+  transition: transform 170ms ease, border-color 170ms ease, background 170ms ease, box-shadow 170ms ease;
+}
+
+.price-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(197, 163, 255, 0.26);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.064), rgba(255, 255, 255, 0.025)),
+    rgba(255, 255, 255, 0.035);
+}
+
+.price-card.recommended:hover {
+  transform: translateY(-5px);
+}
+
+.plan-feature-list li {
+  min-width: 0;
+}
+
+.plan-feature-list svg {
+  margin-top: 1px;
+}
+
+.floating-status {
+  right: 22px;
+  bottom: 22px;
+  max-width: min(420px, calc(100vw - 44px));
+}
+
+/* Subliminal Studio landing refinement */
+.sublimify-landing {
+  position: relative;
+  isolation: isolate;
+  overflow-x: hidden;
+}
+
+.sublimify-landing::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 70% 18%, rgba(155, 92, 255, 0.16), transparent 30%),
+    radial-gradient(circle at 16% 28%, rgba(103, 232, 249, 0.08), transparent 24%);
+}
+
+.sublimify-landing .landing-nav {
+  border-bottom-color: rgba(197, 163, 255, 0.13);
+  background:
+    linear-gradient(180deg, rgba(14, 13, 23, 0.86), rgba(8, 9, 15, 0.72)),
+    rgba(8, 9, 15, 0.78);
+}
+
+.sublimify-landing .minimal-brand .brand-mark {
+  box-shadow:
+    0 0 0 1px rgba(197, 163, 255, 0.18),
+    0 0 30px rgba(155, 92, 255, 0.2);
+}
+
+.sublimify-public-hero {
+  position: relative;
+}
+
+.sublimify-public-hero::after {
+  content: "";
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 24px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(197, 163, 255, 0.18), transparent);
+}
+
+.landing-eyebrow {
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.landing-copy h1 {
+  text-wrap: balance;
+}
+
+.landing-copy p {
+  text-wrap: pretty;
+}
+
+.landing-actions .landing-primary {
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-actions .landing-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 0%, rgba(255, 255, 255, 0.22) 42%, transparent 64%);
+  transform: translateX(-80%);
+  transition: opacity 180ms ease, transform 520ms ease;
+}
+
+.landing-actions .landing-primary:hover::after {
+  opacity: 1;
+  transform: translateX(85%);
+}
+
+.landing-actions .landing-primary > *,
+.landing-actions .landing-secondary > * {
+  position: relative;
+  z-index: 1;
+}
+
+.subliminal-preview {
+  transform-style: preserve-3d;
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.subliminal-preview:hover {
+  transform: translateY(-4px);
+  border-color: rgba(197, 163, 255, 0.28);
+  box-shadow:
+    var(--shadow),
+    0 0 68px rgba(155, 92, 255, 0.22),
+    0 0 30px rgba(103, 232, 249, 0.08);
+}
+
+.preview-topline {
+  min-width: 0;
+}
+
+.typing-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wave-stack i {
+  transition: filter 180ms ease;
+}
+
+.subliminal-preview:hover .wave-stack i {
+  filter: brightness(1.16);
+}
+
+.landing-steps article,
+.landing-proof div {
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-steps article::after,
+.landing-proof div::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(155, 92, 255, 0.08), transparent 54%);
+  transition: opacity 180ms ease;
+}
+
+.landing-steps article:hover::after,
+.landing-proof div:hover::after {
+  opacity: 1;
+}
+
+.landing-steps article > *,
+.landing-proof div > * {
+  position: relative;
+  z-index: 1;
+}
+
+.landing-contact {
+  border-top: 1px solid rgba(197, 163, 255, 0.1);
+  padding-top: 22px;
+}
+
+@media (max-width: 920px) {
+  .sublimify-minimal .minimal-topbar {
+    gap: 10px;
+  }
+
+  .sublimify-minimal .minimal-account-row {
+    min-width: 0;
+  }
+
+  .library-hero {
+    padding: 24px;
+  }
+
+  .modal-pricing {
+    grid-template-columns: 1fr;
+  }
+
+  .price-card.recommended,
+  .price-card.recommended:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .sublimify-minimal .minimal-topbar {
+    align-items: stretch;
+  }
+
+  .minimal-account-row {
+    justify-content: flex-end;
+  }
+
+  .library-hero {
+    min-height: auto;
+  }
+
+  .library-hero::after {
+    width: 210px;
+    height: 210px;
+  }
+
+  .single-step-card > .primary-button,
+  .minimal-actions .primary-button {
+    width: 100%;
+  }
+
+  .toggle-header {
+    min-height: 58px;
+  }
+
+  .toggle-header strong {
+    max-width: none;
+  }
+
+  .preview-panel .secondary-button {
+    min-width: 0;
+  }
+
+  .upgrade-modal-backdrop {
+    padding: 14px;
+  }
+
+  .upgrade-modal {
+    max-height: calc(100vh - 28px);
+    padding: 22px;
+  }
+}
+
+@media (max-width: 420px) {
+  .minimal-account-row .account-upgrade-button {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    font-size: 0;
+  }
+
+  .minimal-account-row .account-upgrade-button svg {
+    margin: 0;
+  }
+
+  .plan-badge {
+    min-height: 24px;
+    padding-inline: 8px;
+    font-size: 10px;
+  }
+
+  .custom-audio-player {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .wizard-nav {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .auth-panel,
   .landing-copy,

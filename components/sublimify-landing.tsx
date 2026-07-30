@@ -9,7 +9,7 @@ const steps = [
   { icon: Sparkles, title: "Choose the topic", text: "Start with the subject you want your subliminal to focus on." },
   { icon: Wand2, title: "Create affirmations", text: "Generate, paste, or record clear affirmations for that topic." },
   { icon: Layers3, title: "Shape the audio", text: "Choose voice, binaural beats, background sound, or your own music." },
-  { icon: Headphones, title: "Export your audio", text: "Download the finished subliminal and keep projects in your account." }
+  { icon: Headphones, title: "Save your subliminal", text: "Keep your finished audio in your private studio and unlock downloads with Pro." }
 ];
 
 const previewTopics = [
