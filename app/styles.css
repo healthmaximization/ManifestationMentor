@@ -1382,6 +1382,21 @@ input[type="range"] {
   transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
 }
 
+.minimal-account-row .account-plan-button {
+  width: auto;
+  min-width: 58px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(197, 163, 255, 0.22);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.minimal-account-row .account-plan-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(197, 163, 255, 0.34);
+}
+
 .minimal-account-row .account-upgrade-button:hover {
   transform: translateY(-2px);
   filter: brightness(1.08);
@@ -1413,6 +1428,128 @@ input[type="range"] {
 .minimal-brand {
   color: var(--ink);
   text-decoration: none;
+}
+
+.minimal-top-actions {
+  position: relative;
+}
+
+.account-status-popover {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  z-index: 45;
+  width: min(360px, calc(100vw - 32px));
+  padding: 16px;
+  display: grid;
+  gap: 14px;
+  border: 1px solid rgba(197, 163, 255, 0.18);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(22, 20, 35, 0.98), rgba(9, 10, 17, 0.98)),
+    rgba(9, 10, 17, 0.98);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.42),
+    0 0 44px rgba(155, 92, 255, 0.12),
+    inset 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.account-status-popover::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  right: 28px;
+  width: 12px;
+  height: 12px;
+  border-top: 1px solid rgba(197, 163, 255, 0.18);
+  border-left: 1px solid rgba(197, 163, 255, 0.18);
+  background: rgba(22, 20, 35, 0.98);
+  transform: rotate(45deg);
+}
+
+.account-status-popover > div:first-child {
+  display: grid;
+  gap: 8px;
+}
+
+.account-status-popover strong {
+  color: #ffffff;
+  font-size: 18px;
+}
+
+.account-status-popover p,
+.account-status-popover small {
+  margin: 0;
+  color: rgba(245, 243, 255, 0.68);
+  line-height: 1.5;
+}
+
+.account-status-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.account-status-actions .primary-button,
+.account-status-actions .secondary-button {
+  min-height: 42px;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.manual-pro-card {
+  width: min(720px, 100%);
+  margin-top: 4px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid rgba(248, 215, 124, 0.14);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(248, 215, 124, 0.075), rgba(155, 92, 255, 0.052)),
+    rgba(255, 255, 255, 0.026);
+}
+
+.manual-pro-card div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.manual-pro-card strong {
+  color: #ffffff;
+}
+
+.manual-pro-card span {
+  color: rgba(245, 243, 255, 0.66);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.manual-pro-card a {
+  min-height: 38px;
+  padding: 0 12px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid rgba(197, 163, 255, 0.18);
+  border-radius: 8px;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.055);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 900;
+  transition: transform 170ms ease, border-color 170ms ease, background 170ms ease;
+}
+
+.manual-pro-card a:hover {
+  transform: translateY(-1px);
+  border-color: rgba(197, 163, 255, 0.34);
+  background: rgba(255, 255, 255, 0.085);
 }
 
 .sublimify-landing {
@@ -4176,6 +4313,32 @@ select:hover {
   color: rgba(255, 246, 214, 0.74);
 }
 
+.pro-price-line {
+  padding: 12px 14px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(248, 215, 124, 0.16);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(248, 215, 124, 0.11), rgba(155, 92, 255, 0.06)),
+    rgba(255, 255, 255, 0.04);
+}
+
+.pro-price-line strong {
+  color: #fff6d6;
+  font-size: clamp(20px, 3vw, 28px);
+  line-height: 1;
+}
+
+.pro-price-line span {
+  color: rgba(255, 246, 214, 0.66);
+  font-size: 12px;
+  font-weight: 850;
+  text-align: right;
+}
+
 .plan-feature-list {
   gap: 10px;
 }
@@ -5548,6 +5711,29 @@ select:hover {
   .landing-account-button,
   .minimal-account-row {
     justify-content: space-between;
+  }
+
+  .account-status-popover {
+    position: static;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .account-status-popover::before {
+    display: none;
+  }
+
+  .account-status-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .manual-pro-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .manual-pro-card a {
+    width: 100%;
   }
 
   .minimal-account-row .account-email,

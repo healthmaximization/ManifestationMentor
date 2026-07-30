@@ -52,6 +52,15 @@ membership=pro
 membership=lite
 ```
 
+For the first manual Skool Premium signups:
+
+1. Ask the member to create a Studio account with the same email they used for Skool.
+2. Open Supabase Table Editor.
+3. Go to `profiles`.
+4. Find the row by email.
+5. Change `membership` from `lite` to `pro`.
+6. If they cancel Skool Premium, change `membership` back to `lite`.
+
 The upgrade popup links to:
 
 ```text

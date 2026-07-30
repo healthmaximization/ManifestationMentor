@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
     const apiKey = process.env.GOOGLE_TTS_API_KEY ?? process.env.GOOGLE_CLOUD_TTS_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: "Google Text-to-Speech is not configured yet." }, { status: 503 });
+      return NextResponse.json({ error: "Text to speech is not available right now. Record your own voice or contact support." }, { status: 503 });
     }
 
     const { text } = await request.json();
@@ -62,8 +62,13 @@ export async function POST(request: Request) {
 
     const data = await response.json().catch(() => null);
     if (!response.ok || !data?.audioContent) {
+      console.error("Google Text-to-Speech error", {
+        status: response.status,
+        message: data?.error?.message,
+        code: data?.error?.code
+      });
       return NextResponse.json(
-        { error: data?.error?.message ?? "Google Text-to-Speech could not create audio." },
+        { error: "Text to speech is not available right now. Record your own voice or contact support." },
         { status: response.ok ? 500 : response.status }
       );
     }

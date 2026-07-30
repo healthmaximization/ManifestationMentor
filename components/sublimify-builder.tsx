@@ -13,7 +13,9 @@ import {
   Clock,
   Crown,
   Download,
+  ExternalLink,
   GripVertical,
+  HelpCircle,
   Library,
   Loader2,
   Lock,
@@ -394,6 +396,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
   const [playlistPlayingId, setPlaylistPlayingId] = useState("");
   const [playlistTrackIndex, setPlaylistTrackIndex] = useState(0);
   const [upgradePrompt, setUpgradePrompt] = useState("");
+  const [accountPanelOpen, setAccountPanelOpen] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const playlistAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -564,6 +567,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
 
   function openUpgradePrompt(message: string) {
     setStatus("");
+    setAccountPanelOpen(false);
     setUpgradePrompt(message);
   }
 
@@ -1049,7 +1053,12 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
       setTtsBlob(new Blob([audioBuffer], { type: response.headers.get("Content-Type") ?? "audio/mpeg" }));
       setStatus("Text to speech voice created.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Could not create text to speech audio.");
+      const message = error instanceof Error ? error.message : "Could not create text to speech audio.";
+      const friendlyMessage = /google|api|configured|permission|billing|quota|key|text-to-speech/i.test(message)
+        ? "Text to speech is not available right now. Record your own voice or contact support if this keeps happening."
+        : message;
+      setVoiceChoice(null);
+      setStatus(friendlyMessage);
     } finally {
       setLoading("");
     }
@@ -1308,10 +1317,16 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
           <form action="/api/auth/signout" method="post" className="minimal-account-row">
             <span className="avatar">{initials}</span>
             <span className="account-email">{userEmail}</span>
-            <span className={hasPro ? "plan-badge pro" : "plan-badge free"}>
+            <button
+              type="button"
+              className={hasPro ? "plan-badge pro account-plan-button" : "plan-badge free account-plan-button"}
+              onClick={() => setAccountPanelOpen((open) => !open)}
+              aria-expanded={accountPanelOpen}
+              aria-label="View account status"
+            >
               {hasPro ? <Crown size={13} /> : null}
               {hasPro ? "PRO" : "LITE"}
-            </span>
+            </button>
             {!hasPro && (
               <button
                 type="button"
@@ -1328,6 +1343,30 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
               <LogOut size={17} />
             </button>
           </form>
+          {accountPanelOpen && (
+            <div className="account-status-popover">
+              <div>
+                <span className={hasPro ? "plan-badge pro" : "plan-badge free"}>{hasPro ? "PRO" : "LITE"}</span>
+                <strong>{hasPro ? "Pro is active" : "Lite account"}</strong>
+                <p>
+                  {hasPro
+                    ? "Your account can use AI affirmations, downloads, playlists, layered subliminals, and unlimited saved creations."
+                    : "You can create and listen to 1 active subliminal. Delete it anytime to make a new Lite creation."}
+                </p>
+              </div>
+              {!hasPro && (
+                <div className="account-status-actions">
+                  <a className="primary-button" href={SKOOL_UPGRADE_URL} target="_blank" rel="noreferrer">
+                    <Crown size={16} /> Upgrade
+                  </a>
+                  <a className="secondary-button" href={SKOOL_COMMUNITY_URL} target="_blank" rel="noreferrer">
+                    <HelpCircle size={16} /> I joined Pro
+                  </a>
+                </div>
+              )}
+              <small>{hasPro ? "Need help with your account? Contact support in Skool." : "Already joined Skool Premium? Use the same email here and contact support so Pro can be activated."}</small>
+            </div>
+          )}
         </div>
       </header>
 
@@ -1341,6 +1380,17 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
               <span><Library size={15} /> {projects.length} saved</span>
               <span><Music2 size={15} /> {playlists.length} playlists</span>
             </div>
+            {!hasPro && (
+              <div className="manual-pro-card">
+                <div>
+                  <strong>Joined Skool Premium?</strong>
+                  <span>Create/login with the same email. Pro is activated manually within 24 hours.</span>
+                </div>
+                <a href={SKOOL_COMMUNITY_URL} target="_blank" rel="noreferrer">
+                  Contact support <ExternalLink size={14} />
+                </a>
+              </div>
+            )}
             {owner && (
               <div className="idea-generator-panel">
                 <div>
@@ -1836,6 +1886,10 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                   <strong>Unlock the full studio</strong>
                   <p>For making, saving, organizing, and exporting subliminals seriously.</p>
                 </div>
+                <div className="pro-price-line">
+                  <strong>$29/month</strong>
+                  <span>Includes Subliminal Academy Premium</span>
+                </div>
                 <ul className="plan-feature-list">
                   <li><CheckCircle2 size={16} /> AI affirmation generation</li>
                   <li><CheckCircle2 size={16} /> Unlimited saved subliminals</li>
@@ -1847,7 +1901,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
                 <a className="primary-button" href={SKOOL_UPGRADE_URL} target="_blank" rel="noreferrer">
                   <Crown size={17} /> Upgrade with Skool
                 </a>
-                <small className="upgrade-note">Pro is activated manually within 24 hours after joining Skool Premium.</small>
+                <small className="upgrade-note">Use the same email for Skool and the Studio. Pro is activated manually within 24 hours.</small>
               </article>
             </div>
           </section>
