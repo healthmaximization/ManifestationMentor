@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, CheckCircle2, Headphones, Layers3, Mail, Sparkles, Wand2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Crown, Headphones, Layers3, Mail, Sparkles, Wand2 } from "lucide-react";
 import BrandLogo from "@/components/brand-logo";
 
 const steps = [
@@ -23,11 +23,13 @@ const previewTopics = [
   "I want unshakable self worth"
 ];
 
-export default function SublimifyLanding() {
+export default function SublimifyLanding({ userEmail = "", hasPro = false }: { userEmail?: string; hasPro?: boolean }) {
   const [topicIndex, setTopicIndex] = useState(0);
   const [typedTopic, setTypedTopic] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const signedIn = Boolean(userEmail);
+  const initials = userEmail.slice(0, 2).toUpperCase() || "SA";
 
   useEffect(() => {
     const currentTopic = previewTopics[topicIndex];
@@ -63,9 +65,20 @@ export default function SublimifyLanding() {
           <BrandLogo size="small" />
           <strong>Subliminal Academy</strong>
         </div>
-        <Link className="secondary-button landing-login-button" href="/login?next=%2Fstudio" onClick={() => setLeaving(true)}>
-          Log in
-        </Link>
+        {signedIn ? (
+          <Link className="landing-account-button" href="/studio" onClick={() => setLeaving(true)} aria-label="Open your Subliminal Studio account">
+            <span className="avatar">{initials}</span>
+            <span className="account-email">{userEmail}</span>
+            <span className={hasPro ? "plan-badge pro" : "plan-badge free"}>
+              {hasPro ? <Crown size={13} /> : null}
+              {hasPro ? "PRO" : "LITE"}
+            </span>
+          </Link>
+        ) : (
+          <Link className="secondary-button landing-login-button" href="/login?next=%2Fstudio" onClick={() => setLeaving(true)}>
+            Log in
+          </Link>
+        )}
       </header>
 
       <section className="sublimify-public-hero" aria-labelledby="landing-title">
@@ -76,12 +89,14 @@ export default function SublimifyLanding() {
             Turn a topic into affirmations, voice, background audio, binaural beats, and a finished audio file without a messy timeline or complicated editor.
           </p>
           <div className="landing-actions">
-            <Link className="primary-button landing-primary" href="/login?next=%2Fstudio&authMode=signup" onClick={() => setLeaving(true)}>
-              Get started for free <ArrowRight size={18} />
+            <Link className="primary-button landing-primary" href={signedIn ? "/studio" : "/login?next=%2Fstudio&authMode=signup"} onClick={() => setLeaving(true)}>
+              {signedIn ? "Open my studio" : "Get started for free"} <ArrowRight size={18} />
             </Link>
-            <Link className="secondary-button landing-secondary" href="/login?next=%2Fstudio" onClick={() => setLeaving(true)}>
-              Already have an account?
-            </Link>
+            {!signedIn && (
+              <Link className="secondary-button landing-secondary" href="/login?next=%2Fstudio" onClick={() => setLeaving(true)}>
+                Already have an account?
+              </Link>
+            )}
           </div>
         </div>
 
