@@ -1,7 +1,7 @@
 import { createAdminSupabase, createServerSupabase } from "@/lib/supabase/server";
 import { isOwner } from "@/lib/auth";
 import { hasProductAccess } from "@/lib/access";
-import { normalizeMembershipEmail, syncProfileMembershipFromEntitlement } from "@/lib/membership";
+import { normalizeMembershipEmail, normalizeSkoolUsername, syncProfileMembershipFromEntitlement } from "@/lib/membership";
 import SetupScreen from "@/components/setup-screen";
 import SublimifyBuilder from "@/components/sublimify-builder";
 import SublimifyLanding from "@/components/sublimify-landing";
@@ -22,17 +22,27 @@ export default async function StudioPage() {
 
   const owner = isOwner(user.email);
   const admin = createAdminSupabase();
+  const metadata = user.user_metadata as { skool_username?: string | null } | null;
+  const skoolUsername = normalizeSkoolUsername(metadata?.skool_username);
+  const profileUpsert: { id: string; email: string | null; skool_username?: string | null; updated_at: string } = {
+    id: user.id,
+    email: normalizeMembershipEmail(user.email) || null,
+    updated_at: new Date().toISOString()
+  };
+  if (skoolUsername) profileUpsert.skool_username = skoolUsername;
   await admin.from("profiles").upsert(
-    {
-      id: user.id,
-      email: normalizeMembershipEmail(user.email) || null,
-      updated_at: new Date().toISOString()
-    },
+    profileUpsert,
     { onConflict: "id" }
   );
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("skool_username")
+    .eq("id", user.id)
+    .maybeSingle();
+  const membershipSkoolUsername = skoolUsername || normalizeSkoolUsername(profile?.skool_username);
   let syncedMembership: "lite" | "pro" | null = null;
   try {
-    syncedMembership = await syncProfileMembershipFromEntitlement(admin, user.id, user.email);
+    syncedMembership = await syncProfileMembershipFromEntitlement(admin, user.id, user.email, membershipSkoolUsername);
   } catch (error) {
     console.error("Could not sync Skool membership entitlement", error);
   }

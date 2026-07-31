@@ -14,6 +14,7 @@ export default function AuthScreen() {
   const nextPath = requestedNext?.startsWith("/") && !requestedNext.startsWith("//") ? requestedNext : "/";
   const initialMode = searchParams.get("authMode") === "signup" ? "signup" : "signin";
   const [mode, setMode] = useState<"signin" | "signup">(initialMode);
+  const [skoolUsername, setSkoolUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -44,10 +45,19 @@ export default function AuthScreen() {
         return;
       }
 
+      const normalizedSkoolUsername = skoolUsername.trim().replace(/^@+/, "").replace(/\s+/g, "").toLowerCase();
+      if (!normalizedSkoolUsername) {
+        setError("Enter your Skool username to create an account.");
+        return;
+      }
+
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: normalizedEmail,
         password,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: { skool_username: normalizedSkoolUsername }
+        }
       });
 
       if (signUpError) {
@@ -87,6 +97,20 @@ export default function AuthScreen() {
           </button>
         </div>
         <form onSubmit={submit} className="auth-form">
+          {mode === "signup" && (
+            <>
+              <label htmlFor="skool-username">Skool username</label>
+              <input
+                id="skool-username"
+                type="text"
+                value={skoolUsername}
+                onChange={(event) => setSkoolUsername(event.target.value)}
+                placeholder="your-skool-username"
+                autoComplete="username"
+                required
+              />
+            </>
+          )}
           <label htmlFor="email">Email</label>
           <input
             id="email"

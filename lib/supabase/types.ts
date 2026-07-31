@@ -7,6 +7,7 @@ export type Database = {
         Row: {
           id: string;
           email: string | null;
+          skool_username: string | null;
           full_name: string | null;
           company_role: string;
           membership: "lite" | "pro";
@@ -20,7 +21,8 @@ export type Database = {
       membership_entitlements: {
         Row: {
           id: string;
-          email: string;
+          email: string | null;
+          skool_username: string | null;
           membership: "lite" | "pro";
           source: string;
           external_id: string | null;
@@ -31,7 +33,6 @@ export type Database = {
           updated_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["membership_entitlements"]["Row"]> & {
-          email: string;
           membership: "lite" | "pro";
         };
         Update: Partial<Database["public"]["Tables"]["membership_entitlements"]["Row"]>;

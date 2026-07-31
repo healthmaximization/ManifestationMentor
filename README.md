@@ -54,12 +54,14 @@ membership=lite
 
 For the first manual Skool Premium signups:
 
-1. Ask the member to create a Studio account with the same email they used for Skool.
+1. Ask the member to create a Studio account and enter their Skool username during signup.
 2. Open Supabase Table Editor.
 3. Go to `profiles`.
-4. Find the row by email.
+4. Find the row by `skool_username`.
 5. Change `membership` from `lite` to `pro`.
 6. If they cancel Skool Premium, change `membership` back to `lite`.
+
+Future Skool webhook automation should send `skool_username` or `username` in the payload. The webhook matches on Skool username first, with email only as a legacy fallback.
 
 The upgrade popup links to:
 

@@ -4,6 +4,7 @@ create extension if not exists "pgcrypto";
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text,
+  skool_username text,
   full_name text,
   company_role text not null default 'customer',
   membership text not null default 'lite' check (membership in ('lite', 'pro')),
@@ -15,6 +16,9 @@ alter table public.profiles
 add column if not exists membership text not null default 'lite';
 
 alter table public.profiles
+add column if not exists skool_username text;
+
+alter table public.profiles
 drop constraint if exists profiles_membership_check;
 
 alter table public.profiles
@@ -24,9 +28,14 @@ update public.profiles
 set email = lower(trim(email))
 where email is not null and email <> lower(trim(email));
 
+update public.profiles
+set skool_username = lower(regexp_replace(trim(skool_username), '^@+', ''))
+where skool_username is not null and skool_username <> lower(regexp_replace(trim(skool_username), '^@+', ''));
+
 create table if not exists public.membership_entitlements (
   id uuid primary key default gen_random_uuid(),
-  email text not null,
+  email text,
+  skool_username text,
   membership text not null default 'pro' check (membership in ('lite', 'pro')),
   source text not null default 'skool',
   external_id text,
@@ -37,6 +46,24 @@ create table if not exists public.membership_entitlements (
   updated_at timestamptz not null default now(),
   unique (source, email)
 );
+
+alter table public.membership_entitlements
+alter column email drop not null;
+
+alter table public.membership_entitlements
+add column if not exists skool_username text;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'membership_entitlements_source_skool_username_key'
+  ) then
+    alter table public.membership_entitlements
+    add constraint membership_entitlements_source_skool_username_key unique (source, skool_username);
+  end if;
+end $$;
 
 -- Manifestation Advisor app.
 create table if not exists public.manifestation_conversations (
@@ -265,6 +292,8 @@ using (auth.uid() = user_id);
 create index if not exists manifestation_conversations_user_updated_idx on public.manifestation_conversations(user_id, updated_at desc);
 create index if not exists manifestation_messages_conversation_created_idx on public.manifestation_messages(conversation_id, created_at);
 create index if not exists membership_entitlements_email_source_idx on public.membership_entitlements(email, source);
+create index if not exists membership_entitlements_skool_username_source_idx on public.membership_entitlements(skool_username, source);
+create unique index if not exists profiles_skool_username_unique_idx on public.profiles(skool_username) where skool_username is not null;
 create index if not exists subliminal_projects_user_updated_idx on public.subliminal_projects(user_id, updated_at desc);
 create index if not exists subliminal_audio_jobs_project_idx on public.subliminal_audio_jobs(project_id, status);
 create index if not exists subliminal_playlists_user_updated_idx on public.subliminal_playlists(user_id, updated_at desc);

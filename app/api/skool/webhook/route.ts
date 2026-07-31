@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { applyMembershipEntitlement, type Membership } from "@/lib/membership";
+import { applyMembershipEntitlement, normalizeSkoolUsername, type Membership } from "@/lib/membership";
 import { createAdminSupabase } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -95,8 +95,33 @@ export async function POST(request: Request) {
     ["data", "customer", "email"]
   ]);
 
-  if (!email) {
-    return NextResponse.json({ error: "Could not find member email in webhook payload." }, { status: 400 });
+  const skoolUsername = normalizeSkoolUsername(readNestedString(payload, [
+    ["skool_username"],
+    ["username"],
+    ["member_username"],
+    ["user_username"],
+    ["handle"],
+    ["member", "skool_username"],
+    ["member", "username"],
+    ["member", "handle"],
+    ["user", "skool_username"],
+    ["user", "username"],
+    ["user", "handle"],
+    ["data", "skool_username"],
+    ["data", "username"],
+    ["data", "member_username"],
+    ["data", "user_username"],
+    ["data", "handle"],
+    ["data", "member", "skool_username"],
+    ["data", "member", "username"],
+    ["data", "member", "handle"],
+    ["data", "user", "skool_username"],
+    ["data", "user", "username"],
+    ["data", "user", "handle"]
+  ]));
+
+  if (!skoolUsername && !email) {
+    return NextResponse.json({ error: "Could not find Skool username or member email in webhook payload." }, { status: 400 });
   }
 
   const membership = inferMembership(payload);
@@ -129,6 +154,7 @@ export async function POST(request: Request) {
   try {
     const result = await applyMembershipEntitlement(createAdminSupabase(), {
       email,
+      skoolUsername,
       membership,
       source: "skool",
       externalId,
@@ -139,6 +165,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       email: email.trim().toLowerCase(),
+      skoolUsername,
       membership,
       profileUpdated: result.profileUpdated
     });

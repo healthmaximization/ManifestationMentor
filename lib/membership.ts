@@ -8,10 +8,19 @@ export function normalizeMembershipEmail(email?: string | null) {
   return email?.trim().toLowerCase() ?? "";
 }
 
+export function normalizeSkoolUsername(username?: string | null) {
+  return username
+    ?.trim()
+    .replace(/^@+/, "")
+    .replace(/\s+/g, "")
+    .toLowerCase() ?? "";
+}
+
 export async function applyMembershipEntitlement(
   supabase: SupabaseLike,
   params: {
-    email: string;
+    email?: string | null;
+    skoolUsername?: string | null;
     membership: Membership;
     source?: string;
     externalId?: string | null;
@@ -20,17 +29,20 @@ export async function applyMembershipEntitlement(
   }
 ) {
   const email = normalizeMembershipEmail(params.email);
-  if (!email) throw new Error("Missing membership email.");
+  const skoolUsername = normalizeSkoolUsername(params.skoolUsername);
+  if (!email && !skoolUsername) throw new Error("Missing Skool username or membership email.");
 
   const source = params.source ?? "skool";
   const now = new Date().toISOString();
   const status = params.membership === "pro" ? "active" : "inactive";
+  const conflictTarget = skoolUsername ? "source,skool_username" : "source,email";
 
   const { data: entitlement, error: entitlementError } = await supabase
     .from("membership_entitlements")
     .upsert(
       {
-        email,
+        email: email || null,
+        skool_username: skoolUsername || null,
         membership: params.membership,
         source,
         external_id: params.externalId ?? null,
@@ -39,18 +51,20 @@ export async function applyMembershipEntitlement(
         raw_payload: params.rawPayload ?? {},
         updated_at: now
       },
-      { onConflict: "source,email" }
+      { onConflict: conflictTarget }
     )
-    .select("id,email,membership,status")
+    .select("id,email,skool_username,membership,status")
     .single();
 
   if (entitlementError) throw entitlementError;
 
-  const { data: profile, error: profileLookupError } = await supabase
+  const profileQuery = supabase
     .from("profiles")
-    .select("id,email,membership")
-    .eq("email", email)
-    .maybeSingle();
+    .select("id,email,skool_username,membership");
+
+  const { data: profile, error: profileLookupError } = skoolUsername
+    ? await profileQuery.eq("skool_username", skoolUsername).maybeSingle()
+    : await profileQuery.eq("email", email).maybeSingle();
 
   if (profileLookupError) throw profileLookupError;
 
@@ -74,19 +88,23 @@ export async function applyMembershipEntitlement(
 export async function syncProfileMembershipFromEntitlement(
   supabase: SupabaseLike,
   userId: string,
-  email?: string | null
+  email?: string | null,
+  skoolUsername?: string | null
 ) {
   const normalizedEmail = normalizeMembershipEmail(email);
-  if (!normalizedEmail) return null;
+  const normalizedSkoolUsername = normalizeSkoolUsername(skoolUsername);
+  if (!normalizedEmail && !normalizedSkoolUsername) return null;
 
-  const { data: entitlement, error: entitlementError } = await supabase
+  const entitlementQuery = supabase
     .from("membership_entitlements")
     .select("membership,status")
     .eq("source", "skool")
-    .eq("email", normalizedEmail)
     .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(1);
+
+  const { data: entitlement, error: entitlementError } = normalizedSkoolUsername
+    ? await entitlementQuery.eq("skool_username", normalizedSkoolUsername).maybeSingle()
+    : await entitlementQuery.eq("email", normalizedEmail).maybeSingle();
 
   if (entitlementError) throw entitlementError;
   if (!entitlement?.membership) return null;
