@@ -354,7 +354,7 @@ function LibraryAudioPlayer({ src }: { src: string }) {
   );
 }
 
-export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEmail: string; owner: boolean; hasPro: boolean }) {
+export default function SublimifyBuilder({ userEmail, accountLabel, owner, hasPro }: { userEmail: string; accountLabel?: string; owner: boolean; hasPro: boolean }) {
   const [screen, setScreen] = useState<"library" | "builder">("library");
   const [activeStep, setActiveStep] = useState<Step>("intention");
   const [mode, setMode] = useState<Mode>(hasPro ? "generate" : "paste");
@@ -411,7 +411,8 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
     musicAudio?: HTMLAudioElement;
   } | null>(null);
 
-  const initials = useMemo(() => userEmail.slice(0, 2).toUpperCase(), [userEmail]);
+  const displayAccount = accountLabel?.trim() || userEmail;
+  const initials = useMemo(() => displayAccount.replace(/^@/, "").slice(0, 2).toUpperCase(), [displayAccount]);
   const script = useMemo(() => linesToScript(affirmations), [affirmations]);
   const activeVoiceBlob = recordedBlob ?? ttsBlob;
   const activeVoiceUrl = useMemo(() => (activeVoiceBlob ? URL.createObjectURL(activeVoiceBlob) : ""), [activeVoiceBlob]);
@@ -1315,7 +1316,7 @@ export default function SublimifyBuilder({ userEmail, owner, hasPro }: { userEma
         <div className="minimal-top-actions">
           <form action="/api/auth/signout" method="post" className="minimal-account-row">
             <span className="avatar">{initials}</span>
-            <span className="account-email">{userEmail}</span>
+            <span className="account-email">{displayAccount}</span>
             <button
               type="button"
               className={hasPro ? "plan-badge pro account-plan-button" : "plan-badge free account-plan-button"}

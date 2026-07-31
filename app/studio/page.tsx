@@ -40,6 +40,7 @@ export default async function StudioPage() {
     .eq("id", user.id)
     .maybeSingle();
   const membershipSkoolUsername = skoolUsername || normalizeSkoolUsername(profile?.skool_username);
+  const accountLabel = membershipSkoolUsername ? `@${membershipSkoolUsername}` : user.email ?? "";
   let syncedMembership: "lite" | "pro" | null = null;
   try {
     syncedMembership = await syncProfileMembershipFromEntitlement(admin, user.id, user.email, membershipSkoolUsername);
@@ -48,7 +49,7 @@ export default async function StudioPage() {
   }
   const hasPro = owner || syncedMembership === "pro" || (await hasProductAccess(supabase, { id: user.id, email: user.email }, "subliminal_maker"));
 
-  return <SublimifyBuilder userEmail={user.email ?? ""} owner={owner} hasPro={hasPro} />;
+  return <SublimifyBuilder userEmail={user.email ?? ""} accountLabel={accountLabel} owner={owner} hasPro={hasPro} />;
 }
 
 export const dynamic = "force-dynamic";

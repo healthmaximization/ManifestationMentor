@@ -24,13 +24,14 @@ const previewTopics = [
   "I want unshakable self worth"
 ];
 
-export default function SublimifyLanding({ userEmail = "", hasPro = false }: { userEmail?: string; hasPro?: boolean }) {
+export default function SublimifyLanding({ userEmail = "", accountLabel = "", hasPro = false }: { userEmail?: string; accountLabel?: string; hasPro?: boolean }) {
   const [topicIndex, setTopicIndex] = useState(0);
   const [typedTopic, setTypedTopic] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const signedIn = Boolean(userEmail);
-  const initials = userEmail.slice(0, 2).toUpperCase() || "SA";
+  const displayAccount = accountLabel.trim() || userEmail;
+  const initials = displayAccount.replace(/^@/, "").slice(0, 2).toUpperCase() || "SA";
 
   useEffect(() => {
     const currentTopic = previewTopics[topicIndex];
@@ -69,7 +70,7 @@ export default function SublimifyLanding({ userEmail = "", hasPro = false }: { u
         {signedIn ? (
           <Link className="landing-account-button" href="/studio" onClick={() => setLeaving(true)} aria-label="Open your Subliminal Studio account">
             <span className="avatar">{initials}</span>
-            <span className="account-email">{userEmail}</span>
+            <span className="account-email">{displayAccount}</span>
             <span className={hasPro ? "plan-badge pro" : "plan-badge free"}>
               {hasPro ? <Crown size={13} /> : null}
               {hasPro ? "PRO" : "LITE"}
