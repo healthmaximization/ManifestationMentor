@@ -979,6 +979,26 @@ export default function SublimifyBuilder({ userEmail, accountLabel, owner, hasPr
     setVoiceChoice(null);
   }
 
+  function selectStyle(nextStyle: Style, available: boolean) {
+    if (!available) return;
+    if (nextStyle === "layered" && isFree) {
+      openUpgradePrompt("Layered subliminals are included in Pro. Upgrade to stack multiple voice layers with timing offsets and stereo spread.");
+      return;
+    }
+    if (previewing) stopPreview();
+    setStyle(nextStyle);
+  }
+
+  function selectCustomMusic(file: File | null) {
+    if (!file) return;
+    if (isFree) {
+      openUpgradePrompt("Custom music and uploaded sound beds are included in Pro. Upgrade to place your own audio above the affirmations.");
+      return;
+    }
+    setMusicFile(file);
+    startPreview({ musicFile: file });
+  }
+
   function canContinue() {
     if (activeStep === "intention") return Boolean(topic.trim());
     if (activeStep === "paste") return affirmationCount > 0;
@@ -1249,6 +1269,14 @@ export default function SublimifyBuilder({ userEmail, accountLabel, owner, hasPr
 
   async function saveToStudio() {
     stopPreview();
+    if (isFree && style === "layered") {
+      openUpgradePrompt("Layered subliminals are included in Pro. Upgrade to save subliminals with multiple voice layers.");
+      return;
+    }
+    if (isFree && musicFile) {
+      openUpgradePrompt("Custom music and uploaded sound beds are included in Pro. Upgrade to save subliminals with your own audio.");
+      return;
+    }
     setLoading("export");
     setStatus("");
     try {
@@ -1635,7 +1663,7 @@ export default function SublimifyBuilder({ userEmail, accountLabel, owner, hasPr
                 <p>This decides how present or hidden the affirmation layer feels in the final mix.</p>
                 <div className="quiz-options two">
                   {STYLES.map((item) => (
-                    <button key={item.key} className={style === item.key ? "quiz-option active" : "quiz-option"} onClick={() => { if (previewing) stopPreview(); setStyle(item.key); }} disabled={!item.available}><SlidersHorizontal size={22} /><strong>{item.label}</strong>{!item.available && <small className="coming-soon">Coming soon</small>}<span>{item.description}</span></button>
+                    <button key={item.key} className={style === item.key ? "quiz-option active" : "quiz-option"} onClick={() => selectStyle(item.key, item.available)} disabled={!item.available}><SlidersHorizontal size={22} /><strong>{item.label}</strong>{!item.available && <small className="coming-soon">Coming soon</small>}{item.key === "layered" && isFree && <small className="coming-soon">Pro</small>}<span>{item.description}</span></button>
                   ))}
                 </div>
                 {style === "layered" && (
@@ -1712,17 +1740,25 @@ export default function SublimifyBuilder({ userEmail, accountLabel, owner, hasPr
                             <span>{item.description}</span>
                           </button>
                         ))}
-                        <label className={musicFile ? "quiz-option upload-sound-tile active" : "quiz-option upload-sound-tile"}>
-                          <Upload size={22} />
+                        <label
+                          className={musicFile ? "quiz-option upload-sound-tile active" : "quiz-option upload-sound-tile"}
+                          onClick={(event) => {
+                            if (isFree) {
+                              event.preventDefault();
+                              openUpgradePrompt("Custom music and uploaded sound beds are included in Pro. Upgrade to place your own audio above the affirmations.");
+                            }
+                          }}
+                        >
+                          {isFree ? <Lock size={22} /> : <Upload size={22} />}
                           <strong>{musicFile ? "Custom audio selected" : "Upload custom audio"}</strong>
+                          {isFree && <small className="coming-soon">Pro</small>}
                           <span>{musicFile ? musicFile.name : "Add your own music, soundscape, MP3, or WAV."}</span>
                           <input
                             type="file"
                             accept="audio/*"
+                            disabled={isFree}
                             onChange={(event) => {
-                              const nextFile = event.target.files?.[0] ?? null;
-                              setMusicFile(nextFile);
-                              startPreview({ musicFile: nextFile });
+                              selectCustomMusic(event.target.files?.[0] ?? null);
                             }}
                           />
                         </label>
