@@ -395,6 +395,7 @@ export default function SublimifyBuilder({ userEmail, accountLabel, owner, hasPr
   const [playlistPlayingId, setPlaylistPlayingId] = useState("");
   const [playlistTrackIndex, setPlaylistTrackIndex] = useState(0);
   const [upgradePrompt, setUpgradePrompt] = useState("");
+  const [activationNoticeOpen, setActivationNoticeOpen] = useState(false);
   const [accountPanelOpen, setAccountPanelOpen] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -569,6 +570,14 @@ export default function SublimifyBuilder({ userEmail, accountLabel, owner, hasPr
     setStatus("");
     setAccountPanelOpen(false);
     setUpgradePrompt(message);
+  }
+
+  function openSkoolUpgrade(event: React.MouseEvent<HTMLAnchorElement>) {
+    event.preventDefault();
+    window.open(SKOOL_UPGRADE_URL, "_blank", "noopener,noreferrer");
+    setUpgradePrompt("");
+    setAccountPanelOpen(false);
+    setActivationNoticeOpen(true);
   }
 
   function openBuilderWithTopic(initialTopic = "") {
@@ -1384,7 +1393,7 @@ export default function SublimifyBuilder({ userEmail, accountLabel, owner, hasPr
               </div>
               {!hasPro && (
                 <div className="account-status-actions">
-                  <a className="primary-button" href={SKOOL_UPGRADE_URL} target="_blank" rel="noreferrer">
+                  <a className="primary-button" href={SKOOL_UPGRADE_URL} target="_blank" rel="noreferrer" onClick={openSkoolUpgrade}>
                     <Crown size={16} /> Upgrade
                   </a>
                   <a className="secondary-button" href={SKOOL_COMMUNITY_URL} target="_blank" rel="noreferrer">
@@ -1923,11 +1932,29 @@ export default function SublimifyBuilder({ userEmail, accountLabel, owner, hasPr
                   <li><CheckCircle2 size={16} /> Layered subliminals</li>
                   <li><CheckCircle2 size={16} /> Import MP3/WAV audio</li>
                 </ul>
-                <a className="primary-button" href={SKOOL_UPGRADE_URL} target="_blank" rel="noreferrer">
+                <a className="primary-button" href={SKOOL_UPGRADE_URL} target="_blank" rel="noreferrer" onClick={openSkoolUpgrade}>
                   <Crown size={17} /> Upgrade with Skool
                 </a>
               </article>
             </div>
+          </section>
+        </div>
+      )}
+
+      {activationNoticeOpen && (
+        <div className="upgrade-modal-backdrop activation-notice-backdrop" role="dialog" aria-modal="true" aria-labelledby="activation-notice-title">
+          <section className="activation-notice-modal">
+            <button className="modal-close" onClick={() => setActivationNoticeOpen(false)} aria-label="Close activation notice">
+              <X size={18} />
+            </button>
+            <span className="price-badge">Pro activation</span>
+            <h2 id="activation-notice-title">Your Pro access may take up to 24 hours.</h2>
+            <p>
+              After joining Subliminal Academy Premium, your Studio account will be upgraded to Pro manually. You can keep using Lite while access is being activated.
+            </p>
+            <button className="primary-button" onClick={() => setActivationNoticeOpen(false)}>
+              Got it
+            </button>
           </section>
         </div>
       )}
