@@ -1893,15 +1893,15 @@ export default function SublimifyBuilder({ userEmail, accountLabel, owner, hasPr
             </button>
             <div className="upgrade-modal-copy">
               <span className="price-badge">Unlock Pro</span>
-              <h2 id="upgrade-title">Create without Lite limits.</h2>
+              <h2 id="upgrade-title">Unlock the full studio.</h2>
               <p>{upgradePrompt}</p>
             </div>
             <div className="pricing-grid modal-pricing">
               <article className="price-card free">
                 <div className="plan-card-head">
                   <span>Lite</span>
-                  <strong>Try the studio</strong>
-                  <p>Good for testing the creator and listening inside your library.</p>
+                  <strong>Current access</strong>
+                  <p>Create and listen with the basic studio limits.</p>
                 </div>
                 <ul className="plan-feature-list">
                   <li><CheckCircle2 size={16} /> Listen in your library</li>
@@ -1917,8 +1917,8 @@ export default function SublimifyBuilder({ userEmail, accountLabel, owner, hasPr
                 <div className="plan-card-head">
                   <div className="price-badge">Recommended</div>
                   <span>Pro</span>
-                  <strong>Unlock the full studio</strong>
-                  <p>For making, saving, organizing, and exporting subliminals seriously.</p>
+                  <strong>Full creator access</strong>
+                  <p>Generate, layer, organize, and export without Lite limits.</p>
                 </div>
                 <div className="pro-price-line">
                   <strong>$29/month</strong>
