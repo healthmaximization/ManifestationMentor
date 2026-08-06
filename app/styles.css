@@ -4330,32 +4330,6 @@ select:hover {
   color: rgba(245, 243, 255, 0.74);
 }
 
-.pro-price-line {
-  padding: 12px 14px;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  border: 1px solid rgba(197, 163, 255, 0.16);
-  border-radius: 8px;
-  background:
-    linear-gradient(135deg, rgba(155, 92, 255, 0.12), rgba(103, 232, 249, 0.05)),
-    rgba(255, 255, 255, 0.04);
-}
-
-.pro-price-line strong {
-  color: #ffffff;
-  font-size: clamp(20px, 3vw, 28px);
-  line-height: 1;
-}
-
-.pro-price-line span {
-  color: rgba(245, 243, 255, 0.66);
-  font-size: 12px;
-  font-weight: 850;
-  text-align: right;
-}
-
 .plan-feature-list {
   gap: 10px;
 }
@@ -4522,15 +4496,6 @@ select:hover {
 .sublimify-minimal .plan-card-head p {
   font-size: 13px;
   line-height: 1.45;
-}
-
-.sublimify-minimal .pro-price-line {
-  padding: 11px 12px;
-  align-items: center;
-}
-
-.sublimify-minimal .pro-price-line strong {
-  font-size: clamp(20px, 2.5vw, 26px);
 }
 
 .sublimify-minimal .plan-feature-list {

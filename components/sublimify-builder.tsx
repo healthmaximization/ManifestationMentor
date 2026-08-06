@@ -1959,10 +1959,6 @@ export default function SublimifyBuilder({ userEmail, accountLabel, owner, hasPr
                   <strong>Full creator access</strong>
                   <p>Generate, layer, organize, and export without Lite limits.</p>
                 </div>
-                <div className="pro-price-line">
-                  <strong>$29/month</strong>
-                  <span>Includes Subliminal Academy Premium</span>
-                </div>
                 <ul className="plan-feature-list">
                   <li><CheckCircle2 size={16} /> AI affirmation generation</li>
                   <li><CheckCircle2 size={16} /> Unlimited saved subliminals</li>
