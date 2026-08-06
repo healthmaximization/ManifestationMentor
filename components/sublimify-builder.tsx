@@ -203,6 +203,33 @@ async function decodeBlob(context: BaseAudioContext, blob: Blob) {
   return context.decodeAudioData(await blob.arrayBuffer());
 }
 
+function isMobileAudioRuntime() {
+  if (typeof navigator === "undefined") return false;
+  return /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+}
+
+function speedUpAudioBuffer(context: BaseAudioContext, buffer: AudioBuffer, speed: number) {
+  if (speed <= 1.01) return buffer;
+
+  const nextLength = Math.max(1, Math.ceil(buffer.length / speed));
+  const spedBuffer = context.createBuffer(buffer.numberOfChannels, nextLength, buffer.sampleRate);
+
+  for (let channel = 0; channel < buffer.numberOfChannels; channel += 1) {
+    const input = buffer.getChannelData(channel);
+    const output = spedBuffer.getChannelData(channel);
+
+    for (let index = 0; index < nextLength; index += 1) {
+      const sourceIndex = Math.min(input.length - 1, index * speed);
+      const leftIndex = Math.floor(sourceIndex);
+      const rightIndex = Math.min(input.length - 1, leftIndex + 1);
+      const blend = sourceIndex - leftIndex;
+      output[index] = input[leftIndex] * (1 - blend) + input[rightIndex] * blend;
+    }
+  }
+
+  return spedBuffer;
+}
+
 function createNoiseBuffer(context: BaseAudioContext, duration: number, ambience: Ambience) {
   const buffer = context.createBuffer(2, duration * context.sampleRate, context.sampleRate);
   let lastOut = 0;
@@ -1203,6 +1230,7 @@ export default function SublimifyBuilder({ userEmail, accountLabel, owner, hasPr
   async function renderSubliminalWav() {
     const sampleRate = 44100;
     let voiceBuffer: AudioBuffer | null = null;
+    let renderVoiceSpeed = voiceSpeed;
 
     if (activeVoiceBlob) {
       const voiceContext = new AudioContext();
@@ -1210,7 +1238,18 @@ export default function SublimifyBuilder({ userEmail, accountLabel, owner, hasPr
       await voiceContext.close();
     }
 
-    const effectiveVoiceDuration = voiceBuffer ? voiceBuffer.duration / voiceSpeed : duration;
+    const useMobileSpeedBuffer = Boolean(voiceBuffer && isMobileAudioRuntime() && voiceSpeed > 1.01);
+    if (voiceBuffer && useMobileSpeedBuffer) {
+      const speedContext = new OfflineAudioContext(
+        voiceBuffer.numberOfChannels,
+        Math.max(1, Math.ceil(voiceBuffer.length / voiceSpeed)),
+        voiceBuffer.sampleRate
+      );
+      voiceBuffer = speedUpAudioBuffer(speedContext, voiceBuffer, voiceSpeed);
+      renderVoiceSpeed = 1;
+    }
+
+    const effectiveVoiceDuration = voiceBuffer ? voiceBuffer.duration / renderVoiceSpeed : duration;
     const layerTail = style === "layered" ? (layerCount - 1) * layerOffset : 0;
     const renderDuration = Math.max(1, Math.min(3600, Math.ceil(effectiveVoiceDuration + layerTail)));
     const context = new OfflineAudioContext(2, renderDuration * sampleRate, sampleRate);
@@ -1256,14 +1295,14 @@ export default function SublimifyBuilder({ userEmail, accountLabel, owner, hasPr
     if (voiceBuffer) {
       const activeLayerCount = style === "layered" ? layerCount : 1;
       const baseVolume = style === "silent" ? 0.035 : voiceVolume;
-      const voiceLoopDuration = voiceBuffer.duration / voiceSpeed;
+      const voiceLoopDuration = voiceBuffer.duration / renderVoiceSpeed;
       for (let layer = 0; layer < activeLayerCount; layer += 1) {
         for (let start = layer * layerOffset; start < renderDuration; start += voiceLoopDuration + 1.8) {
           const source = context.createBufferSource();
           const gain = context.createGain();
           const pan = context.createStereoPanner();
           source.buffer = voiceBuffer;
-          source.playbackRate.value = voiceSpeed;
+          source.playbackRate.value = renderVoiceSpeed;
           gain.gain.value = baseVolume / Math.sqrt(activeLayerCount);
           pan.pan.value = activeLayerCount === 1 ? 0 : -layerSpread + (2 * layerSpread * layer) / Math.max(1, activeLayerCount - 1);
           source.connect(gain).connect(pan).connect(context.destination);
