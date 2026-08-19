@@ -69,6 +69,11 @@ type SubliminalPlaylist = {
   projectIds: string[];
 };
 
+type StreakState = {
+  count: number;
+  lastVisit: string;
+};
+
 const BASE_STEPS: Step[] = ["intention", "source"];
 const FINISH_STEPS: Step[] = ["voice", "style", "sound", "export"];
 const STYLES: { key: Style; label: string; description: string; available: boolean }[] = [
@@ -270,6 +275,19 @@ function formatPlaybackTime(seconds: number) {
   return `${minutes}:${remaining.toString().padStart(2, "0")}`;
 }
 
+function dateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function previousDateKey(date = new Date()) {
+  const previous = new Date(date);
+  previous.setDate(previous.getDate() - 1);
+  return dateKey(previous);
+}
+
 function downloadBlob(blob: Blob, fileName: string) {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
@@ -424,6 +442,9 @@ export default function SublimifyBuilder({ userEmail, accountLabel, owner, hasPr
   const [upgradePrompt, setUpgradePrompt] = useState("");
   const [activationNoticeOpen, setActivationNoticeOpen] = useState(false);
   const [accountPanelOpen, setAccountPanelOpen] = useState(false);
+  const [streakCount, setStreakCount] = useState(1);
+  const [streakCelebrationOpen, setStreakCelebrationOpen] = useState(false);
+  const [streakJustUpgraded, setStreakJustUpgraded] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const playlistAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -476,6 +497,36 @@ export default function SublimifyBuilder({ userEmail, accountLabel, owner, hasPr
   const activeStepIndex = Math.max(0, currentSteps.indexOf(activeStep));
   const isFree = !hasPro;
   const libraryLimitReached = isFree && projects.length >= 1;
+
+  useEffect(() => {
+    const today = dateKey();
+    const yesterday = previousDateKey();
+    const storageKey = `subliminal-streak:${userEmail.toLowerCase() || displayAccount.toLowerCase()}`;
+    let stored: StreakState = { count: 0, lastVisit: "" };
+
+    try {
+      stored = JSON.parse(window.localStorage.getItem(storageKey) || "null") || stored;
+    } catch {
+      stored = { count: 0, lastVisit: "" };
+    }
+
+    const nextCount = stored.lastVisit === today
+      ? Math.max(1, stored.count)
+      : stored.lastVisit === yesterday
+        ? stored.count + 1
+        : 1;
+    const upgradedToday = stored.lastVisit !== today;
+
+    setStreakCount(nextCount);
+    setStreakJustUpgraded(upgradedToday);
+    window.localStorage.setItem(storageKey, JSON.stringify({ count: nextCount, lastVisit: today }));
+
+    if (upgradedToday) {
+      setStreakCelebrationOpen(true);
+      const timer = window.setTimeout(() => setStreakCelebrationOpen(false), 3600);
+      return () => window.clearTimeout(timer);
+    }
+  }, [displayAccount, userEmail]);
 
   useEffect(() => {
     return () => {
@@ -1390,6 +1441,10 @@ export default function SublimifyBuilder({ userEmail, accountLabel, owner, hasPr
           </div>
         )}
         <div className="minimal-top-actions">
+          <div className={streakJustUpgraded ? "streak-pill upgraded" : "streak-pill"} title={`${streakCount} day streak`} aria-label={`${streakCount} day streak`}>
+            <span className="streak-flame" aria-hidden="true" />
+            <strong>{streakCount}</strong>
+          </div>
           <form action="/api/auth/signout" method="post" className="minimal-account-row">
             <span className="avatar">{initials}</span>
             <span className="account-email">{displayAccount}</span>
@@ -1991,6 +2046,20 @@ export default function SublimifyBuilder({ userEmail, accountLabel, owner, hasPr
               Got it
             </button>
           </section>
+        </div>
+      )}
+
+      {streakCelebrationOpen && (
+        <div className="streak-celebration" role="status" aria-live="polite">
+          <button type="button" onClick={() => setStreakCelebrationOpen(false)} aria-label="Close streak update">
+            <X size={16} />
+          </button>
+          <div className="streak-celebration-fire" aria-hidden="true">
+            <span />
+          </div>
+          <strong>{streakCount}</strong>
+          <span>day streak</span>
+          <small>Nice. You showed up today.</small>
         </div>
       )}
 
