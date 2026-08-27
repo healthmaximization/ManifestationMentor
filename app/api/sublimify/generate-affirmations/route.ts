@@ -11,11 +11,8 @@ function cleanLines(text: string, limit: number) {
 
   return extractListItems(text)
     .split("\n")
-    .flatMap((line) => line.split(/(?<=\.)\s+(?=(?:I|My|Every|Each|More|It)\b)/i))
     .map(normalizeAffirmation)
-    .filter((line) => line.length >= 6 && line.length <= 180)
-    .filter((line) => !isMetaLine(line))
-    .filter(isAffirmationLine)
+    .filter((line) => line.length > 0)
     .filter((line) => {
       const key = line.toLowerCase();
       if (seen.has(key)) return false;
@@ -23,17 +20,6 @@ function cleanLines(text: string, limit: number) {
       return true;
     })
     .slice(0, limit);
-}
-
-function isAffirmationLine(line: string) {
-  return /^(i|i'm|i've|i already|i have|i choose|i allow|i feel|i trust|i welcome|i create|i become|my|every day|each day|more and more|it feels natural|it is safe|it is easy)/i.test(line);
-}
-
-function isMetaLine(line: string) {
-  return (
-    /[{}]|=>|<=|^\w+\d+\s/.test(line) ||
-    /\b(user|prompt|rule|cannot|okay|starts?|varied|category|analysis|markdown|format|response)\b/i.test(line)
-  );
 }
 
 function extractListItems(text: string) {
@@ -100,15 +86,13 @@ export async function POST(request: Request) {
     },
     {
       role: "user" as const,
-      content: `Use the creator prompt as the only writing instructions.
-
-Topic or user details:
+      content: `Topic or user details:
 ${safeTopic}
 
-${hasRequestedCount ? `Requested amount, unless the creator prompt says otherwise:\n${safeCount}\n\n` : ""}${safeTone ? `Tone, unless the creator prompt says otherwise:\n${safeTone}\n\n` : ""}Return only the affirmations, one per line. Do not add intro text, explanations, categories, analysis, markdown, or notes.`
+${hasRequestedCount ? `Requested amount:\n${safeCount}\n\n` : ""}${safeTone ? `Tone or extra context:\n${safeTone}` : ""}`
     }
   ];
-  const minimumCleanAffirmations = Math.min(6, safeCount);
+  const minimumCleanAffirmations = 1;
 
   try {
     const reply = await askGemini(messages, {
@@ -124,7 +108,7 @@ ${hasRequestedCount ? `Requested amount, unless the creator prompt says otherwis
     }
 
     return NextResponse.json(
-      { error: "The AI did not return enough clean affirmations. Try again or adjust the affirmation prompt." },
+      { error: "The AI did not return affirmations. Try again or adjust the affirmation prompt." },
       { status: 502 }
     );
   } catch (error) {
