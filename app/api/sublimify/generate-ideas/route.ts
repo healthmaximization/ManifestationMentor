@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { isOwner } from "@/lib/auth";
 import { DEFAULT_SUBLIMINAL_IDEA_PROMPT } from "@/lib/config";
-import { askGemini } from "@/lib/gemini";
+import { askOpenRouter } from "@/lib/openrouter";
 import { createAdminSupabase, createRouteSupabase } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   try {
-    const reply = await askGemini([
+    const reply = await askOpenRouter([
       {
         role: "system",
         content: config?.idea_prompt?.trim() || DEFAULT_SUBLIMINAL_IDEA_PROMPT
@@ -84,7 +84,12 @@ ${safeSeed.trim() ? `Direction, audience, or extra context:\n${safeSeed.trim()}\
       temperature: 0.82,
       maxTokens: 360,
       timeoutMs: 45000,
-      model: process.env.GEMINI_IDEA_MODEL || process.env.GEMINI_MODEL
+      retries: 1,
+      models: [
+        process.env.OPENROUTER_IDEA_MODEL ?? "",
+        "qwen/qwen3-coder:free",
+        "nvidia/nemotron-3-ultra-550b-a55b:free"
+      ].filter(Boolean)
     });
 
     const ideas = cleanLines(reply, 12);

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { hasProductAccess } from "@/lib/access";
 import { DEFAULT_SUBLIMINAL_PROMPT } from "@/lib/config";
-import { askGemini } from "@/lib/gemini";
+import { askOpenRouter } from "@/lib/openrouter";
 import { createAdminSupabase, createRouteSupabase } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +10,22 @@ const OUTPUT_FORMAT_GUARD = `Output format requirements:
 - Return only the final affirmation lines.
 - Do not answer, verify, restate, or checklist the creator prompt.
 - Do not include labels, headings, notes, markdown, or explanations.`;
+
+const BAD_AFFIRMATION_MODEL_PATTERNS = [
+  /^qwen\/qwen3-coder(?::free)?$/i,
+  /^nvidia\/nemotron/i
+];
+
+const AFFIRMATION_MODELS = [
+  getSafeAffirmationModelOverride(),
+  "google/gemma-4-31b-it:free",
+  "google/gemma-4-26b-a4b-it:free",
+  "meta-llama/llama-3.3-70b-instruct:free",
+  "qwen/qwen3-next-80b-a3b-instruct:free",
+  "openai/gpt-oss-20b:free",
+  "meta-llama/llama-3.2-3b-instruct:free",
+  "liquid/lfm-2.5-1.2b-instruct:free"
+].filter(Boolean);
 
 function cleanLines(text: string, limit: number) {
   const seen = new Set<string>();
@@ -62,6 +78,14 @@ function normalizeAffirmation(line: string) {
     .trim();
 }
 
+function getSafeAffirmationModelOverride() {
+  const model = process.env.OPENROUTER_AFFIRMATION_MODEL?.trim();
+  if (!model) return "";
+  if (!model.endsWith(":free")) return "";
+
+  return BAD_AFFIRMATION_MODEL_PATTERNS.some((pattern) => pattern.test(model)) ? "" : model;
+}
+
 export async function POST(request: Request) {
   const supabase = createRouteSupabase();
   const {
@@ -112,43 +136,56 @@ ${safeTone ? `Tone or extra context:\n${safeTone}` : ""}`;
   const minimumCleanAffirmations = Math.min(8, safeCount);
 
   try {
-    const model = process.env.GEMINI_AFFIRMATION_MODEL || process.env.GEMINI_MODEL;
-    let reply = await askGemini(messages, {
-      temperature: 0.48,
-      maxTokens: Math.min(1400, safeCount * 42),
-      timeoutMs: 30000,
-      model
-    });
-    let affirmations = cleanLines(reply, safeCount);
+    let lastError: unknown;
 
-    if (affirmations.length < minimumCleanAffirmations) {
-      reply = await askGemini([
-        {
-          role: "system" as const,
-          content: promptWithOutputGuard
-        },
-        {
-          role: "user" as const,
-          content: `${userRequest}
+    for (const model of AFFIRMATION_MODELS) {
+      try {
+        let reply = await askOpenRouter(messages, {
+          temperature: 0.48,
+          maxTokens: Math.min(1400, safeCount * 42),
+          timeoutMs: 30000,
+          retries: 0,
+          models: [model],
+          includeConfiguredModel: false,
+          includeDefaultFallbacks: false
+        });
+        let affirmations = cleanLines(reply, safeCount);
+
+        if (affirmations.length < minimumCleanAffirmations) {
+          reply = await askOpenRouter([
+            {
+              role: "system" as const,
+              content: promptWithOutputGuard
+            },
+            {
+              role: "user" as const,
+              content: `${userRequest}
 
 The previous output was invalid because it included commentary, checklist text, or too few final lines.
 Return the final affirmation lines only.`
+            }
+          ], {
+            temperature: 0.35,
+            maxTokens: Math.min(1400, safeCount * 42),
+            timeoutMs: 30000,
+            retries: 0,
+            models: [model],
+            includeConfiguredModel: false,
+            includeDefaultFallbacks: false
+          });
+          affirmations = cleanLines(reply, safeCount);
         }
-      ], {
-        temperature: 0.35,
-        maxTokens: Math.min(1400, safeCount * 42),
-        timeoutMs: 30000,
-        model
-      });
-      affirmations = cleanLines(reply, safeCount);
-    }
 
-    if (affirmations.length >= minimumCleanAffirmations) {
-      return NextResponse.json({ affirmations });
+        if (affirmations.length >= minimumCleanAffirmations) {
+          return NextResponse.json({ affirmations });
+        }
+      } catch (error) {
+        lastError = error;
+      }
     }
 
     return NextResponse.json(
-      { error: "The AI did not return affirmations. Try again or adjust the affirmation prompt." },
+      { error: lastError ? getPublicGenerationError(lastError) : "The AI did not return affirmations. Try again or adjust the affirmation prompt." },
       { status: 502 }
     );
   } catch (error) {
