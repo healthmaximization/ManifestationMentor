@@ -1,26 +1,10 @@
 import { NextResponse } from "next/server";
 import { hasProductAccess } from "@/lib/access";
 import { DEFAULT_SUBLIMINAL_PROMPT } from "@/lib/config";
-import { askOpenRouter } from "@/lib/openrouter";
+import { askGemini } from "@/lib/gemini";
 import { createAdminSupabase, createRouteSupabase } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-
-const BAD_AFFIRMATION_MODEL_PATTERNS = [
-  /^qwen\/qwen3-coder(?::free)?$/i,
-  /^nvidia\/nemotron/i
-];
-
-const AFFIRMATION_MODELS = [
-  "google/gemma-4-31b-it:free",
-  "google/gemma-4-26b-a4b-it:free",
-  "meta-llama/llama-3.3-70b-instruct:free",
-  getSafeAffirmationModelOverride(),
-  "qwen/qwen3-next-80b-a3b-instruct:free",
-  "openai/gpt-oss-20b:free",
-  "meta-llama/llama-3.2-3b-instruct:free",
-  "liquid/lfm-2.5-1.2b-instruct:free"
-].filter(Boolean);
 
 function cleanLines(text: string, limit: number) {
   const seen = new Set<string>();
@@ -78,14 +62,6 @@ function normalizeAffirmation(line: string) {
     .trim();
 }
 
-function getSafeAffirmationModelOverride() {
-  const model = process.env.OPENROUTER_AFFIRMATION_MODEL?.trim();
-  if (!model) return "";
-  if (!model.endsWith(":free")) return "";
-
-  return BAD_AFFIRMATION_MODEL_PATTERNS.some((pattern) => pattern.test(model)) ? "" : model;
-}
-
 export async function POST(request: Request) {
   const supabase = createRouteSupabase();
   const {
@@ -135,31 +111,20 @@ ${hasRequestedCount ? `Requested amount, unless the creator prompt says otherwis
   const minimumCleanAffirmations = Math.min(6, safeCount);
 
   try {
-    let lastError: unknown;
+    const reply = await askGemini(messages, {
+      temperature: 0.62,
+      maxTokens: Math.min(1200, safeCount * 34),
+      timeoutMs: 30000,
+      model: process.env.GEMINI_AFFIRMATION_MODEL || process.env.GEMINI_MODEL
+    });
+    const affirmations = cleanLines(reply, safeCount);
 
-    for (const model of AFFIRMATION_MODELS) {
-      try {
-        const reply = await askOpenRouter(messages, {
-          temperature: 0.68,
-          maxTokens: Math.min(1200, safeCount * 34),
-          timeoutMs: 22000,
-          retries: 0,
-          models: [model],
-          includeConfiguredModel: false,
-          includeDefaultFallbacks: false
-        });
-        const affirmations = cleanLines(reply, safeCount);
-
-        if (affirmations.length >= minimumCleanAffirmations) {
-          return NextResponse.json({ affirmations });
-        }
-      } catch (error) {
-        lastError = error;
-      }
+    if (affirmations.length >= minimumCleanAffirmations) {
+      return NextResponse.json({ affirmations });
     }
 
     return NextResponse.json(
-      { error: lastError ? getPublicGenerationError(lastError) : "The free AI models did not return enough clean affirmations. Please try again." },
+      { error: "The AI did not return enough clean affirmations. Try again or adjust the affirmation prompt." },
       { status: 502 }
     );
   } catch (error) {
@@ -172,7 +137,7 @@ function getPublicGenerationError(error: unknown) {
 
   const message = error.message.toLowerCase();
   if (message.includes("429") || message.includes("rate-limit") || message.includes("rate limit")) {
-    return "The free AI models are busy right now. Please try again in a few seconds.";
+    return "The AI model is busy right now. Please try again in a few seconds.";
   }
 
   if (message.includes("took too long") || message.includes("abort")) {

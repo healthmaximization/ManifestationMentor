@@ -7,7 +7,7 @@ export default function SetupScreen() {
       <section className="auth-panel setup-panel">
         <BrandLogo />
         <h1>Subliminal Academy</h1>
-        <p>Add your environment variables to connect Supabase, OpenRouter, and your creation tools.</p>
+        <p>Add your environment variables to connect Supabase, Gemini, OpenRouter, and your creation tools.</p>
         <div className="setup-list">
           <div>
             <Database size={18} />
@@ -24,6 +24,10 @@ export default function SetupScreen() {
           <div>
             <KeyRound size={18} />
             <span>OPENROUTER_API_KEY</span>
+          </div>
+          <div>
+            <KeyRound size={18} />
+            <span>GOOGLE_AI_API_KEY</span>
           </div>
         </div>
       </section>

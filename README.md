@@ -25,15 +25,22 @@ npm run dev
 
 The owner account is hard-coded as `jelmer.huysmans123@gmail.com` in `lib/config.ts`.
 
-## OpenRouter
+## AI generation
 
-The default model is `nvidia/nemotron-3-ultra-550b-a55b:free`. You can override it with `OPENROUTER_MODEL`.
-If OpenRouter removes a configured model, the app automatically falls back to the current free defaults.
-For higher-quality Subliminal Studio generations, you can also set task-specific model overrides. Affirmations intentionally ignore the global model and only accept free `:free` model ids because reasoning/coder models can return analysis instead of clean affirmations.
+Subliminal Studio uses Gemini from Google AI Studio for affirmation and idea generation.
 
 ```text
-OPENROUTER_IDEA_MODEL=nvidia/nemotron-3-ultra-550b-a55b:free
-OPENROUTER_AFFIRMATION_MODEL=google/gemma-4-31b-it:free
+GOOGLE_AI_API_KEY=your_google_ai_studio_key
+GEMINI_MODEL=gemini-2.0-flash
+GEMINI_IDEA_MODEL=gemini-2.0-flash
+GEMINI_AFFIRMATION_MODEL=gemini-2.0-flash
+```
+
+The manifestation mentor chat can still use OpenRouter if you keep these values:
+
+```text
+OPENROUTER_API_KEY=your_openrouter_key
+OPENROUTER_MODEL=nvidia/nemotron-3-ultra-550b-a55b:free
 ```
 
 ## Membership
@@ -79,7 +86,7 @@ Subliminal Studio lives at:
 
 Run the latest `supabase/schema.sql` again after pulling this version. It adds `subliminal_generation_config`, which stores the owner-editable affirmation and idea prompts.
 
-AI affirmation generation uses OpenRouter. Text-to-speech narrator audio uses Google Cloud Text-to-Speech through the server route at `/api/sublimify/tts`.
+AI affirmation and idea generation use Gemini through Google AI Studio. Text-to-speech narrator audio uses Google Cloud Text-to-Speech through the server route at `/api/sublimify/tts`.
 
 Add this in Vercel when you enable Google Cloud TTS:
 
