@@ -6,6 +6,11 @@ import { createAdminSupabase, createRouteSupabase } from "@/lib/supabase/server"
 
 export const dynamic = "force-dynamic";
 
+const OUTPUT_FORMAT_GUARD = `Output format requirements:
+- Return only the final affirmation lines.
+- Do not answer, verify, restate, or checklist the creator prompt.
+- Do not include labels, headings, notes, markdown, or explanations.`;
+
 function cleanLines(text: string, limit: number) {
   const seen = new Set<string>();
 
@@ -13,6 +18,7 @@ function cleanLines(text: string, limit: number) {
     .split("\n")
     .map(normalizeAffirmation)
     .filter((line) => line.length > 0)
+    .filter((line) => !isOutputArtifact(line))
     .filter((line) => {
       const key = line.toLowerCase();
       if (seen.has(key)) return false;
@@ -20,6 +26,14 @@ function cleanLines(text: string, limit: number) {
       return true;
     })
     .slice(0, limit);
+}
+
+function isOutputArtifact(line: string) {
+  return (
+    /^(yes|no|checked|done|correct|affirmations?|notes?|output|result|response)\.?$/i.test(line) ||
+    /\b(emotionally believable|no negations|topic clear|checked|creator prompt|requirements?|criteria|markdown|checklist)\b/i.test(line) ||
+    /^(here are|sure[,!]|of course|below are|these are)/i.test(line)
+  );
 }
 
 function extractListItems(text: string) {
@@ -79,29 +93,55 @@ export async function POST(request: Request) {
     .select("*")
     .eq("id", "main")
     .maybeSingle();
+  const creatorPrompt = config?.prompt?.trim() || DEFAULT_SUBLIMINAL_PROMPT;
+  const promptWithOutputGuard = `${creatorPrompt}\n\n${OUTPUT_FORMAT_GUARD}`;
+  const userRequest = `Topic or user details:
+${safeTopic}
+
+${safeTone ? `Tone or extra context:\n${safeTone}` : ""}`;
   const messages = [
     {
       role: "system" as const,
-      content: config?.prompt?.trim() || DEFAULT_SUBLIMINAL_PROMPT
+      content: promptWithOutputGuard
     },
     {
       role: "user" as const,
-      content: `Topic or user details:
-${safeTopic}
-
-${hasRequestedCount ? `Requested amount:\n${safeCount}\n\n` : ""}${safeTone ? `Tone or extra context:\n${safeTone}` : ""}`
+      content: hasRequestedCount ? `${userRequest}\n\nRequested amount:\n${safeCount}` : userRequest
     }
   ];
-  const minimumCleanAffirmations = 1;
+  const minimumCleanAffirmations = Math.min(8, safeCount);
 
   try {
-    const reply = await askGemini(messages, {
-      temperature: 0.62,
-      maxTokens: Math.min(1200, safeCount * 34),
+    const model = process.env.GEMINI_AFFIRMATION_MODEL || process.env.GEMINI_MODEL;
+    let reply = await askGemini(messages, {
+      temperature: 0.48,
+      maxTokens: Math.min(1400, safeCount * 42),
       timeoutMs: 30000,
-      model: process.env.GEMINI_AFFIRMATION_MODEL || process.env.GEMINI_MODEL
+      model
     });
-    const affirmations = cleanLines(reply, safeCount);
+    let affirmations = cleanLines(reply, safeCount);
+
+    if (affirmations.length < minimumCleanAffirmations) {
+      reply = await askGemini([
+        {
+          role: "system" as const,
+          content: promptWithOutputGuard
+        },
+        {
+          role: "user" as const,
+          content: `${userRequest}
+
+The previous output was invalid because it included commentary, checklist text, or too few final lines.
+Return the final affirmation lines only.`
+        }
+      ], {
+        temperature: 0.35,
+        maxTokens: Math.min(1400, safeCount * 42),
+        timeoutMs: 30000,
+        model
+      });
+      affirmations = cleanLines(reply, safeCount);
+    }
 
     if (affirmations.length >= minimumCleanAffirmations) {
       return NextResponse.json({ affirmations });
